@@ -4,35 +4,17 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase'
 import { useRouter } from 'next/navigation'
 import type { UserMetadata } from '@/types/supabase'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function Dashboard() {
+  const { user, loading, signOut } = useAuth()
   const router = useRouter()
-  const [user, setUser] = useState<{ user_metadata: UserMetadata } | null>(null)
-  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const getUser = async () => {
-      try {
-        const { data: { user } } = await supabase.auth.getUser()
-        setUser(user)
-      } catch (error) {
-        console.error('Error fetching user:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    getUser()
-  }, [])
-
-  const handleSignOut = async () => {
-    try {
-      await supabase.auth.signOut()
+    if (!user && !loading) {
       router.push('/auth')
-    } catch (error) {
-      console.error('Error signing out:', error)
     }
-  }
+  }, [user, loading, router])
 
   if (loading) {
     return <div>Loading...</div>
@@ -45,16 +27,23 @@ export default function Dashboard() {
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-900">ダッシュボード</h1>
             <button
-              onClick={handleSignOut}
+              onClick={signOut}
               className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
             >
               ログアウト
             </button>
           </div>
           {user && (
-            <div className="mt-4">
-              <p className="text-lg">ようこそ、{user.user_metadata.full_name}さん</p>
-              <p className="text-gray-600">@{user.user_metadata.user_name}</p>
+            <div className="mt-4 flex items-center gap-4">
+              <img 
+                src={user.user_metadata.avatar_url?.replace('_normal', '') || user.user_metadata.avatar_url} 
+                alt={`${user.user_metadata.full_name}のアバター`}
+                className="w-12 h-12 rounded-full"
+              />
+              <div>
+                <p className="text-lg">ようこそ、{user.user_metadata.full_name}さん</p>
+                <p className="text-gray-600">@{user.user_metadata.user_name}</p>
+              </div>
             </div>
           )}
         </div>

@@ -1,8 +1,21 @@
 'use client'
 
-import { supabase } from '@/lib/supabase'
+import { useEffect } from 'react'
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { useRouter } from 'next/navigation'
+import { useAuth } from '@/contexts/AuthContext'
 
 export default function AuthPage() {
+  const { user, loading } = useAuth()
+  const router = useRouter()
+  const supabase = createClientComponentClient()
+
+  useEffect(() => {
+    if (user && !loading) {
+      router.push('/dashboard')
+    }
+  }, [user, loading, router])
+
   const handleSignIn = async () => {
     try {
       console.log('Starting auth process...')
@@ -10,9 +23,7 @@ export default function AuthPage() {
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
-          redirectTo: process.env.NODE_ENV === 'development' 
-            ? 'http://localhost:3000/auth/callback'
-            : `${process.env.NEXT_PUBLIC_SITE_URL}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback`
         }
       })
 
@@ -24,6 +35,10 @@ export default function AuthPage() {
     } catch (error) {
       console.error('Unexpected error:', error)
     }
+  }
+
+  if (loading) {
+    return <div>Loading...</div>
   }
 
   return (
