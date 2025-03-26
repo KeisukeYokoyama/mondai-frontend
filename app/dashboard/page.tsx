@@ -1,9 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import type { UserMetadata } from '@/types/supabase'
+import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
 
 export default function Dashboard() {
@@ -33,16 +32,22 @@ export default function Dashboard() {
               ログアウト
             </button>
           </div>
-          {user && (
+          {user && user.user_metadata && (
             <div className="mt-4 flex items-center gap-4">
-              <img 
-                src={user.user_metadata.avatar_url?.replace('_normal', '') || user.user_metadata.avatar_url} 
-                alt={`${user.user_metadata.full_name}のアバター`}
-                className="w-12 h-12 rounded-full"
+              <Image 
+                src={
+                  (user.user_metadata.avatar_url?.replace('_normal', '') || 
+                  user.user_metadata.avatar_url || 
+                  '/default-avatar.png')
+                }
+                alt={`${user.user_metadata.full_name || 'ユーザー'}のアバター`}
+                width={48}
+                height={48}
+                className="rounded-full"
               />
               <div>
-                <p className="text-lg">ようこそ、{user.user_metadata.full_name}さん</p>
-                <p className="text-gray-600">@{user.user_metadata.user_name}</p>
+                <p className="text-lg">ようこそ、{user.user_metadata.full_name || 'ゲスト'}さん</p>
+                <p className="text-gray-600">@{user.user_metadata.user_name || 'unknown'}</p>
               </div>
             </div>
           )}
