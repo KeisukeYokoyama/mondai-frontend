@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { politicianAPI } from '@/utils/supabase/politicians';
 import type { SpeakerWithRelations } from '@/utils/supabase/types';
+import Image from 'next/image';
 
 export default function PoliticianTestPage() {
   const [politicians, setPoliticians] = useState<SpeakerWithRelations[]>([]);
@@ -104,10 +105,12 @@ export default function PoliticianTestPage() {
             onClick={() => fetchPoliticianDetail(politician.id)}
           >
             <div className="mb-3">
-              <img
+              <Image
                 src={politician.image_path ? `/${politician.image_path}` : '/images/default-avatar.png'}
                 alt={`${politician.last_name} ${politician.first_name}の写真`}
                 className="w-32 h-32 object-cover rounded"
+                width={128}
+                height={128}
               />
             </div>
             <h2 className="text-xl font-bold">
@@ -129,10 +132,12 @@ export default function PoliticianTestPage() {
           <div className="bg-white p-6 rounded-lg max-w-2xl w-full">
             <div className="flex items-start">
               <div className="mr-6">
-                <img
+                <Image
                   src={selectedPolitician.image_path ? `/${selectedPolitician.image_path}` : '/images/default-avatar.png'}
                   alt={`${selectedPolitician.last_name} ${selectedPolitician.first_name}の写真`}
                   className="w-48 h-48 object-cover rounded"
+                  width={192}
+                  height={192}
                 />
               </div>
               <div className="flex-1">

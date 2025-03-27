@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 
-export default function Header({ title }: { title: string }) {
+export default function Header() {
   const [isOpen, setIsOpen] = useState(false)
 
   return (

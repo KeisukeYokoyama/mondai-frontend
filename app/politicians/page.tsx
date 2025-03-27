@@ -4,6 +4,7 @@ import Header from '@/components/Navs/Header'
 import Footer from '@/components/Navs/Footer'
 import Link from 'next/link'
 import debounce from 'lodash/debounce';  // lodashのインストールが必要
+import Image from 'next/image';
 
 interface Politician {
   id: number;
@@ -622,10 +623,12 @@ export default function Home() {
                 className="flex items-center justify-between py-3 px-4 bg-white w-full hover:bg-gray-50 transition-colors"
               >
                 <div className="flex items-center">
-                  <img 
+                  <Image
                     src={politician.image_path || "/images/default-avatar.png"} 
                     alt={`${politician.last_name} ${politician.first_name}`} 
                     className="w-16 h-16 object-cover rounded-full mr-4 shadow-md" 
+                    width={64}
+                    height={64}
                   />
                   <div className="flex-1 min-w-0">
                     <h3 className="text-gray-900">

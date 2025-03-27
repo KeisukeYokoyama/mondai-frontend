@@ -4,10 +4,17 @@
 import { useState, useEffect } from 'react'
 import { locationAPI } from '@/utils/supabase/location'
 
+interface LocationData {
+  id: number;
+  name: string;
+  slug?: string;
+  regions?: { name: string }[];
+}
+
 export default function LocationTest() {
-  const [regions, setRegions] = useState<any[]>([])
-  const [prefectures, setPrefectures] = useState<any[]>([])
-  const [cities, setCities] = useState<any[]>([])
+  const [regions, setRegions] = useState<LocationData[]>([])
+  const [prefectures, setPrefectures] = useState<LocationData[]>([])
+  const [cities, setCities] = useState<LocationData[]>([])
   const [selectedPrefId, setSelectedPrefId] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
