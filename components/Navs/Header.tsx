@@ -31,12 +31,12 @@ export default function Header({ title }: HeaderProps) {
 
           {/* デスクトップ用メニュー */}
           <div className="hidden md:flex items-center space-x-8 text-sm font-semibold ml-auto py-3">
-            <Link
+            {/* <Link
               href="/search"
               className="text-gray-900 hover:text-blue-700"
             >
               問題発言を探す
-            </Link>
+            </Link> */}
             <Link
               href="/politicians"
               className="text-gray-900 hover:text-blue-700"
@@ -107,7 +107,7 @@ export default function Header({ title }: HeaderProps) {
                     話題の問題発言
                   </Link>
                 </li>
-                <li className="mb-2">
+                {/* <li className="mb-2">
                   <Link
                     href="/search"
                     className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100"
@@ -115,7 +115,7 @@ export default function Header({ title }: HeaderProps) {
                   >
                     問題発言を探す
                   </Link>
-                </li>
+                </li> */}
                 <li className="mb-2">
                   <Link
                     href="/politicians"
