@@ -6,18 +6,6 @@ import Link from 'next/link'
 import debounce from 'lodash/debounce';  // lodashのインストールが必要
 import Image from 'next/image';
 
-interface Politician {
-  id: number;
-  name: string;
-  party: string;
-  gender: string;
-  age: number;
-  district: string;
-  type: string;
-  election_result: string;
-  img: string;
-}
-
 interface Region {
   id: number;
   name: string;
@@ -121,10 +109,6 @@ export default function Home() {
   const [totalResults, setTotalResults] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);  // クライアントサイドかどうかのフラグ
-  
-  // 単一選択から複数選択に変更
-  const [selectedTypes, setSelectedTypes] = useState<string[]>([]);
-  const [selectedGenders, setSelectedGenders] = useState<string[]>([]);
   
   // マウント時にクライアントサイドフラグを設定
   useEffect(() => {
@@ -325,350 +309,329 @@ export default function Home() {
     };
   }, [debouncedSearch]);
 
-  // チェックボックスの変更ハンドラー
-  const handleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSelectedTypes(prev => 
-      prev.includes(value)
-        ? prev.filter(type => type !== value)
-        : [...prev, value]
-    );
-  };
-
-  const handleGenderChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    if (value === 'all') {
-      setSelectedGenders([]);
-      return;
-    }
-    
-    setSelectedGenders(prev => 
-      prev.includes(value)
-        ? prev.filter(gender => gender !== value)
-        : [...prev, value]
-    );
-  };
-
   return (
-    <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
-      <section className="text-gray-600 body-font bg-white">
-        <div className="container px-5 py-2 mx-auto">
-          <Header title="政治家一覧" />
-        </div>
-      </section>
-      <div className="container px-5 pt-8 mx-auto text-center relative">
-        <div className="relative flex flex-col gap-4 max-w-md mx-auto">
-          <div className="relative">
-            <input 
-              type="text" 
-              className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md" 
-              placeholder="政治家名を入力" 
-              value={searchText}
-              onChange={handleInputChange}
-            />
-            {isLoading && <SearchingIndicator />}
+    <div className="min-h-screen bg-gray-50">
+      <Header />
+      <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
+        <section className="text-gray-600 body-font bg-white">
+          <div className="container px-5 py-2 mx-auto">
+            <Header title="政治家一覧" />
           </div>
-          <p 
-            onClick={() => setIsModalOpen(true)}
-            className="text-xs text-blue-700 cursor-pointer text-right -mt-2 font-semibold"
-          >
-            詳細条件
-          </p>
+        </section>
+        <div className="container px-5 pt-8 mx-auto text-center relative">
+          <div className="relative flex flex-col gap-4 max-w-md mx-auto">
+            <div className="relative">
+              <input 
+                type="text" 
+                className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md" 
+                placeholder="政治家名を入力" 
+                value={searchText}
+                onChange={handleInputChange}
+              />
+              {isLoading && <SearchingIndicator />}
+            </div>
+            <p 
+              onClick={() => setIsModalOpen(true)}
+              className="text-xs text-blue-700 cursor-pointer text-right -mt-2 font-semibold"
+            >
+              詳細条件
+            </p>
 
-          {/* モーダル */}
-          {isModalOpen && (
-            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start pt-12 justify-center z-50">
-              <div className="bg-white p-6 rounded-lg w-full max-w-md mx-4">
-                <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold">詳細検索</h3>
-                  <button 
-                    onClick={() => setIsModalOpen(false)}
-                    className="text-gray-500 hover:text-gray-700"
-                  >
-                    ✕
-                  </button>
-                </div>
+            {/* モーダル */}
+            {isModalOpen && (
+              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start pt-12 justify-center z-50">
+                <div className="bg-white p-6 rounded-lg w-full max-w-md mx-4">
+                  <div className="flex justify-between items-center mb-4">
+                    <h3 className="text-lg font-bold">詳細検索</h3>
+                    <button 
+                      onClick={() => setIsModalOpen(false)}
+                      className="text-gray-500 hover:text-gray-700"
+                    >
+                      ✕
+                    </button>
+                  </div>
 
-                <div className="space-y-4">
-                  <select 
-                    className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
-                    value={selectedParty}
-                    onChange={(e) => {
-                      const selectedValue = e.target.value;
-                      const selectedParty = parentParties.find(p => p.id === Number(selectedValue));
-                      console.log('Selected value:', selectedValue);
-                      console.log('Selected party:', selectedParty);
-                      setSelectedParty(selectedValue);
-                      setSelectedChildParty('');
-                    }}
-                  >
-                    <option value="">政党を選択</option>
-                    {parentParties.map((party) => (
-                      <option key={party.uuid} value={party.id}>
-                        {party.name}
-                      </option>
-                    ))}
-                  </select>
-
-                  {/* 「その他」が選択された場合のみ子政党を表示 */}
-                  {Number(selectedParty) === OTHER_PARTY_ID && childParties.length > 0 && (
+                  <div className="space-y-4">
                     <select 
                       className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
-                      value={selectedChildParty}
+                      value={selectedParty}
                       onChange={(e) => {
                         const selectedValue = e.target.value;
-                        console.log('Selected child party id:', selectedValue);
-                        setSelectedChildParty(selectedValue);
+                        const selectedParty = parentParties.find(p => p.id === Number(selectedValue));
+                        console.log('Selected value:', selectedValue);
+                        console.log('Selected party:', selectedParty);
+                        setSelectedParty(selectedValue);
+                        setSelectedChildParty('');
                       }}
                     >
-                      <option value="">選択してください</option>
-                      {childParties.map((party) => (
+                      <option value="">政党を選択</option>
+                      {parentParties.map((party) => (
                         <option key={party.uuid} value={party.id}>
                           {party.name}
                         </option>
                       ))}
                     </select>
-                  )}
 
-                  {/* 種別選択 */}
-                  <div className="flex flex-col items-start gap-2 pb-2">
-                    <p className="text-sm text-gray-700 font-bold">議員種別</p>
-                    <div className="flex gap-3">
-                      <label className="flex items-center">
-                        <input 
-                          type="radio" 
-                          name="type" 
-                          value=""
-                          checked={selectedType === ""}
-                          onChange={(e) => setSelectedType(e.target.value)}
-                          className="mr-1" 
-                        />
-                        <span className="text-sm">すべて</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input 
-                          type="radio" 
-                          name="type" 
-                          value="衆議院"
-                          checked={selectedType === "衆議院"}
-                          onChange={(e) => setSelectedType(e.target.value)}
-                          className="mr-1" 
-                        />
-                        <span className="text-sm">衆議院</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input 
-                          type="radio" 
-                          name="type" 
-                          value="参議院"
-                          checked={selectedType === "参議院"}
-                          onChange={(e) => setSelectedType(e.target.value)}
-                          className="mr-1" 
-                        />
-                        <span className="text-sm">参議院</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input 
-                          type="radio" 
-                          name="type" 
-                          value="地方選挙"
-                          checked={selectedType === "地方選挙"}
-                          onChange={(e) => setSelectedType(e.target.value)}
-                          className="mr-1" 
-                        />
-                        <span className="text-sm">地方議員</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  {/* 性別選択 */}
-                  <div className="flex flex-col items-start gap-2 pb-2">
-                    <p className="text-sm text-gray-700 font-bold">性別</p>
-                    <div className="flex gap-3">
-                      <label className="flex items-center">
-                        <input 
-                          type="radio" 
-                          name="gender" 
-                          value=""
-                          checked={selectedGender === ""}
-                          onChange={(e) => setSelectedGender(e.target.value)}
-                          className="mr-1" 
-                        />
-                        <span className="text-sm">すべて</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input 
-                          type="radio" 
-                          name="gender" 
-                          value="男"
-                          checked={selectedGender === "男"}
-                          onChange={(e) => setSelectedGender(e.target.value)}
-                          className="mr-1" 
-                        />
-                        <span className="text-sm">男性</span>
-                      </label>
-                      <label className="flex items-center">
-                        <input 
-                          type="radio" 
-                          name="gender" 
-                          value="女"
-                          checked={selectedGender === "女"}
-                          onChange={(e) => setSelectedGender(e.target.value)}
-                          className="mr-1" 
-                        />
-                        <span className="text-sm">女性</span>
-                      </label>
-                    </div>
-                  </div>
-
-                  <div className="space-y-4 pb-2">
-                    {/* 地域選択 */}
-                    <select 
-                      className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
-                      value={selectedRegion}
-                      onChange={(e) => setSelectedRegion(Number(e.target.value))}
-                    >
-                      <option value={0}>地域を選択</option>
-                      {regions.map((region) => (
-                        <option key={region.id} value={region.id}>
-                          {region.name}
-                        </option>
-                      ))}
-                    </select>
-
-                    {/* 都道府県選択（地域が選択されている場合のみ表示） */}
-                    {selectedRegion > 0 && (
+                    {/* 「その他」が選択された場合のみ子政党を表示 */}
+                    {Number(selectedParty) === OTHER_PARTY_ID && childParties.length > 0 && (
                       <select 
                         className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
-                        value={selectedPrefecture}
+                        value={selectedChildParty}
                         onChange={(e) => {
-                          const prefecture = prefectures.find(p => p.id === Number(e.target.value));
-                          if (prefecture) {
-                            setSelectedPrefecture(prefecture.id);
-                            setSelectedPrefectureSlug(prefecture.slug);
-                            setSelectedCity(0);
-                          }
+                          const selectedValue = e.target.value;
+                          console.log('Selected child party id:', selectedValue);
+                          setSelectedChildParty(selectedValue);
                         }}
                       >
-                        <option value="">都道府県を選択</option>
-                        {prefectures.map((prefecture) => (
-                          <option key={prefecture.id} value={prefecture.id}>
-                            {prefecture.name}
+                        <option value="">選択してください</option>
+                        {childParties.map((party) => (
+                          <option key={party.uuid} value={party.id}>
+                            {party.name}
                           </option>
                         ))}
                       </select>
                     )}
 
-                    {/* 市区町村選択（都道府県が選択されている場合のみ表示） */}
-                    {selectedPrefecture > 0 && (
+                    {/* 種別選択 */}
+                    <div className="flex flex-col items-start gap-2 pb-2">
+                      <p className="text-sm text-gray-700 font-bold">議員種別</p>
+                      <div className="flex gap-3">
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="type" 
+                            value=""
+                            checked={selectedType === ""}
+                            onChange={(e) => setSelectedType(e.target.value)}
+                            className="mr-1" 
+                          />
+                          <span className="text-sm">すべて</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="type" 
+                            value="衆議院"
+                            checked={selectedType === "衆議院"}
+                            onChange={(e) => setSelectedType(e.target.value)}
+                            className="mr-1" 
+                          />
+                          <span className="text-sm">衆議院</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="type" 
+                            value="参議院"
+                            checked={selectedType === "参議院"}
+                            onChange={(e) => setSelectedType(e.target.value)}
+                            className="mr-1" 
+                          />
+                          <span className="text-sm">参議院</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="type" 
+                            value="地方選挙"
+                            checked={selectedType === "地方選挙"}
+                            onChange={(e) => setSelectedType(e.target.value)}
+                            className="mr-1" 
+                          />
+                          <span className="text-sm">地方議員</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* 性別選択 */}
+                    <div className="flex flex-col items-start gap-2 pb-2">
+                      <p className="text-sm text-gray-700 font-bold">性別</p>
+                      <div className="flex gap-3">
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="gender" 
+                            value=""
+                            checked={selectedGender === ""}
+                            onChange={(e) => setSelectedGender(e.target.value)}
+                            className="mr-1" 
+                          />
+                          <span className="text-sm">すべて</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="gender" 
+                            value="男"
+                            checked={selectedGender === "男"}
+                            onChange={(e) => setSelectedGender(e.target.value)}
+                            className="mr-1" 
+                          />
+                          <span className="text-sm">男性</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input 
+                            type="radio" 
+                            name="gender" 
+                            value="女"
+                            checked={selectedGender === "女"}
+                            onChange={(e) => setSelectedGender(e.target.value)}
+                            className="mr-1" 
+                          />
+                          <span className="text-sm">女性</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4 pb-2">
+                      {/* 地域選択 */}
                       <select 
                         className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
-                        value={selectedCity}
-                        onChange={(e) => setSelectedCity(Number(e.target.value))}
+                        value={selectedRegion}
+                        onChange={(e) => setSelectedRegion(Number(e.target.value))}
                       >
-                        <option value={0}>市区町村を選択</option>
-                        {cities.map((city) => (
-                          <option key={city.id} value={city.id}>
-                            {city.name}
+                        <option value={0}>地域を選択</option>
+                        {regions.map((region) => (
+                          <option key={region.id} value={region.id}>
+                            {region.name}
                           </option>
                         ))}
                       </select>
-                    )}
-                  </div>
 
-                  <button 
-                    onClick={() => {
-                      handleSearch({
-                        s: searchText,
-                        chamber: selectedType,
-                        gender: selectedGender,
-                        party_id: selectedChildParty || selectedParty,
-                        prefecture_id: selectedPrefecture,
-                        city_id: String(selectedCity)
-                      });
-                      setIsModalOpen(false);
-                    }}
-                    className="w-full pl-4 pr-12 py-2 text-sm border rounded-md bg-gray-900 text-white hover:bg-gray-800"
-                  >
-                    検索
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-      <div className="container px-3 pt-8 mx-auto">
-        <div className="flex justify-between items-center">
-          <h2 className="text-xl font-bold text-gray-900">
-            検索結果
-          </h2>
-          {Array.isArray(searchResults) && (
-            <p className="text-sm text-gray-600">
-              {totalResults === 0 ? (
-                "該当する結果はありません"
-              ) : (
-                `検索結果：${totalResults}件`
-              )}
-            </p>
-          )}
-        </div>
-      </div>
-      <div className="container px-0 py-8 mx-auto">
-        <div className="flex flex-col divide-y divide-gray-200">
-          {Array.isArray(searchResults) && searchResults.length > 0 ? (
-            searchResults.map((politician, index) => (
-              <div 
-                key={politician.id || index} 
-                className="flex items-center justify-between py-3 px-4 bg-white w-full hover:bg-gray-50 transition-colors"
-              >
-                <div className="flex items-center">
-                  <Image
-                    src={politician.image_path || "/images/default-avatar.png"} 
-                    alt={`${politician.last_name} ${politician.first_name}`} 
-                    className="w-16 h-16 object-cover rounded-full mr-4 shadow-md" 
-                    width={64}
-                    height={64}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-gray-900">
-                      <span className="font-bold">
-                        {politician.last_name} {politician.first_name}
-                      </span>
-                      <span className="text-gray-600 text-xs">
-                        （{politician.age ? `${politician.age}歳` : '-'} / {politician.gender || '-'}）
-                      </span>
-                    </h3>
-                    <p className="text-gray-600 text-xs">
-                      {politician.party?.name || '無所属'} / 
-                      {politician.chamber === '地方選挙' ? '地方議員' : politician.chamber || '不明'} / 
-                      {politician.prefecture?.name || '地域不明'} /
-                      <span 
-                        className={politician.election_result === "0" ? 'text-red-600 font-semibold' : 
-                                 politician.election_result === "1" ? 'text-green-600 font-semibold' : ''}
-                      >
-                        {politician.election_result === "0" ? '😢 落選' : 
-                         politician.election_result === "1" ? '当選' : '不明'}
-                      </span>
-                    </p>
+                      {/* 都道府県選択（地域が選択されている場合のみ表示） */}
+                      {selectedRegion > 0 && (
+                        <select 
+                          className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
+                          value={selectedPrefecture}
+                          onChange={(e) => {
+                            const prefecture = prefectures.find(p => p.id === Number(e.target.value));
+                            if (prefecture) {
+                              setSelectedPrefecture(prefecture.id);
+                              setSelectedPrefectureSlug(prefecture.slug);
+                              setSelectedCity(0);
+                            }
+                          }}
+                        >
+                          <option value="">都道府県を選択</option>
+                          {prefectures.map((prefecture) => (
+                            <option key={prefecture.id} value={prefecture.id}>
+                              {prefecture.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+
+                      {/* 市区町村選択（都道府県が選択されている場合のみ表示） */}
+                      {selectedPrefecture > 0 && (
+                        <select 
+                          className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
+                          value={selectedCity}
+                          onChange={(e) => setSelectedCity(Number(e.target.value))}
+                        >
+                          <option value={0}>市区町村を選択</option>
+                          {cities.map((city) => (
+                            <option key={city.id} value={city.id}>
+                              {city.name}
+                            </option>
+                          ))}
+                        </select>
+                      )}
+                    </div>
+
+                    <button 
+                      onClick={() => {
+                        handleSearch({
+                          s: searchText,
+                          chamber: selectedType,
+                          gender: selectedGender,
+                          party_id: selectedChildParty || selectedParty,
+                          prefecture_id: selectedPrefecture,
+                          city_id: String(selectedCity)
+                        });
+                        setIsModalOpen(false);
+                      }}
+                      className="w-full pl-4 pr-12 py-2 text-sm border rounded-md bg-gray-900 text-white hover:bg-gray-800"
+                    >
+                      検索
+                    </button>
                   </div>
                 </div>
-                <div className="min-w-[40px] text-right">
-                  <Link href={`/politicians/${politician.id}`} className="text-blue-500 text-sm font-bold">
-                    詳細
-                  </Link>
-                </div>
               </div>
-            ))
-          ) : searchText.length > 0 ? (
-            <div className="text-center py-4 text-gray-500">
-              {isLoading ? "検索中..." : "検索結果がありません"}
-            </div>
-          ) : null}
+            )}
+          </div>
         </div>
-      </div>
-    <Footer />
-    </main>
+        <div className="container px-3 pt-8 mx-auto">
+          <div className="flex justify-between items-center">
+            <h2 className="text-xl font-bold text-gray-900">
+              検索結果
+            </h2>
+            {Array.isArray(searchResults) && (
+              <p className="text-sm text-gray-600">
+                {totalResults === 0 ? (
+                  "該当する結果はありません"
+                ) : (
+                  `検索結果：${totalResults}件`
+                )}
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="container px-0 py-8 mx-auto">
+          <div className="flex flex-col divide-y divide-gray-200">
+            {Array.isArray(searchResults) && searchResults.length > 0 ? (
+              searchResults.map((politician, index) => (
+                <div 
+                  key={politician.id || index} 
+                  className="flex items-center justify-between py-3 px-4 bg-white w-full hover:bg-gray-50 transition-colors"
+                >
+                  <div className="flex items-center">
+                    <Image
+                      src={politician.image_path || "/images/default-avatar.png"} 
+                      alt={`${politician.last_name} ${politician.first_name}`} 
+                      className="w-16 h-16 object-cover rounded-full mr-4 shadow-md" 
+                      width={64}
+                      height={64}
+                    />
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-gray-900">
+                        <span className="font-bold">
+                          {politician.last_name} {politician.first_name}
+                        </span>
+                        <span className="text-gray-600 text-xs">
+                          （{politician.age ? `${politician.age}歳` : '-'} / {politician.gender || '-'}）
+                        </span>
+                      </h3>
+                      <p className="text-gray-600 text-xs">
+                        {politician.party?.name || '無所属'} / 
+                        {politician.chamber === '地方選挙' ? '地方議員' : politician.chamber || '不明'} / 
+                        {politician.prefecture?.name || '地域不明'} /
+                        <span 
+                          className={politician.election_result === "0" ? 'text-red-600 font-semibold' : 
+                                   politician.election_result === "1" ? 'text-green-600 font-semibold' : ''}
+                        >
+                          {politician.election_result === "0" ? '😢 落選' : 
+                           politician.election_result === "1" ? '当選' : '不明'}
+                        </span>
+                      </p>
+                    </div>
+                  </div>
+                  <div className="min-w-[40px] text-right">
+                    <Link href={`/politicians/${politician.id}`} className="text-blue-500 text-sm font-bold">
+                      詳細
+                    </Link>
+                  </div>
+                </div>
+              ))
+            ) : searchText.length > 0 ? (
+              <div className="text-center py-4 text-gray-500">
+                {isLoading ? "検索中..." : "検索結果がありません"}
+              </div>
+            ) : null}
+          </div>
+        </div>
+      </main>
+      <Footer />
+    </div>
   )
 }
 
