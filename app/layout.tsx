@@ -15,8 +15,11 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "問題アプリ",
-  description: "問題を解くアプリケーション",
+  title: {
+    template: '%s | みんなの暴言',
+    default: 'みんなの暴言', // デフォルトのタイトル
+  },
+  description: 'みんなの暴言は、問題を発言するサイトです。',
 };
 
 export default function RootLayout({

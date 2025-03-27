@@ -21,9 +21,9 @@ export async function middleware(req: NextRequest) {
   }
 
   // 未認証ユーザーをログインページにリダイレクト
-  if (!session && req.nextUrl.pathname !== '/auth') {
-    return NextResponse.redirect(new URL('/auth', req.url))
-  }
+  // if (!session && req.nextUrl.pathname !== '/auth') {
+  //   return NextResponse.redirect(new URL('/auth', req.url))
+  // }
 
   // プライバシーポリシーページへのアクセスは認証をスキップ
   if (req.nextUrl.pathname === '/privacy') {
