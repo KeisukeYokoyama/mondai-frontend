@@ -1,5 +1,6 @@
 import React from 'react';
 import { FaCrown } from "react-icons/fa6";
+import Image from 'next/image';
 
 interface TopRankingProps {
   title: string;
@@ -33,7 +34,11 @@ export default function TopRanking({ title }: TopRankingProps) {
             <div key={index} className="flex items-center justify-between py-3 px-4 bg-white w-full">
               <div className="flex items-center">
                 <div className="text-2xl font-bold text-gray-900 mr-4">{index + 1}</div>
-                <img src={politician.img} alt={politician.name} className="w-16 h-16 object-cover rounded-full mr-4 shadow-md" />
+                <Image
+                  src={politician.img} alt={politician.name} className="w-16 h-16 object-cover rounded-full mr-4 shadow-md" 
+                  width={64}
+                  height={64}
+                />
                 <div>
                   <h3 className="font-bold text-gray-900">{politician.name}</h3>
                   <p className="text-gray-600 text-xs">{politician.party}</p>

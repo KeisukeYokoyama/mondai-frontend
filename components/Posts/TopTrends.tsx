@@ -1,7 +1,7 @@
 import React from 'react';
 import { FcAreaChart } from "react-icons/fc";
 import { FaRegThumbsDown, FaRegThumbsUp, FaArrowRightLong } from "react-icons/fa6";
-
+import Image from 'next/image';
 interface TopTrendsProps {
   title: string;
   className?: string;
@@ -66,7 +66,11 @@ export default function TopTrends({ title, className }: TopTrendsProps) {
             <div key={post.id} className="p-2 md:w-1/3 w-full">
               <div className="border border-gray-200 rounded-md bg-white shadow-sm">
                 <div className="flex items-center justify-center p-4">
-                  <img src={post.imageUrl} alt={`Post ${post.id}`} className="w-full h-full object-cover object-center rounded" />
+                  <Image
+                    src={post.imageUrl} alt={`Post ${post.id}`} className="w-full h-full object-cover object-center rounded" 
+                    width={300}
+                    height={300}
+                  />
                 </div>
                 <div className="pb-4 px-4">
                   <div className="flex flex-wrap gap-2 mb-2">

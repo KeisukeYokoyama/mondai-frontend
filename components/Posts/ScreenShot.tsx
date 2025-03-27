@@ -1,6 +1,5 @@
 import React from 'react';
-import { FcAreaChart } from "react-icons/fc";
-import { FaRegThumbsDown, FaRegThumbsUp, FaArrowRightLong } from "react-icons/fa6";
+import Image from 'next/image';
 
 interface ScreenShotProps {
   title: string;
@@ -65,7 +64,11 @@ export default function ScreenShot({ title, className }: ScreenShotProps) {
             <div key={post.id} className="p-2 md:w-1/3 w-full">
               <div className="border border-gray-200 rounded-md bg-white shadow-sm">
                 <div className="flex items-center justify-center p-4">
-                  <img src={post.imageUrl} alt={`Post ${post.id}`} className="w-full h-full object-cover object-center rounded" />
+                  <Image
+                    src={post.imageUrl} alt={`Post ${post.id}`} className="w-full h-full object-cover object-center rounded" 
+                    width={300}
+                    height={300}
+                  />
                 </div>
               </div>
             </div>
