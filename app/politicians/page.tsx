@@ -1,10 +1,13 @@
 'use client';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import React, { useState, useEffect, useCallback } from 'react'
 import Header from '@/components/Navs/Header'
 import Footer from '@/components/Navs/Footer'
 import Link from 'next/link'
 import debounce from 'lodash/debounce';  // lodashのインストールが必要
 import Image from 'next/image';
+import { politicianAPI } from '@/utils/supabase/politicians';
+import type { SpeakerWithRelations } from '@/utils/supabase/types';
 
 interface Region {
   id: number;
@@ -46,20 +49,20 @@ interface SearchParams {
 
 // 型定義の追加
 interface Speaker {
-  id: string;          // 数値型の元ID
+  id: string;
   speaker_type: number;
   last_name: string;
   first_name: string;
-  last_name_kana: string;
-  first_name_kana: string;
-  age?: string;
-  gender?: string;
-  chamber?: string;
-  image_path?: string;  // 追加
-  election_result?: string;  // 文字列型に修正
+  last_name_kana: string | null;  // nullを許容
+  first_name_kana: string | null;  // nullを許容
+  age?: string | null;  // nullを許容するように修正
+  gender?: string | null;  // nullを許容するように修正
+  chamber?: string | null;  // nullを許容するように修正
+  image_path?: string | null;  // nullを許容するように修正
+  election_result?: string | null;  // nullを許容するように修正
   party?: {
-    id: number;        // 数値型のID
-    uuid: string;      // UUID
+    id: number;
+    uuid: string;
     name: string;
     abbreviation: string;
   };
@@ -88,6 +91,8 @@ const SearchingIndicator = () => (
 );
 
 export default function Home() {
+  const supabase = createClientComponentClient()
+  
   // 状態の初期化（空の値で初期化）
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [regions, setRegions] = useState<Region[]>([]);
@@ -165,32 +170,104 @@ export default function Home() {
     searchResults, totalResults
   ]);
 
-  // 検索実行関数
+  // 地域一覧の取得
+  useEffect(() => {
+    const fetchRegions = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('regions')
+          .select('*')
+          .order('name');
+        
+        if (error) throw error;
+        setRegions(data);
+      } catch (error) {
+        console.error('Error fetching regions:', error);
+      }
+    };
+
+    fetchRegions();
+  }, [supabase]);
+
+  // 都道府県一覧の取得
+  useEffect(() => {
+    const fetchPrefectures = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('prefectures')
+          .select('*')
+          .order('name');
+        
+        if (error) throw error;
+        setPrefectures(data);
+      } catch (error) {
+        console.error('Error fetching prefectures:', error);
+      }
+    };
+
+    fetchPrefectures();
+  }, [supabase]);
+
+  // 市区町村一覧の取得
+  useEffect(() => {
+    const fetchCities = async () => {
+      if (!selectedPrefectureSlug) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('cities')
+          .select('*')
+          .eq('prefecture_id', selectedPrefecture)
+          .order('name');
+        
+        if (error) throw error;
+        setCities(data);
+      } catch (error) {
+        console.error('Error fetching cities:', error);
+      }
+    };
+
+    fetchCities();
+  }, [selectedPrefectureSlug, selectedPrefecture, supabase]);
+
+  // 政党一覧の取得
+  useEffect(() => {
+    const fetchParties = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('parties')
+          .select('*')
+          .order('order', { ascending: true })
+          .order('name', { ascending: true });
+        
+        if (error) throw error;
+        setParties(data);
+      } catch (error) {
+        console.error('Error fetching parties:', error);
+      }
+    };
+
+    fetchParties();
+  }, [supabase]);
+
+  // 検索機能の実装
   const handleSearch = async (params: SearchParams) => {
     setIsLoading(true);
     try {
-      const queryParams = new URLSearchParams();
+      const { data, error } = await politicianAPI.search({
+        s: params.s,
+        chamber: params.chamber,
+        gender: params.gender,
+        party_id: params.party_id,
+        prefecture_id: params.prefecture_id ? String(params.prefecture_id) : undefined,
+        city_id: params.city_id,
+        per_page: 20
+      });
+
+      if (error) throw error;
       
-      if (params.s) queryParams.append('s', params.s);
-      if (params.chamber) queryParams.append('chamber', params.chamber);
-      if (params.gender) queryParams.append('gender', params.gender);
-      if (params.party_id && params.party_id !== '0') {
-        queryParams.append('party_id', params.party_id);
-      }
-      if (params.prefecture_id) queryParams.append('prefecture_id', String(params.prefecture_id));
-      if (params.city_id && params.city_id !== '0') queryParams.append('city_id', params.city_id);
-
-      const searchUrl = `http://localhost:8000/api/v1/speakers/search?${queryParams}`;
-      const response = await fetch(searchUrl);
-      
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data: SearchResponse = await response.json();
-      setSearchResults(data.data || []);
-      setTotalResults(data.total || 0);
-
+      setSearchResults(data?.data || []);
+      setTotalResults(data?.total || 0);
     } catch (error) {
       console.error('検索エラー:', error);
       setSearchResults([]);
@@ -205,78 +282,8 @@ export default function Home() {
     debounce((searchText: string) => {
       handleSearch({ s: searchText });
     }, 300),
-    [handleSearch]
+    []
   );
-
-  // 地域一覧の取得
-  useEffect(() => {
-    const fetchRegions = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/v1/regions');
-        const data = await response.json();
-        setRegions(data);
-      } catch (error) {
-        console.error('Error fetching regions:', error);
-      }
-    };
-
-    fetchRegions();
-  }, []);
-
-  // 都道府県一覧の取得
-  useEffect(() => {
-    const fetchPrefectures = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/v1/prefectures');
-        const data = await response.json();
-        setPrefectures(data);
-      } catch (error) {
-        console.error('Error fetching prefectures:', error);
-      }
-    };
-
-    fetchPrefectures();
-  }, []);
-
-  // 市区町村一覧の取得
-  useEffect(() => {
-    const fetchCities = async () => {
-      if (!selectedPrefectureSlug) return;
-      
-      try {
-        const response = await fetch(`http://localhost:8000/api/v1/prefectures/${selectedPrefectureSlug}/cities`);
-        const data = await response.json();
-        setCities(data);
-      } catch (error) {
-        console.error('Error fetching cities:', error);
-      }
-    };
-
-    fetchCities();
-  }, [selectedPrefectureSlug]);
-
-  // 政党一覧の取得（フラットな配列として取得）
-  useEffect(() => {
-    const fetchParties = async () => {
-      try {
-        const response = await fetch('http://localhost:8000/api/v1/parties');
-        const data = await response.json();
-        // orderに基づいてソート
-        setParties(data.sort((a: Party, b: Party) => {
-          // orderが存在する場合はそれを使用
-          if (a.order !== undefined && b.order !== undefined) {
-            return a.order - b.order;
-          }
-          // orderがない場合は名前でソート
-          return a.name.localeCompare(b.name);
-        }));
-      } catch (error) {
-        console.error('Error fetching parties:', error);
-      }
-    };
-
-    fetchParties();
-  }, []);
 
   // 親政党のみをフィルタリング（orderでソート済み）
   const parentParties = parties.filter(party => !party.parent_id);
@@ -586,7 +593,10 @@ export default function Home() {
                 >
                   <div className="flex items-center">
                     <Image
-                      src={politician.image_path || "/images/default-avatar.png"} 
+                      src={politician.image_path 
+                        ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${politician.image_path}`
+                        : "/images/default-avatar.png"
+                      } 
                       alt={`${politician.last_name} ${politician.first_name}`} 
                       className="w-16 h-16 object-cover rounded-full mr-4 shadow-md" 
                       width={64}

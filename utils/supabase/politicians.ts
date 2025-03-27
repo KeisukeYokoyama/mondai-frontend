@@ -1,99 +1,52 @@
 import { supabase } from '@/lib/supabase'
-import type { Speaker, SpeakerWithRelations, PaginationParams } from '@/utils/supabase/types'
+import type { 
+  Speaker, 
+  SpeakerWithRelations, 
+  PaginationParams,
+  SearchSpeakerParams,
+  SearchResponse 
+} from '@/utils/supabase/types'
 import type { SupabaseResponse } from '@/utils/supabase/index'
 
 export const politicianAPI = {
   /**
    * 政治家の検索
    */
-  search: async (params: {
-    s?: string;
-    chamber?: string;
-    gender?: string;
-    type?: string;
-    prefecture_id?: number;
-    city_id?: number;
-    party_id?: number;
-    per_page?: number;
-  }): Promise<SupabaseResponse<{ data: SpeakerWithRelations[], total: number }>> => {
+  search: async (params: SearchSpeakerParams): Promise<SupabaseResponse<SearchResponse>> => {
     try {
       let query = supabase
         .from('speakers')
         .select(`
-          id,
-          speaker_type,
-          last_name,
-          first_name,
-          last_name_kana,
-          first_name_kana,
-          birthday,
-          age,
-          gender,
-          party_id,
-          prefecture_id,
-          city_id,
-          district,
-          chamber,
-          election_result,
-          position,
-          biography,
-          official_url,
-          facebook_url,
-          twitter_url,
-          youtube_url,
-          line_url,
-          instagram_url,
-          tiktok_url,
-          image_path,
-          created_at,
-          updated_at,
-          parties (
+          *,
+          parties!inner (
             id,
             uuid,
             name,
             abbreviation,
             order,
-            parent_id,
-            leader_name,
-            description,
-            founded_date,
-            dissolved_date,
-            official_website,
-            twitter_url,
-            facebook_url,
-            instagram_url,
-            youtube_url,
-            created_at,
-            updated_at
+            parent_id
           ),
           prefectures (
             id,
-            name,
-            created_at,
-            updated_at
+            name
           ),
           cities (
             id,
             name,
-            prefecture_id,
-            created_at,
-            updated_at
+            prefecture_id
           )
-        `)
+        `, { count: 'exact' })
         .eq('speaker_type', 1);
 
       // 検索条件の適用
       if (params.s) {
-        query = query.or(`last_name.ilike.%${params.s}%,first_name.ilike.%${params.s}%`);
+        query = query.or(`last_name.ilike.%${params.s}%,first_name.ilike.%${params.s}%,last_name_kana.ilike.%${params.s}%,first_name_kana.ilike.%${params.s}%`);
       }
       if (params.chamber) {
         query = query.eq('chamber', params.chamber);
       }
       if (params.gender) {
         query = query.eq('gender', params.gender);
-      }
-      if (params.type) {
-        query = query.eq('speaker_type', params.type);
       }
       if (params.prefecture_id) {
         query = query.eq('prefecture_id', params.prefecture_id);
@@ -103,22 +56,22 @@ export const politicianAPI = {
       }
       if (params.party_id) {
         // その他の党（ID: 3925）の場合は、親政党も含めて検索
-        if (params.party_id === 3925) {
-          query = query.or(`party_id.eq.${params.party_id},party_id.in.(${params.party_id})`);
+        if (params.party_id === '3925') {
+          query = query.or(`party_id.eq.${params.party_id},parties.parent_id.eq.${params.party_id}`);
         } else {
           query = query.eq('party_id', params.party_id);
         }
       }
 
-      const page = 1;
+      const page = params.page || 1;
       const perPage = params.per_page || 20;
       const start = (page - 1) * perPage;
       const end = start + perPage - 1;
 
       const { data, error, count } = await query
         .range(start, end)
-        .order('last_name')
-        .order('first_name');
+        .order('last_name', { ascending: true })
+        .order('first_name', { ascending: true });
 
       if (error) {
         console.error('Error searching politicians:', {
@@ -139,7 +92,10 @@ export const politicianAPI = {
       };
     } catch (err) {
       console.error('Unexpected error in search:', err);
-      return { data: null, error: err instanceof Error ? err.message : '予期せぬエラーが発生しました' };
+      return { 
+        data: null, 
+        error: err instanceof Error ? err.message : '予期せぬエラーが発生しました' 
+      };
     }
   },
 

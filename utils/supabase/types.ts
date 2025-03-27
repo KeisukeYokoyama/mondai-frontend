@@ -116,11 +116,14 @@ export interface WithPagination<T> {
 
 // 検索用のパラメータ型
 export interface SearchSpeakerParams {
-  query?: string
-  prefecture_id?: number
-  party_id?: number
-  page?: number
-  limit?: number
+  s?: string;
+  chamber?: string;
+  gender?: string;
+  party_id?: string;  // UUIDに変更
+  prefecture_id?: string;
+  city_id?: string;
+  per_page?: number;
+  page?: number;
 }
 
 export interface SearchStatementParams {
@@ -152,4 +155,10 @@ export interface City {
   prefecture_id: number
   created_at: string
   updated_at: string
+}
+
+// 検索レスポンスの型を追加
+export interface SearchResponse {
+  data: SpeakerWithRelations[];
+  total: number;
 }
