@@ -76,13 +76,6 @@ interface Speaker {
   };
 }
 
-interface SearchResponse {
-  data: Speaker[];
-  total: number;
-  current_page: number;
-  per_page: number;
-}
-
 // 検索中のインジケータコンポーネント
 const SearchingIndicator = () => (
   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -251,7 +244,7 @@ export default function Home() {
   }, [supabase]);
 
   // 検索機能の実装
-  const handleSearch = async (params: SearchParams) => {
+  const handleSearch = useCallback(async (params: SearchParams) => {
     setIsLoading(true);
     try {
       const { data, error } = await politicianAPI.search({
@@ -275,14 +268,14 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   // デバウンスされた検索関数
   const debouncedSearch = useCallback(
     debounce((searchText: string) => {
       handleSearch({ s: searchText });
     }, 300),
-    []
+    [handleSearch]
   );
 
   // 親政党のみをフィルタリング（orderでソート済み）
