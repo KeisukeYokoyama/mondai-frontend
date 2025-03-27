@@ -4,10 +4,9 @@ import React, { useState, useEffect, useCallback } from 'react'
 import Header from '@/components/Navs/Header'
 import Footer from '@/components/Navs/Footer'
 import Link from 'next/link'
-import debounce from 'lodash/debounce';  // lodashのインストールが必要
-import Image from 'next/image';
-import { politicianAPI } from '@/utils/supabase/politicians';
-import type { SpeakerWithRelations } from '@/utils/supabase/types';
+import debounce from 'lodash/debounce'
+import Image from 'next/image'
+import { politicianAPI } from '@/utils/supabase/politicians'
 
 interface Region {
   id: number;
@@ -272,10 +271,13 @@ export default function Home() {
 
   // デバウンスされた検索関数
   const debouncedSearch = useCallback(
-    debounce((searchText: string) => {
-      handleSearch({ s: searchText });
+    debounce(async (term: string) => {
+      const results = await politicianAPI.search({ s: term });
+      if (results.data && Array.isArray(results.data)) {
+        setSearchResults(results.data);
+      }
     }, 300),
-    [handleSearch]
+    [selectedRegion]
   );
 
   // 親政党のみをフィルタリング（orderでソート済み）
