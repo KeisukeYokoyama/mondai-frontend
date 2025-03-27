@@ -272,12 +272,19 @@ export default function Home() {
   // デバウンスされた検索関数
   const debouncedSearch = useCallback(
     debounce(async (term: string) => {
-      const results = await politicianAPI.search({ s: term });
-      if (results.data && Array.isArray(results.data)) {
-        setSearchResults(results.data);
+      try {
+        const results = await politicianAPI.search({ s: term });
+        if (results.data) {
+          setSearchResults(results.data.data || []);
+          setTotalResults(results.data.total || 0);
+        }
+      } catch (error) {
+        console.error('検索エラー:', error);
+        setSearchResults([]);
+        setTotalResults(0);
       }
     }, 300),
-    [selectedRegion]
+    []
   );
 
   // 親政党のみをフィルタリング（orderでソート済み）
