@@ -165,12 +165,47 @@ export default function Home() {
     searchResults, totalResults
   ]);
 
+  // 検索実行関数
+  const handleSearch = async (params: SearchParams) => {
+    setIsLoading(true);
+    try {
+      const queryParams = new URLSearchParams();
+      
+      if (params.s) queryParams.append('s', params.s);
+      if (params.chamber) queryParams.append('chamber', params.chamber);
+      if (params.gender) queryParams.append('gender', params.gender);
+      if (params.party_id && params.party_id !== '0') {
+        queryParams.append('party_id', params.party_id);
+      }
+      if (params.prefecture_id) queryParams.append('prefecture_id', String(params.prefecture_id));
+      if (params.city_id && params.city_id !== '0') queryParams.append('city_id', params.city_id);
+
+      const searchUrl = `http://localhost:8000/api/v1/speakers/search?${queryParams}`;
+      const response = await fetch(searchUrl);
+      
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`);
+      }
+
+      const data: SearchResponse = await response.json();
+      setSearchResults(data.data || []);
+      setTotalResults(data.total || 0);
+
+    } catch (error) {
+      console.error('検索エラー:', error);
+      setSearchResults([]);
+      setTotalResults(0);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // デバウンスされた検索関数
   const debouncedSearch = useCallback(
     debounce((searchText: string) => {
       handleSearch({ s: searchText });
     }, 300),
-    []
+    [handleSearch]
   );
 
   // 地域一覧の取得
@@ -253,41 +288,6 @@ export default function Home() {
 
   // 「その他」政党のIDを定数として定義
   const OTHER_PARTY_ID = 3925;  // 数値のまま
-
-  // 検索実行関数
-  const handleSearch = async (params: SearchParams) => {
-    setIsLoading(true);
-    try {
-      const queryParams = new URLSearchParams();
-      
-      if (params.s) queryParams.append('s', params.s);
-      if (params.chamber) queryParams.append('chamber', params.chamber);
-      if (params.gender) queryParams.append('gender', params.gender);
-      if (params.party_id && params.party_id !== '0') {
-        queryParams.append('party_id', params.party_id);
-      }
-      if (params.prefecture_id) queryParams.append('prefecture_id', String(params.prefecture_id));
-      if (params.city_id && params.city_id !== '0') queryParams.append('city_id', params.city_id);
-
-      const searchUrl = `http://localhost:8000/api/v1/speakers/search?${queryParams}`;
-      const response = await fetch(searchUrl);
-      
-      if (!response.ok) {
-        throw new Error(`API error: ${response.status}`);
-      }
-
-      const data: SearchResponse = await response.json();
-      setSearchResults(data.data || []);
-      setTotalResults(data.total || 0);
-
-    } catch (error) {
-      console.error('検索エラー:', error);
-      setSearchResults([]);
-      setTotalResults(0);
-    } finally {
-      setIsLoading(false);
-    }
-  };
 
   // 入力時の処理
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

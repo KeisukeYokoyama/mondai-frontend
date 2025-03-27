@@ -25,7 +25,7 @@ export default function Header({ title }: HeaderProps) {
               priority
             />
             <span className="self-center text-base font-semibold whitespace-nowrap">
-              みんなの暴言（仮）
+              {title || 'みんなの暴言（仮）'}
             </span>
           </Link>
 
