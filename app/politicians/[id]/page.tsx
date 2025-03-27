@@ -3,7 +3,6 @@
 import React, { useState, useEffect } from 'react'
 import Header from '@/components/Navs/Header'
 import Footer from '@/components/Navs/Footer'
-import TopTrends from '@/components/Posts/TopTrends'
 import Image from 'next/image'
 import { FaSquareXTwitter } from "react-icons/fa6";
 import { FaFacebookSquare } from "react-icons/fa";
