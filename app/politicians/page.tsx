@@ -7,6 +7,7 @@ import Link from 'next/link'
 import debounce from 'lodash/debounce'
 import Image from 'next/image'
 import { politicianAPI } from '@/utils/supabase/politicians'
+import type { SpeakerWithRelations } from '@/utils/supabase/types'
 
 interface Region {
   id: number;
@@ -32,7 +33,7 @@ interface Party {
   uuid: string;         // UUID
   name: string;
   abbreviation?: string;
-  parent_id?: string;
+  parent_id: number | null;  // 修正
   order?: number;
 }
 
@@ -65,14 +66,14 @@ interface Speaker {
     name: string;
     abbreviation: string;
   };
-  prefecture?: {
+  prefectures?: {
     id: number;
     name: string;
-  };
-  city?: {
+  }[];
+  cities?: {
     id: number;
     name: string;
-  };
+  }[];
 }
 
 // 検索中のインジケータコンポーネント
@@ -96,13 +97,13 @@ export default function Home() {
   const [searchText, setSearchText] = useState('');
   const [selectedGender, setSelectedGender] = useState('');
   const [selectedType, setSelectedType] = useState('');
-  const [selectedParty, setSelectedParty] = useState('');
-  const [selectedChildParty, setSelectedChildParty] = useState('');
+  const [selectedParty, setSelectedParty] = useState<string>('');
+  const [selectedChildParty, setSelectedChildParty] = useState<string>('');
   const [selectedRegion, setSelectedRegion] = useState(0);
   const [selectedPrefecture, setSelectedPrefecture] = useState(0);
   const [selectedPrefectureSlug, setSelectedPrefectureSlug] = useState('');
   const [selectedCity, setSelectedCity] = useState(0);
-  const [searchResults, setSearchResults] = useState<Speaker[]>([]);
+  const [searchResults, setSearchResults] = useState<SpeakerWithRelations[]>([]);
   const [totalResults, setTotalResults] = useState<number>(0);
   const [isLoading, setIsLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);  // クライアントサイドかどうかのフラグ
@@ -242,10 +243,29 @@ export default function Home() {
     fetchParties();
   }, [supabase]);
 
+  // 親政党のみをフィルタリング（orderでソート済み）
+  const parentParties = parties.filter(party => !party.parent_id);
+  
+  // 選択された親政党の子政党をフィルタリング
+  const childParties = parties.filter(party => {
+    if (!selectedParty) return false;
+    const parentId = String(selectedParty);
+    return String(party.parent_id) === parentId;
+  });
+
   // 検索機能の実装
   const handleSearch = useCallback(async (params: SearchParams) => {
     setIsLoading(true);
     try {
+      console.log('検索実行 - パラメータ:', {
+        検索文字列: params.s,
+        議員種別: params.chamber,
+        性別: params.gender,
+        政党ID: params.party_id,
+        都道府県ID: params.prefecture_id,
+        市区町村ID: params.city_id
+      });
+
       const { data, error } = await politicianAPI.search({
         s: params.s,
         chamber: params.chamber,
@@ -258,6 +278,42 @@ export default function Home() {
 
       if (error) throw error;
       
+      console.log('検索結果の最初のデータ構造:', {
+        データ全体: data?.data?.[0],
+        政党情報: {
+          parties: data?.data?.[0]?.parties,
+        },
+        地域情報: {
+          prefectures: data?.data?.[0]?.prefectures,
+        }
+      });
+
+      console.log('検索結果の詳細:', {
+        最初の政治家: data?.data?.[0] ? {
+          名前: `${data.data[0].last_name} ${data.data[0].first_name}`,
+          政党情報: {
+            party: data.data[0].parties,
+            政党名: data.data[0].parties.name,
+            政党ID: data.data[0].party_id
+          },
+          地域情報: {
+            prefecture: data.data[0].prefectures,
+            地域名: data.data[0].prefectures.name
+          }
+        } : '該当なし'
+      });
+
+      console.log('検索結果:', {
+        総件数: data?.total,
+        取得データ件数: data?.data?.length,
+        最初の結果: data?.data?.[0] ? {
+          名前: `${data.data[0].last_name} ${data.data[0].first_name}`,
+          政党: data.data[0].parties.name,
+          政党ID: data.data[0].party_id,
+          議員種別: data.data[0].chamber
+        } : '該当なし'
+      });
+
       setSearchResults(data?.data || []);
       setTotalResults(data?.total || 0);
     } catch (error) {
@@ -273,7 +329,15 @@ export default function Home() {
   const debouncedSearch = useCallback(
     debounce(async (term: string) => {
       try {
-        const results = await politicianAPI.search({ s: term });
+        setIsLoading(true);
+        const results = await politicianAPI.search({
+          s: term || undefined,
+          party_id: selectedChildParty || selectedParty || undefined,
+          chamber: selectedType || undefined,
+          gender: selectedGender || undefined,
+          prefecture_id: selectedPrefecture > 0 ? String(selectedPrefecture) : undefined,
+          city_id: selectedCity > 0 ? String(selectedCity) : undefined
+        });
         if (results.data) {
           setSearchResults(results.data.data || []);
           setTotalResults(results.data.total || 0);
@@ -282,17 +346,11 @@ export default function Home() {
         console.error('検索エラー:', error);
         setSearchResults([]);
         setTotalResults(0);
+      } finally {
+        setIsLoading(false);
       }
     }, 300),
-    []
-  );
-
-  // 親政党のみをフィルタリング（orderでソート済み）
-  const parentParties = parties.filter(party => !party.parent_id);
-  
-  // 選択された親政党の子政党をフィルタリング
-  const childParties = parties.filter(party => 
-    party.parent_id === selectedParty
+    [selectedParty, selectedChildParty, selectedType, selectedGender, selectedPrefecture, selectedCity]
   );
 
   // 「その他」政党のIDを定数として定義
@@ -322,17 +380,19 @@ export default function Home() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
-        <section className="text-gray-600 body-font bg-white">
+        {/* <section className="text-gray-600 body-font bg-white">
           <div className="container px-5 py-2 mx-auto">
-            <Header title="政治家一覧" />
+            <h1 className="text-xl font-bold text-gray-900">
+              政治家一覧
+            </h1>
           </div>
-        </section>
+        </section> */}
         <div className="container px-5 pt-8 mx-auto text-center relative">
           <div className="relative flex flex-col gap-4 max-w-md mx-auto">
             <div className="relative">
               <input 
                 type="text" 
-                className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md" 
+                className="w-full pl-4 pr-12 py-2 bg-white border border-gray-300 rounded-md text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="政治家名を入力" 
                 value={searchText}
                 onChange={handleInputChange}
@@ -341,7 +401,7 @@ export default function Home() {
             </div>
             <p 
               onClick={() => setIsModalOpen(true)}
-              className="text-xs text-blue-700 cursor-pointer text-right -mt-2 font-semibold"
+              className="text-sm text-blue-700 cursor-pointer text-right -mt-2 font-semibold"
             >
               詳細条件
             </p>
@@ -367,8 +427,12 @@ export default function Home() {
                       onChange={(e) => {
                         const selectedValue = e.target.value;
                         const selectedParty = parentParties.find(p => p.id === Number(selectedValue));
-                        console.log('Selected value:', selectedValue);
-                        console.log('Selected party:', selectedParty);
+                        console.log('政党選択:', {
+                          selectedValue,
+                          selectedParty,
+                          isOtherParty: Number(selectedValue) === OTHER_PARTY_ID,
+                          childPartiesCount: childParties.length
+                        });
                         setSelectedParty(selectedValue);
                         setSelectedChildParty('');
                       }}
@@ -549,14 +613,16 @@ export default function Home() {
 
                     <button 
                       onClick={() => {
-                        handleSearch({
+                        const searchParams = {
                           s: searchText,
                           chamber: selectedType,
                           gender: selectedGender,
                           party_id: selectedChildParty || selectedParty,
                           prefecture_id: selectedPrefecture,
                           city_id: String(selectedCity)
-                        });
+                        };
+                        console.log('Sending search params:', searchParams);
+                        handleSearch(searchParams);
                         setIsModalOpen(false);
                       }}
                       className="w-full pl-4 pr-12 py-2 text-sm border rounded-md bg-gray-900 text-white hover:bg-gray-800"
@@ -571,9 +637,9 @@ export default function Home() {
         </div>
         <div className="container px-3 pt-8 mx-auto">
           <div className="flex justify-between items-center">
-            <h2 className="text-xl font-bold text-gray-900">
-              検索結果
-            </h2>
+            <h1 className="text-xl font-bold text-gray-900">
+              政治家一覧
+            </h1>
             {Array.isArray(searchResults) && (
               <p className="text-sm text-gray-600">
                 {totalResults === 0 ? (
@@ -614,9 +680,9 @@ export default function Home() {
                         </span>
                       </h3>
                       <p className="text-gray-600 text-xs">
-                        {politician.party?.name || '無所属'} / 
+                        {politician.parties?.name || '無所属'} / 
                         {politician.chamber === '地方選挙' ? '地方議員' : politician.chamber || '不明'} / 
-                        {politician.prefecture?.name || '地域不明'} /
+                        {politician.prefectures?.name || '地域不明'} /
                         <span 
                           className={politician.election_result === "0" ? 'text-red-600 font-semibold' : 
                                    politician.election_result === "1" ? 'text-green-600 font-semibold' : ''}

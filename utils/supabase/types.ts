@@ -34,21 +34,22 @@ export interface PaginationParams {
 }
 
 export interface SpeakerWithRelations extends Omit<Speaker, 'party_id' | 'prefecture_id' | 'city_id'> {
-  parties: Party[]
-  prefectures: Prefecture[]
-  cities: City[]
+  party_id: number | null;
+  parties: Party;
+  prefectures: Prefecture;
+  cities: City;
   statements?: {
-    id: string
-    content: string
-    created_at: string
+    id: string;
+    content: string;
+    created_at: string;
     parties: {
-      id: number
-      name: string
-      abbreviation: string
-    }[];
+      id: number;
+      name: string;
+      abbreviation: string;
+    };
     tags: {
-      id: number
-      name: string
+      id: number;
+      name: string;
     }[];
   }[];
 }
