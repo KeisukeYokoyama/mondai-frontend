@@ -357,17 +357,56 @@ export default function Home() {
   const OTHER_PARTY_ID = 3925;  // 数値のまま
 
   // 入力時の処理
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setSearchText(value);
-    
-    if (value.length >= 1) {
-      debouncedSearch(value);
-    } else {
-      setSearchResults([]);
-      setTotalResults(0);
-    }
-  };
+  const handleInputChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      setSearchText(value);
+      
+      if (value.length >= 1) {
+        debouncedSearch(value);
+      } else {
+        setSearchResults([]);
+        setTotalResults(0);
+      }
+    },
+    [debouncedSearch, setSearchResults, setTotalResults]  // 依存関係を明示的に指定
+  );
+
+  const handleGenderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedGender(e.target.value);
+  }, []);
+
+  const handleTypeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSelectedType(e.target.value);
+  }, []);
+
+  const handlePartyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedParty(e.target.value);
+    setSelectedChildParty('');
+  }, []);
+
+  const handleChildPartyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedChildParty(e.target.value);
+  }, []);
+
+  const handleRegionChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = Number(e.target.value);
+    setSelectedRegion(value);
+    setSelectedPrefecture(0);
+    setSelectedPrefectureSlug('');
+    setSelectedCity(0);
+  }, []);
+
+  const handlePrefectureChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = Number(e.target.value);
+    setSelectedPrefecture(value);
+    setSelectedPrefectureSlug(prefectures.find(p => p.id === value)?.slug || '');
+    setSelectedCity(0);
+  }, [prefectures]);
+
+  const handleCityChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedCity(Number(e.target.value));
+  }, []);
 
   // コンポーネントのクリーンアップ
   useEffect(() => {
@@ -424,18 +463,7 @@ export default function Home() {
                     <select 
                       className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
                       value={selectedParty}
-                      onChange={(e) => {
-                        const selectedValue = e.target.value;
-                        const selectedParty = parentParties.find(p => p.id === Number(selectedValue));
-                        console.log('政党選択:', {
-                          selectedValue,
-                          selectedParty,
-                          isOtherParty: Number(selectedValue) === OTHER_PARTY_ID,
-                          childPartiesCount: childParties.length
-                        });
-                        setSelectedParty(selectedValue);
-                        setSelectedChildParty('');
-                      }}
+                      onChange={handlePartyChange}
                     >
                       <option value="">政党を選択</option>
                       {parentParties.map((party) => (
@@ -450,11 +478,7 @@ export default function Home() {
                       <select 
                         className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
                         value={selectedChildParty}
-                        onChange={(e) => {
-                          const selectedValue = e.target.value;
-                          console.log('Selected child party id:', selectedValue);
-                          setSelectedChildParty(selectedValue);
-                        }}
+                        onChange={handleChildPartyChange}
                       >
                         <option value="">選択してください</option>
                         {childParties.map((party) => (
@@ -475,7 +499,7 @@ export default function Home() {
                             name="type" 
                             value=""
                             checked={selectedType === ""}
-                            onChange={(e) => setSelectedType(e.target.value)}
+                            onChange={handleTypeChange}
                             className="mr-1" 
                           />
                           <span className="text-sm">すべて</span>
@@ -486,7 +510,7 @@ export default function Home() {
                             name="type" 
                             value="衆議院"
                             checked={selectedType === "衆議院"}
-                            onChange={(e) => setSelectedType(e.target.value)}
+                            onChange={handleTypeChange}
                             className="mr-1" 
                           />
                           <span className="text-sm">衆議院</span>
@@ -497,7 +521,7 @@ export default function Home() {
                             name="type" 
                             value="参議院"
                             checked={selectedType === "参議院"}
-                            onChange={(e) => setSelectedType(e.target.value)}
+                            onChange={handleTypeChange}
                             className="mr-1" 
                           />
                           <span className="text-sm">参議院</span>
@@ -508,7 +532,7 @@ export default function Home() {
                             name="type" 
                             value="地方選挙"
                             checked={selectedType === "地方選挙"}
-                            onChange={(e) => setSelectedType(e.target.value)}
+                            onChange={handleTypeChange}
                             className="mr-1" 
                           />
                           <span className="text-sm">地方議員</span>
@@ -526,7 +550,7 @@ export default function Home() {
                             name="gender" 
                             value=""
                             checked={selectedGender === ""}
-                            onChange={(e) => setSelectedGender(e.target.value)}
+                            onChange={handleGenderChange}
                             className="mr-1" 
                           />
                           <span className="text-sm">すべて</span>
@@ -537,7 +561,7 @@ export default function Home() {
                             name="gender" 
                             value="男"
                             checked={selectedGender === "男"}
-                            onChange={(e) => setSelectedGender(e.target.value)}
+                            onChange={handleGenderChange}
                             className="mr-1" 
                           />
                           <span className="text-sm">男性</span>
@@ -548,7 +572,7 @@ export default function Home() {
                             name="gender" 
                             value="女"
                             checked={selectedGender === "女"}
-                            onChange={(e) => setSelectedGender(e.target.value)}
+                            onChange={handleGenderChange}
                             className="mr-1" 
                           />
                           <span className="text-sm">女性</span>
@@ -561,7 +585,7 @@ export default function Home() {
                       <select 
                         className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
                         value={selectedRegion}
-                        onChange={(e) => setSelectedRegion(Number(e.target.value))}
+                        onChange={handleRegionChange}
                       >
                         <option value={0}>地域を選択</option>
                         {regions.map((region) => (
@@ -576,14 +600,7 @@ export default function Home() {
                         <select 
                           className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
                           value={selectedPrefecture}
-                          onChange={(e) => {
-                            const prefecture = prefectures.find(p => p.id === Number(e.target.value));
-                            if (prefecture) {
-                              setSelectedPrefecture(prefecture.id);
-                              setSelectedPrefectureSlug(prefecture.slug);
-                              setSelectedCity(0);
-                            }
-                          }}
+                          onChange={handlePrefectureChange}
                         >
                           <option value="">都道府県を選択</option>
                           {prefectures.map((prefecture) => (
@@ -599,7 +616,7 @@ export default function Home() {
                         <select 
                           className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
                           value={selectedCity}
-                          onChange={(e) => setSelectedCity(Number(e.target.value))}
+                          onChange={handleCityChange}
                         >
                           <option value={0}>市区町村を選択</option>
                           {cities.map((city) => (
