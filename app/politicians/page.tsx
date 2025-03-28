@@ -369,7 +369,7 @@ export default function Home() {
         setTotalResults(0);
       }
     },
-    [debouncedSearch, setSearchResults, setTotalResults]  // 依存関係を明示的に指定
+    [debouncedSearch, setSearchResults, setTotalResults]
   );
 
   const handleGenderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
