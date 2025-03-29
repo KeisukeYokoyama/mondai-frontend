@@ -170,7 +170,7 @@ export default function Home() {
         const { data, error } = await supabase
           .from('regions')
           .select('*')
-          .order('name');
+          .order('id', { ascending: true });
         
         if (error) throw error;
         setRegions(data);
@@ -186,10 +186,17 @@ export default function Home() {
   useEffect(() => {
     const fetchPrefectures = async () => {
       try {
-        const { data, error } = await supabase
+        let query = supabase
           .from('prefectures')
           .select('*')
-          .order('name');
+          .order('id', { ascending: true });
+
+        // 地域が選択されている場合、その地域の都道府県のみを取得
+        if (selectedRegion > 0) {
+          query = query.eq('region_id', selectedRegion);
+        }
+        
+        const { data, error } = await query;
         
         if (error) throw error;
         setPrefectures(data);
@@ -199,7 +206,7 @@ export default function Home() {
     };
 
     fetchPrefectures();
-  }, [supabase]);
+  }, [supabase, selectedRegion]);
 
   // 市区町村一覧の取得
   useEffect(() => {
@@ -211,7 +218,7 @@ export default function Home() {
           .from('cities')
           .select('*')
           .eq('prefecture_id', selectedPrefecture)
-          .order('name');
+          .order('id', { ascending: true });
         
         if (error) throw error;
         setCities(data);
@@ -392,6 +399,7 @@ export default function Home() {
   const handleRegionChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = Number(e.target.value);
     setSelectedRegion(value);
+    // 地域が変更されたら、都道府県と市区町村の選択をリセット
     setSelectedPrefecture(0);
     setSelectedPrefectureSlug('');
     setSelectedCity(0);
@@ -602,7 +610,7 @@ export default function Home() {
                           value={selectedPrefecture}
                           onChange={handlePrefectureChange}
                         >
-                          <option value="">都道府県を選択</option>
+                          <option value={0}>都道府県を選択</option>
                           {prefectures.map((prefecture) => (
                             <option key={prefecture.id} value={prefecture.id}>
                               {prefecture.name}

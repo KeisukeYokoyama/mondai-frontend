@@ -8,6 +8,20 @@ import type {
 } from '@/utils/supabase/types'
 import type { SupabaseResponse } from '@/utils/supabase/index'
 
+// カタカナをひらがなに変換する関数
+const katakanaToHiragana = (str: string) => {
+  return str.replace(/[\u30A1-\u30F6]/g, match => {
+    return String.fromCharCode(match.charCodeAt(0) - 0x60);
+  });
+};
+
+// ひらがなをカタカナに変換する関数
+const hiraganaToKatakana = (str: string) => {
+  return str.replace(/[\u3041-\u3096]/g, match => {
+    return String.fromCharCode(match.charCodeAt(0) + 0x60);
+  });
+};
+
 export const politicianAPI = {
   /**
    * 政治家の検索
@@ -44,8 +58,28 @@ export const politicianAPI = {
 
       // 検索条件の適用
       if (params.s) {
-        query = query.or(`last_name.ilike.%${params.s}%,first_name.ilike.%${params.s}%,last_name_kana.ilike.%${params.s}%,first_name_kana.ilike.%${params.s}%`);
-        console.log('名前検索条件を追加:', params.s);
+        const searchTerm = params.s;
+        const hiragana = katakanaToHiragana(searchTerm);
+        const katakana = hiraganaToKatakana(searchTerm);
+        
+        // OR条件を1行で指定するように修正
+        const searchCondition = [
+          `last_name.ilike.%${searchTerm}%`,
+          `first_name.ilike.%${searchTerm}%`,
+          `last_name_kana.ilike.%${hiragana}%`,
+          `first_name_kana.ilike.%${hiragana}%`,
+          `last_name_kana.ilike.%${katakana}%`,
+          `first_name_kana.ilike.%${katakana}%`
+        ].join(',');
+
+        query = query.or(searchCondition);
+        
+        console.log('名前検索条件を追加:', {
+          original: searchTerm,
+          hiragana: hiragana,
+          katakana: katakana,
+          condition: searchCondition
+        });
       }
       if (params.chamber) {
         query = query.eq('chamber', params.chamber);
@@ -97,21 +131,26 @@ export const politicianAPI = {
         .order('last_name', { ascending: true })
         .order('first_name', { ascending: true });
 
-      console.log('検索結果:', {
-        件数: count,
-        エラー: error ? 'あり' : 'なし',
-        データ件数: data?.length
-      });
-
       if (error) {
-        console.error('Error searching politicians:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
+        console.error('Error searching politicians:', error);
+        console.error('Error details:', {
+          message: error.message || 'No message',
+          details: error.details || 'No details',
+          hint: error.hint || 'No hint',
+          code: error.code || 'No code'
         });
         return { data: null, error };
       }
+
+      // 検索結果のログ出力を改善
+      console.log('検索成功:', {
+        総件数: count || 0,
+        取得データ件数: data?.length || 0,
+        最初のデータ: data?.[0] ? {
+          名前: `${data[0].last_name} ${data[0].first_name}`,
+          カナ: `${data[0].last_name_kana || ''} ${data[0].first_name_kana || ''}`
+        } : 'データなし'
+      });
 
       return {
         data: {
@@ -121,10 +160,16 @@ export const politicianAPI = {
         error: null
       };
     } catch (err) {
+      // エラーハンドリングの改善
       console.error('Unexpected error in search:', err);
+      const errorMessage = err instanceof Error ? err.message : '予期せぬエラーが発生しました';
+      console.error('Error details:', {
+        type: err instanceof Error ? 'Error' : typeof err,
+        stack: err instanceof Error ? err.stack : 'No stack trace'
+      });
       return { 
         data: null, 
-        error: err instanceof Error ? err.message : '予期せぬエラーが発生しました' 
+        error: errorMessage
       };
     }
   },

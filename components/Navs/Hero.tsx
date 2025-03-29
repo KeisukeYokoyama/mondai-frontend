@@ -8,7 +8,7 @@ export default function Hero() {
         <div className="relative flex max-w-md mx-auto">
           <input 
             type="text" 
-            className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-l-md" 
+            className="w-full pl-4 pr-12 py-2 bg-white border border-gray-300 rounded-l-md text-gray-600 focus:outline-none"
             placeholder="問題発言を検索" 
           />
           <button 
