@@ -6,6 +6,7 @@ import { statementAPI } from '@/utils/supabase/statements';
 import Header from '@/components/Navs/Header';
 import Footer from '@/components/Navs/Footer';
 import { supabase } from '@/lib/supabase';
+import Image from 'next/image';
 
 export default function CreateStatement() {
     const router = useRouter();
@@ -111,7 +112,7 @@ export default function CreateStatement() {
             setAvailableTags([...availableTags, data]);
             setSelectedTags([...selectedTags, data.id]);
             setNewTag('');
-        } catch (error: any) {
+        } catch (error: unknown) {
             showToastMessage('タグの追加に失敗しました');
             console.error('タグの追加に失敗しました', error);
         }
@@ -121,12 +122,21 @@ export default function CreateStatement() {
         e.preventDefault();
         setError('');
 
+        if (!speakerId) {
+            setError('政治家IDが指定されていません');
+            return;
+        }
+
         try {
-            // 発言を登録
-            const statement = await statementAPI.create({
+            const { data: statement } = await statementAPI.create({
                 ...formData,
+                speaker_id: speakerId,
                 image_path: image || undefined,
             });
+
+            if (!statement) {
+                throw new Error('発言の登録に失敗しました');
+            }
 
             // タグがある場合は関連付け
             if (selectedTags.length > 0) {
@@ -207,9 +217,11 @@ export default function CreateStatement() {
                             {imagePreview && (
                                 <div className="mt-4">
                                     <div className="relative w-full h-full">
-                                        <img
+                                        <Image
                                             src={imagePreview}
                                             alt="プレビュー"
+                                            width={400}
+                                            height={300}
                                             className="rounded-lg object-contain w-full h-full"
                                         />
                                         <button
