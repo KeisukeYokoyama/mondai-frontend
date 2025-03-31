@@ -2,9 +2,11 @@ import React from 'react';
 import PoliticianDetailClient from '@/app/politicians/[id]/PoliticianDetailClient';
 
 type PageProps = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
 };
 
-export default function PoliticianDetail({ params }: PageProps) {
-  return <PoliticianDetailClient id={params.id} />;
+// Next.js 15ではparamsをPromise型に変更
+export default async function PoliticianDetail({ params }: PageProps) {
+  const resolvedParams = await params;
+  return <PoliticianDetailClient id={resolvedParams.id} />;
 }
