@@ -55,16 +55,16 @@ export default function AuthPage() {
             </h2>
           </div>
           <p className="mt-8 text-sm text-gray-600">
-            ログインすると問題発言の登録ができるようになります
+            ログインすると投稿ができるようになります
           </p>
         </div>
 
         <button
           onClick={handleSignIn}
-          className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-3 px-4 rounded-lg hover:bg-gray-800 transition-colors hover:cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition-colors hover:cursor-pointer"
         >
-          <FaXTwitter className="w-4 h-4" />
-          ログイン
+          <FaXTwitter className="w-8 h-8 pr-2" />
+          <span className="text-sm">X(Twitter)でログイン</span>
         </button>
         <p className="mt-8 text-xs text-gray-600 text-center">
           <Link href="/privacy" className="text-blue-600 hover:text-blue-800">
@@ -76,7 +76,7 @@ export default function AuthPage() {
           </Link>
         </p>
         <p className="mt-4 text-xs text-gray-600 text-center">
-          上記リンクをご確認して同意の上、ご利用ください
+          上記リンクをご確認して同意の上ご利用ください
         </p>
       </div>
     </div>

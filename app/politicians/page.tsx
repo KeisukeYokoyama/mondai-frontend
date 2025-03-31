@@ -83,6 +83,19 @@ const SearchingIndicator = () => (
   </div>
 );
 
+// 画像パスを処理するヘルパー関数を追加
+const getImagePath = (path: string | null) => {
+  if (!path) return '/images/default-avatar.png';
+  
+  // パスが完全なURLの場合はそのまま返す
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+  
+  // Supabaseのストレージパスを構築
+  return path.startsWith('/') ? path : `/${path}`;
+};
+
 export default function Home() {
   const supabase = createClientComponentClient()
   
@@ -301,7 +314,7 @@ export default function Home() {
           政党情報: {
             party: data.data[0].parties,
             政党名: data.data[0].parties.name,
-            政党ID: data.data[0].party_id
+            政党ID: data.data[0].parties.id
           },
           地域情報: {
             prefecture: data.data[0].prefectures,
@@ -316,7 +329,7 @@ export default function Home() {
         最初の結果: data?.data?.[0] ? {
           名前: `${data.data[0].last_name} ${data.data[0].first_name}`,
           政党: data.data[0].parties.name,
-          政党ID: data.data[0].party_id,
+          政党ID: data.data[0].parties.id,
           議員種別: data.data[0].chamber
         } : '該当なし'
       });
@@ -686,10 +699,7 @@ export default function Home() {
                 >
                   <div className="flex items-center">
                     <Image
-                      src={politician.image_path 
-                        ? `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/${politician.image_path}`
-                        : "/images/default-avatar.png"
-                      } 
+                      src={getImagePath(politician.image_path)}
                       alt={`${politician.last_name} ${politician.first_name}`} 
                       className="w-16 h-16 object-cover rounded-full mr-4 shadow-md" 
                       width={64}
