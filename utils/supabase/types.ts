@@ -34,24 +34,10 @@ export interface PaginationParams {
 }
 
 export interface SpeakerWithRelations extends Omit<Speaker, 'party_id' | 'prefecture_id' | 'city_id'> {
-  party_id: number | null;
   parties: Party;
   prefectures: Prefecture;
   cities: City;
-  statements?: {
-    id: string;
-    content: string;
-    created_at: string;
-    parties: {
-      id: number;
-      name: string;
-      abbreviation: string;
-    };
-    tags: {
-      id: number;
-      name: string;
-    }[];
-  }[];
+  statements?: Statement[];
 }
 
 export interface Party {
@@ -88,10 +74,15 @@ export interface Statement {
   speaker_id: string
   party_id?: number
   statement_date: string
-  image_path?: string
+  image_path?: string | File
   evidence_url?: string
   created_at: string
   updated_at: string
+  statement_tag?: StatementTag[]
+  tags?: {
+    id: number
+    name: string
+  }[]
 }
 
 export interface Tag {
@@ -102,11 +93,10 @@ export interface Tag {
 }
 
 export interface StatementTag {
-  id: number
-  statement_id: string
-  tag_id: number
-  created_at: string
-  updated_at: string
+  tags: {
+    id: number;
+    name: string;
+  };
 }
 
 // 共通の型

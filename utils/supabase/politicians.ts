@@ -273,77 +273,33 @@ export const politicianAPI = {
       const { data, error } = await supabase
         .from('speakers')
         .select(`
-          id,
-          speaker_type,
-          last_name,
-          first_name,
-          last_name_kana,
-          first_name_kana,
-          birthday,
-          age,
-          gender,
-          party_id,
-          prefecture_id,
-          city_id,
-          district,
-          chamber,
-          election_result,
-          position,
-          biography,
-          official_url,
-          facebook_url,
-          twitter_url,
-          youtube_url,
-          line_url,
-          instagram_url,
-          tiktok_url,
-          image_path,
-          created_at,
-          updated_at,
+          *,
           parties (
             id,
             uuid,
             name,
             abbreviation,
             order,
-            parent_id,
-            leader_name,
-            description,
-            founded_date,
-            dissolved_date,
-            official_website,
-            twitter_url,
-            facebook_url,
-            instagram_url,
-            youtube_url,
-            created_at,
-            updated_at
+            parent_id
           ),
           prefectures (
             id,
-            name,
-            created_at,
-            updated_at
+            name
           ),
           cities (
             id,
             name,
-            prefecture_id,
-            created_at,
-            updated_at
+            prefecture_id
           ),
           statements (
             id,
             content,
             created_at,
-            parties (
-              id,
-              name,
-              abbreviation
-            ),
-            tags (
-              id,
-              name
+            statement_tag (
+              tags (
+                id,
+                name
+              )
             )
           )
         `)
@@ -351,20 +307,24 @@ export const politicianAPI = {
         .eq('speaker_type', 1)
         .single();
 
-      if (error) {
-        console.error('Error fetching politician detail:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-          code: error.code
-        });
-        return { data: null, error };
-      }
+      if (error) throw error;
 
-      return { data: data as unknown as SpeakerWithRelations, error: null };
+      // データ構造を変換して、statement_tagをtagsに変換
+      const transformedData = {
+        ...data,
+        statements: data.statements?.map(statement => ({
+          ...statement,
+          tags: statement.statement_tag?.map(st => st.tags) || []
+        }))
+      };
+
+      return { data: transformedData as SpeakerWithRelations, error: null };
     } catch (err) {
-      console.error('Unexpected error in getDetail:', err);
-      return { data: null, error: err instanceof Error ? err.message : '予期せぬエラーが発生しました' };
+      console.error('Error fetching politician detail:', err);
+      return { 
+        data: null, 
+        error: err instanceof Error ? err.message : '政治家データの取得に失敗しました'
+      };
     }
   }
 };
