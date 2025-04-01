@@ -309,7 +309,6 @@ export const politicianAPI = {
 
       if (error) throw error;
 
-      // データ構造を変換して、statement_tagをtagsに変換
       const transformedData = {
         ...data,
         statements: data.statements?.map((statement: {

@@ -49,6 +49,11 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
     return path.startsWith('/') ? path : `/${path}`;
   };
 
+  // URLが有効かどうかをチェックするヘルパー関数
+  const isValidUrl = (url: string | null): boolean => {
+    return url !== null && url !== "NULL" && url.trim() !== '';
+  };
+
   if (loading) return <div>読み込み中...</div>;
   if (error) return <div>エラー: {error}</div>;
   if (!politician) return <div>データが見つかりませんでした</div>;
@@ -69,7 +74,7 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
               alt={`${politician.last_name}${politician.first_name}`}
               width={128}
               height={128}
-              className="inline-flex object-cover border-4 border-indigo-500 rounded-full bg-gray-50 h-32 w-32 mb-4 md:mb-0 ml-0 md:mr-5"
+              className="inline-flex object-cover border-4 border-indigo-400 rounded-full bg-gray-50 h-32 w-32 mb-4 md:mb-0 ml-0 md:mr-5"
             />
           )}
           
@@ -87,14 +92,48 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
                 </p>
 
                 <ul className="mt-2 flex flex-row items-center justify-center md:justify-start">
-                  {politician.official_url && (
+                  {isValidUrl(politician.official_url) && (
                     <li className="mr-5">
-                      <a href={politician.official_url} target="_blank" rel="noopener noreferrer" aria-label="Home">
+                      <a href={politician.official_url!} target="_blank" rel="noopener noreferrer" aria-label="Home">
                         <FaHouse className="h-6 text-gray-700 hover:text-gray-300" />
                       </a>
                     </li>
                   )}
-                  {/* 他のSNSアイコンも同様に */}
+                  {isValidUrl(politician.twitter_url) && (
+                    <li className="mr-5">
+                      <a href={politician.twitter_url!} target="_blank" rel="noopener noreferrer" aria-label="Twitter">
+                        <FaSquareXTwitter className="h-6 text-gray-700 hover:text-gray-300" />
+                      </a>
+                    </li>
+                  )}
+                  {isValidUrl(politician.youtube_url) && (
+                    <li className="mr-5">
+                      <a href={politician.youtube_url!} target="_blank" rel="noopener noreferrer" aria-label="YouTube">
+                        <IoLogoYoutube className="h-6 text-gray-700 hover:text-gray-300" />
+                      </a>
+                    </li>
+                  )}
+                  {isValidUrl(politician.line_url) && (
+                    <li className="mr-5">
+                      <a href={politician.line_url!} target="_blank" rel="noopener noreferrer" aria-label="LINE">
+                        <FaLine className="h-6 text-gray-700 hover:text-gray-300" />
+                      </a>
+                    </li>
+                  )}
+                  {isValidUrl(politician.instagram_url) && (
+                    <li className="mr-5">
+                      <a href={politician.instagram_url!} target="_blank" rel="noopener noreferrer" aria-label="Instagram">
+                        <FaSquareInstagram className="h-6 text-gray-700 hover:text-gray-300" />
+                      </a>
+                    </li>
+                  )}
+                  {isValidUrl(politician.tiktok_url) && (
+                    <li className="mr-5">
+                      <a href={politician.tiktok_url!} target="_blank" rel="noopener noreferrer" aria-label="TikTok">
+                        <FaTiktok className="h-6 text-gray-700 hover:text-gray-300" />
+                      </a>
+                    </li>
+                  )}
                 </ul>
               </div>
             </div>
