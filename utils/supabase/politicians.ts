@@ -312,7 +312,17 @@ export const politicianAPI = {
       // データ構造を変換して、statement_tagをtagsに変換
       const transformedData = {
         ...data,
-        statements: data.statements?.map(statement => ({
+        statements: data.statements?.map((statement: {
+          id: string;
+          content: string;
+          created_at: string;
+          statement_tag?: Array<{
+            tags: {
+              id: number;
+              name: string;
+            };
+          }>;
+        }) => ({
           ...statement,
           tags: statement.statement_tag?.map(st => st.tags) || []
         }))
