@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useState, useRef, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { statementAPI } from '@/utils/supabase/statements';
@@ -8,7 +9,7 @@ import Footer from '@/components/Navs/Footer';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 
-export default function CreateStatement() {
+function CreateStatementContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const speakerId = searchParams.get('speaker_id');
@@ -341,5 +342,13 @@ export default function CreateStatement() {
 
             <Footer />
         </main>
+    );
+}
+
+export default function CreateStatement() {
+    return (
+        <Suspense fallback={<div>読み込み中...</div>}>
+            <CreateStatementContent />
+        </Suspense>
     );
 }
