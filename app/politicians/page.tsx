@@ -366,7 +366,7 @@ export default function Home() {
         setIsLoading(false);
       }
     }, 300),
-    [selectedParty, selectedType, selectedGender, selectedPrefecture, selectedCity]
+    [selectedParty, selectedType, selectedGender, selectedPrefecture, selectedCity, setSearchResults, setTotalResults, setIsLoading, politicianAPI]
   );
 
   // 「その他」政党のIDを定数として定義
