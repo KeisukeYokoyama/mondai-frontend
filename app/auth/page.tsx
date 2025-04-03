@@ -45,8 +45,8 @@ export default function AuthPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50">
-      <div className="max-w-md w-full p-8 bg-white rounded-lg shadow">
+    <div className="h-screen flex justify-center bg-gray-50">
+      <div className="max-w-md w-full pt-20 px-10 bg-white rounded-lg shadow">
         <div className="text-center mb-5">
           <div className="flex items-center justify-center gap-4">
             <Image src="/images/logo.svg" alt="問題発言ドットコム" width={36} height={36} />
@@ -61,7 +61,7 @@ export default function AuthPage() {
 
         <button
           onClick={handleSignIn}
-          className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-2 px-4 rounded-lg hover:bg-gray-800 transition-colors hover:cursor-pointer"
+          className="w-full flex items-center justify-center gap-2 bg-gray-900 text-white py-2 px-4 rounded-sm hover:bg-gray-800 transition-colors hover:cursor-pointer"
         >
           <FaXTwitter className="w-8 h-8 pr-2" />
           <span className="text-sm">X(Twitter)でログイン</span>
