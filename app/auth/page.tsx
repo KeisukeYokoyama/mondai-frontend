@@ -7,8 +7,9 @@ import { useAuth } from '@/contexts/AuthContext'
 import { FaXTwitter } from "react-icons/fa6";
 import Image from 'next/image';
 import Link from 'next/link';
+import { Suspense } from 'react'
 
-export default function AuthPage() {
+function AuthContent() {
   const { user, loading } = useAuth()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -17,7 +18,7 @@ export default function AuthPage() {
   useEffect(() => {
     if (user && !loading) {
       const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
-      sessionStorage.removeItem('redirectAfterLogin'); // 使用後は削除
+      sessionStorage.removeItem('redirectAfterLogin');
       router.push(redirectPath);
     }
   }, [user, loading, router]);
@@ -84,5 +85,13 @@ export default function AuthPage() {
         </p>
       </div>
     </div>
+  )
+}
+
+export default function AuthPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <AuthContent />
+    </Suspense>
   )
 }
