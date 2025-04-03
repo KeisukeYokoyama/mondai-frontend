@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useAuth } from '@/contexts/AuthContext'
 import { FaXTwitter } from "react-icons/fa6";
 import Image from 'next/image';
@@ -11,22 +11,26 @@ import Link from 'next/link';
 export default function AuthPage() {
   const { user, loading } = useAuth()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const supabase = createClientComponentClient()
 
   useEffect(() => {
     if (user && !loading) {
-      router.push('/dashboard')
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
+      sessionStorage.removeItem('redirectAfterLogin'); // 使用後は削除
+      router.push(redirectPath);
     }
-  }, [user, loading, router])
+  }, [user, loading, router]);
 
   const handleSignIn = async () => {
     try {
       console.log('Starting auth process...')
       
+      const currentPath = window.location.pathname + window.location.search;
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: 'twitter',
         options: {
-          redirectTo: `${window.location.origin}/auth/callback`
+          redirectTo: `${window.location.origin}/auth/callback?next=${encodeURIComponent(currentPath)}`
         }
       })
 

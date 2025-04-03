@@ -6,14 +6,14 @@ export async function GET(request: Request) {
   try {
     const requestUrl = new URL(request.url)
     const code = requestUrl.searchParams.get('code')
-    const next = requestUrl.searchParams.get('next') ?? '/dashboard'
 
     if (code) {
       const supabase = createRouteHandlerClient({ cookies })
       const { error } = await supabase.auth.exchangeCodeForSession(code)
 
       if (!error) {
-        return NextResponse.redirect(`${requestUrl.origin}${next}`)
+        // 認証チェックページにリダイレクト
+        return NextResponse.redirect(`${requestUrl.origin}/auth/check`)
       }
     }
 

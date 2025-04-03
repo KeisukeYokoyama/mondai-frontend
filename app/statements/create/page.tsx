@@ -8,12 +8,33 @@ import Header from '@/components/Navs/Header';
 import Footer from '@/components/Navs/Footer';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
+import { useAuth } from '@/contexts/AuthContext';
 
 function CreateStatementContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const speakerId = searchParams.get('speaker_id');
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const { user, loading } = useAuth();
+
+    // ログインチェック
+    useEffect(() => {
+        if (!loading && !user) {
+            const currentPath = window.location.pathname + window.location.search;
+            localStorage.setItem('redirectAfterLogin', currentPath);
+            router.push('/auth');
+        }
+    }, [user, loading, router]);
+
+    // ローディング中は何も表示しない
+    if (loading) {
+        return null;
+    }
+
+    // 未ログインの場合は何も表示しない（useEffectでリダイレクトされる）
+    if (!user) {
+        return null;
+    }
 
     const [formData, setFormData] = useState({
         title: '',
