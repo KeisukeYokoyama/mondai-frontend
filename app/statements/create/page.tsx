@@ -34,6 +34,15 @@ function CreateStatementContent() {
     const [toastMessage, setToastMessage] = useState<string>('');
     const [showToast, setShowToast] = useState(false);
 
+    // ログインチェック
+    useEffect(() => {
+        if (!loading && !user) {
+            const currentPath = window.location.pathname + window.location.search;
+            localStorage.setItem('redirectAfterLogin', currentPath);
+            router.push('/auth');
+        }
+    }, [user, loading, router]);
+
     // タグ一覧を取得
     useEffect(() => {
         const fetchTags = async () => {
@@ -50,29 +59,12 @@ function CreateStatementContent() {
                 showToastMessage('タグの取得に失敗しました');
             }
         };
-        fetchTags();
-    }, []);
 
-    // ログインチェック
-    useEffect(() => {
-        if (!loading && !user) {
-            const currentPath = window.location.pathname + window.location.search;
-            localStorage.setItem('redirectAfterLogin', currentPath);
-            router.push('/auth');
+        // ユーザーがログインしている場合のみタグを取得
+        if (user) {
+            fetchTags();
         }
-    }, [user, loading, router]);
-
-    // ローディング中または未ログインの場合のレンダリング
-    if (loading || !user) {
-        return (
-            <div className="flex items-center justify-center min-h-screen">
-                <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
-                    <p className="mt-4 text-gray-600">読み込み中...</p>
-                </div>
-            </div>
-        );
-    }
+    }, [user]);
 
     // バケットの存在確認
     useEffect(() => {
@@ -87,8 +79,24 @@ function CreateStatementContent() {
                 setError('ストレージの設定を確認してください');
             }
         };
-        checkBucket();
-    }, []);
+
+        // ユーザーがログインしている場合のみバケットをチェック
+        if (user) {
+            checkBucket();
+        }
+    }, [user]);
+
+    // ローディング中または未ログインの場合のレンダリング
+    if (loading || !user) {
+        return (
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+                    <p className="mt-4 text-gray-600">読み込み中...</p>
+                </div>
+            </div>
+        );
+    }
 
     // Toastを表示する関数
     const showToastMessage = (message: string) => {

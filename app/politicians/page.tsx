@@ -101,7 +101,7 @@ export default function Home() {
   
   // 状態管理
   const [searchText, setSearchText] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<SpeakerWithRelations[]>([]);
   const [selectedType, setSelectedType] = useState<number>(0);
   const [selectedParty, setSelectedParty] = useState<number>(0);
   const [selectedRegion, setSelectedRegion] = useState<number>(0);
@@ -338,35 +338,38 @@ export default function Home() {
 
   // デバウンスされた検索関数
   const debouncedSearch = useCallback(
-    debounce(async (term: string) => {
-      try {
-        setIsLoading(true);
-        const results = await politicianAPI.search({
-          s: term || undefined,
-          party_id: selectedParty ? String(selectedParty) : undefined,
-          chamber: selectedType === 0 ? undefined : 
-                  selectedType === 1 ? '衆議院' : 
-                  selectedType === 2 ? '参議院' : 
-                  selectedType === 3 ? '地方選挙' : undefined,
-          gender: selectedGender === 0 ? undefined : 
-                 selectedGender === 1 ? '男' : 
-                 selectedGender === 2 ? '女' : undefined,
-          prefecture_id: selectedPrefecture ? String(selectedPrefecture) : undefined,
-          city_id: selectedCity ? String(selectedCity) : undefined
-        });
-        if (results.data) {
-          setSearchResults(results.data.data || []);
-          setTotalResults(results.data.total || 0);
+    debounce((term: string) => {
+      const search = async () => {
+        try {
+          setIsLoading(true);
+          const results = await politicianAPI.search({
+            s: term || undefined,
+            party_id: selectedParty ? String(selectedParty) : undefined,
+            chamber: selectedType === 0 ? undefined : 
+                    selectedType === 1 ? '衆議院' : 
+                    selectedType === 2 ? '参議院' : 
+                    selectedType === 3 ? '地方選挙' : undefined,
+            gender: selectedGender === 0 ? undefined : 
+                   selectedGender === 1 ? '男' : 
+                   selectedGender === 2 ? '女' : undefined,
+            prefecture_id: selectedPrefecture ? String(selectedPrefecture) : undefined,
+            city_id: selectedCity ? String(selectedCity) : undefined
+          });
+          if (results.data) {
+            setSearchResults(results.data.data || []);
+            setTotalResults(results.data.total || 0);
+          }
+        } catch (error) {
+          console.error('検索エラー:', error);
+          setSearchResults([]);
+          setTotalResults(0);
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error('検索エラー:', error);
-        setSearchResults([]);
-        setTotalResults(0);
-      } finally {
-        setIsLoading(false);
-      }
+      };
+      search();
     }, 300),
-    [selectedParty, selectedType, selectedGender, selectedPrefecture, selectedCity, setSearchResults, setTotalResults, setIsLoading, politicianAPI]
+    [selectedParty, selectedType, selectedGender, selectedPrefecture, selectedCity, setSearchResults, setTotalResults, setIsLoading]
   );
 
   // 「その他」政党のIDを定数として定義
