@@ -337,59 +337,40 @@ export default function Home() {
   }, []);
 
   // デバウンスされた検索関数
-  const debouncedSearchFn = debounce(async (
-    term: string,
-    options: {
-      selectedParty: number;
-      selectedType: number;
-      selectedGender: number;
-      selectedPrefecture: number;
-      selectedCity: number;
-      setSearchResults: (results: any[]) => void;
-      setTotalResults: (total: number) => void;
-      setIsLoading: (loading: boolean) => void;
-    }
-  ) => {
-    try {
-      options.setIsLoading(true);
-      const results = await politicianAPI.search({
-        s: term || undefined,
-        party_id: options.selectedParty ? String(options.selectedParty) : undefined,
-        chamber: options.selectedType === 0 ? undefined : 
-                options.selectedType === 1 ? '衆議院' : 
-                options.selectedType === 2 ? '参議院' : 
-                options.selectedType === 3 ? '地方選挙' : undefined,
-        gender: options.selectedGender === 0 ? undefined : 
-               options.selectedGender === 1 ? '男' : 
-               options.selectedGender === 2 ? '女' : undefined,
-        prefecture_id: options.selectedPrefecture ? String(options.selectedPrefecture) : undefined,
-        city_id: options.selectedCity ? String(options.selectedCity) : undefined
-      });
-      if (results.data) {
-        options.setSearchResults(results.data.data || []);
-        options.setTotalResults(results.data.total || 0);
-      }
-    } catch (error) {
-      console.error('検索エラー:', error);
-      options.setSearchResults([]);
-      options.setTotalResults(0);
-    } finally {
-      options.setIsLoading(false);
-    }
-  }, 300);
-
   const debouncedSearch = useCallback(
     (term: string) => {
-      debouncedSearchFn(term, {
-        selectedParty,
-        selectedType,
-        selectedGender,
-        selectedPrefecture,
-        selectedCity,
-        setSearchResults,
-        setTotalResults,
-        setIsLoading
-      });
+      const search = async () => {
+        try {
+          setIsLoading(true);
+          const results = await politicianAPI.search({
+            s: term || undefined,
+            party_id: selectedParty ? String(selectedParty) : undefined,
+            chamber: selectedType === 0 ? undefined : 
+                    selectedType === 1 ? '衆議院' : 
+                    selectedType === 2 ? '参議院' : 
+                    selectedType === 3 ? '地方選挙' : undefined,
+            gender: selectedGender === 0 ? undefined : 
+                   selectedGender === 1 ? '男' : 
+                   selectedGender === 2 ? '女' : undefined,
+            prefecture_id: selectedPrefecture ? String(selectedPrefecture) : undefined,
+            city_id: selectedCity ? String(selectedCity) : undefined
+          });
+          if (results.data) {
+            setSearchResults(results.data.data || []);
+            setTotalResults(results.data.total || 0);
+          }
+        } catch (error) {
+          console.error('検索エラー:', error);
+          setSearchResults([]);
+          setTotalResults(0);
+        } finally {
+          setIsLoading(false);
+        }
+      };
+
+      const debouncedFn = debounce(search, 300);
+      debouncedFn();
+      return debouncedFn;
     },
     [selectedParty, selectedType, selectedGender, selectedPrefecture, selectedCity, setSearchResults, setTotalResults, setIsLoading]
   );
@@ -397,9 +378,12 @@ export default function Home() {
   // コンポーネントのクリーンアップ
   useEffect(() => {
     return () => {
-      debouncedSearchFn.cancel();
+      if (debouncedSearch) {
+        const debouncedFn = debouncedSearch('');
+        debouncedFn.cancel();
+      }
     };
-  }, []);
+  }, [debouncedSearch]);
 
   // 「その他」政党のIDを定数として定義
   const OTHER_PARTY_ID = 3925;  // 数値のまま
