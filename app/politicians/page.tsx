@@ -40,9 +40,9 @@ interface Party {
 // 検索用のinterface追加
 interface SearchParams {
   s?: string;
-  chamber?: string;
-  gender?: string;
-  party_id?: string;  // UUID
+  chamber?: string;  // undefinedのみを許可
+  gender?: string;   // undefinedのみを許可
+  party_id?: string;
   prefecture_id?: number;
   city_id?: string;
 }
@@ -99,27 +99,23 @@ const getImagePath = (path: string | null) => {
 export default function Home() {
   const supabase = createClientComponentClient()
   
-  // 状態の初期化（空の値で初期化）
+  // 状態管理
+  const [searchText, setSearchText] = useState('');
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [selectedType, setSelectedType] = useState<number>(0);
+  const [selectedParty, setSelectedParty] = useState<number>(0);
+  const [selectedRegion, setSelectedRegion] = useState<number>(0);
+  const [selectedPrefecture, setSelectedPrefecture] = useState<number>(0);
+  const [selectedCity, setSelectedCity] = useState<number>(0);
+  const [selectedGender, setSelectedGender] = useState<number>(0);
+  const [totalResults, setTotalResults] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [regions, setRegions] = useState<Region[]>([]);
   const [prefectures, setPrefectures] = useState<Prefecture[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [parties, setParties] = useState<Party[]>([]);
-  
-  // 空の初期値で初期化
-  const [searchText, setSearchText] = useState('');
-  const [selectedGender, setSelectedGender] = useState('');
-  const [selectedType, setSelectedType] = useState('');
-  const [selectedParty, setSelectedParty] = useState<string>('');
-  const [selectedChildParty, setSelectedChildParty] = useState<string>('');
-  const [selectedRegion, setSelectedRegion] = useState(0);
-  const [selectedPrefecture, setSelectedPrefecture] = useState(0);
-  const [selectedPrefectureSlug, setSelectedPrefectureSlug] = useState('');
-  const [selectedCity, setSelectedCity] = useState(0);
-  const [searchResults, setSearchResults] = useState<SpeakerWithRelations[]>([]);
-  const [totalResults, setTotalResults] = useState<number>(0);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isClient, setIsClient] = useState(false);  // クライアントサイドかどうかのフラグ
   
   // マウント時にクライアントサイドフラグを設定
   useEffect(() => {
@@ -128,13 +124,11 @@ export default function Home() {
     // sessionStorageから値を取得
     try {
       setSearchText(sessionStorage.getItem('searchText') || '');
-      setSelectedGender(sessionStorage.getItem('selectedGender') || '');
-      setSelectedType(sessionStorage.getItem('selectedType') || '');
-      setSelectedParty(sessionStorage.getItem('selectedParty') || '');
-      setSelectedChildParty(sessionStorage.getItem('selectedChildParty') || '');
+      setSelectedGender(Number(sessionStorage.getItem('selectedGender')) || 0);
+      setSelectedType(Number(sessionStorage.getItem('selectedType')) || 0);
+      setSelectedParty(Number(sessionStorage.getItem('selectedParty')) || 0);
       setSelectedRegion(Number(sessionStorage.getItem('selectedRegion')) || 0);
       setSelectedPrefecture(Number(sessionStorage.getItem('selectedPrefecture')) || 0);
-      setSelectedPrefectureSlug(sessionStorage.getItem('selectedPrefectureSlug') || '');
       setSelectedCity(Number(sessionStorage.getItem('selectedCity')) || 0);
       
       const savedResults = sessionStorage.getItem('searchResults');
@@ -157,13 +151,11 @@ export default function Home() {
     
     try {
       sessionStorage.setItem('searchText', searchText);
-      sessionStorage.setItem('selectedGender', selectedGender);
-      sessionStorage.setItem('selectedType', selectedType);
-      sessionStorage.setItem('selectedParty', selectedParty);
-      sessionStorage.setItem('selectedChildParty', selectedChildParty);
+      sessionStorage.setItem('selectedGender', String(selectedGender));
+      sessionStorage.setItem('selectedType', String(selectedType));
+      sessionStorage.setItem('selectedParty', String(selectedParty));
       sessionStorage.setItem('selectedRegion', String(selectedRegion));
       sessionStorage.setItem('selectedPrefecture', String(selectedPrefecture));
-      sessionStorage.setItem('selectedPrefectureSlug', selectedPrefectureSlug);
       sessionStorage.setItem('selectedCity', String(selectedCity));
       sessionStorage.setItem('searchResults', JSON.stringify(searchResults));
       sessionStorage.setItem('totalResults', String(totalResults));
@@ -171,8 +163,7 @@ export default function Home() {
       console.error('Error saving to sessionStorage:', error);
     }
   }, [
-    isClient, searchText, selectedGender, selectedType, selectedParty, selectedChildParty,
-    selectedRegion, selectedPrefecture, selectedPrefectureSlug, selectedCity,
+    isClient, searchText, selectedGender, selectedType, selectedParty, selectedRegion, selectedPrefecture, selectedCity,
     searchResults, totalResults
   ]);
 
@@ -224,7 +215,7 @@ export default function Home() {
   // 市区町村一覧の取得
   useEffect(() => {
     const fetchCities = async () => {
-      if (!selectedPrefectureSlug) return;
+      if (!selectedPrefecture) return;
       
       try {
         const { data, error } = await supabase
@@ -241,7 +232,7 @@ export default function Home() {
     };
 
     fetchCities();
-  }, [selectedPrefectureSlug, selectedPrefecture, supabase]);
+  }, [selectedPrefecture, supabase]);
 
   // 政党一覧の取得
   useEffect(() => {
@@ -352,11 +343,16 @@ export default function Home() {
         setIsLoading(true);
         const results = await politicianAPI.search({
           s: term || undefined,
-          party_id: selectedChildParty || selectedParty || undefined,
-          chamber: selectedType || undefined,
-          gender: selectedGender || undefined,
-          prefecture_id: selectedPrefecture > 0 ? String(selectedPrefecture) : undefined,
-          city_id: selectedCity > 0 ? String(selectedCity) : undefined
+          party_id: selectedParty ? String(selectedParty) : undefined,
+          chamber: selectedType === 0 ? undefined : 
+                  selectedType === 1 ? '衆議院' : 
+                  selectedType === 2 ? '参議院' : 
+                  selectedType === 3 ? '地方選挙' : undefined,
+          gender: selectedGender === 0 ? undefined : 
+                 selectedGender === 1 ? '男' : 
+                 selectedGender === 2 ? '女' : undefined,
+          prefecture_id: selectedPrefecture ? String(selectedPrefecture) : undefined,
+          city_id: selectedCity ? String(selectedCity) : undefined
         });
         if (results.data) {
           setSearchResults(results.data.data || []);
@@ -370,7 +366,7 @@ export default function Home() {
         setIsLoading(false);
       }
     }, 300),
-    [selectedParty, selectedChildParty, selectedType, selectedGender, selectedPrefecture, selectedCity]
+    [selectedParty, selectedType, selectedGender, selectedPrefecture, selectedCity]
   );
 
   // 「その他」政党のIDを定数として定義
@@ -393,20 +389,15 @@ export default function Home() {
   );
 
   const handleGenderChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedGender(e.target.value);
+    setSelectedGender(Number(e.target.value));
   }, []);
 
   const handleTypeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedType(e.target.value);
+    setSelectedType(Number(e.target.value));
   }, []);
 
   const handlePartyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedParty(e.target.value);
-    setSelectedChildParty('');
-  }, []);
-
-  const handleChildPartyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedChildParty(e.target.value);
+    setSelectedParty(Number(e.target.value));
   }, []);
 
   const handleRegionChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -414,16 +405,14 @@ export default function Home() {
     setSelectedRegion(value);
     // 地域が変更されたら、都道府県と市区町村の選択をリセット
     setSelectedPrefecture(0);
-    setSelectedPrefectureSlug('');
     setSelectedCity(0);
   }, []);
 
   const handlePrefectureChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = Number(e.target.value);
     setSelectedPrefecture(value);
-    setSelectedPrefectureSlug(prefectures.find(p => p.id === value)?.slug || '');
     setSelectedCity(0);
-  }, [prefectures]);
+  }, []);
 
   const handleCityChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     setSelectedCity(Number(e.target.value));
@@ -435,6 +424,34 @@ export default function Home() {
       debouncedSearch.cancel();
     };
   }, [debouncedSearch]);
+
+  // 検索結果の更新処理
+  const updateSearchResults = useCallback(() => {
+    const fetchData = async () => {
+      try {
+        const { data: speakers, error } = await supabase
+          .from('speakers')
+          .select('*')
+          .eq('speaker_type', selectedType === 0 ? null : selectedType)
+          .eq('party_id', selectedParty === 0 ? null : selectedParty)
+          .eq('region_id', selectedRegion === 0 ? null : selectedRegion)
+          .eq('prefecture_id', selectedPrefecture === 0 ? null : selectedPrefecture)
+          .eq('city_id', selectedCity === 0 ? null : selectedCity)
+          .eq('gender', selectedGender === 0 ? null : selectedGender)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        setSearchResults(speakers || []);
+        setTotalResults(speakers?.length || 0);
+        localStorage.setItem('searchResults', JSON.stringify(speakers));
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, [selectedType, selectedParty, selectedRegion, selectedPrefecture, selectedCity, selectedGender, supabase]);
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -498,8 +515,8 @@ export default function Home() {
                     {Number(selectedParty) === OTHER_PARTY_ID && childParties.length > 0 && (
                       <select 
                         className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
-                        value={selectedChildParty}
-                        onChange={handleChildPartyChange}
+                        value={selectedParty}
+                        onChange={handlePartyChange}
                       >
                         <option value="">選択してください</option>
                         {childParties.map((party) => (
@@ -518,8 +535,8 @@ export default function Home() {
                           <input 
                             type="radio" 
                             name="type" 
-                            value=""
-                            checked={selectedType === ""}
+                            value="0"
+                            checked={selectedType === 0}
                             onChange={handleTypeChange}
                             className="mr-1" 
                           />
@@ -529,8 +546,8 @@ export default function Home() {
                           <input 
                             type="radio" 
                             name="type" 
-                            value="衆議院"
-                            checked={selectedType === "衆議院"}
+                            value="1"
+                            checked={selectedType === 1}
                             onChange={handleTypeChange}
                             className="mr-1" 
                           />
@@ -540,8 +557,8 @@ export default function Home() {
                           <input 
                             type="radio" 
                             name="type" 
-                            value="参議院"
-                            checked={selectedType === "参議院"}
+                            value="2"
+                            checked={selectedType === 2}
                             onChange={handleTypeChange}
                             className="mr-1" 
                           />
@@ -551,8 +568,8 @@ export default function Home() {
                           <input 
                             type="radio" 
                             name="type" 
-                            value="地方選挙"
-                            checked={selectedType === "地方選挙"}
+                            value="3"
+                            checked={selectedType === 3}
                             onChange={handleTypeChange}
                             className="mr-1" 
                           />
@@ -569,8 +586,8 @@ export default function Home() {
                           <input 
                             type="radio" 
                             name="gender" 
-                            value=""
-                            checked={selectedGender === ""}
+                            value="0"
+                            checked={selectedGender === 0}
                             onChange={handleGenderChange}
                             className="mr-1" 
                           />
@@ -580,8 +597,8 @@ export default function Home() {
                           <input 
                             type="radio" 
                             name="gender" 
-                            value="男"
-                            checked={selectedGender === "男"}
+                            value="1"
+                            checked={selectedGender === 1}
                             onChange={handleGenderChange}
                             className="mr-1" 
                           />
@@ -591,8 +608,8 @@ export default function Home() {
                           <input 
                             type="radio" 
                             name="gender" 
-                            value="女"
-                            checked={selectedGender === "女"}
+                            value="2"
+                            checked={selectedGender === 2}
                             onChange={handleGenderChange}
                             className="mr-1" 
                           />
@@ -653,11 +670,16 @@ export default function Home() {
                       onClick={() => {
                         const searchParams = {
                           s: searchText,
-                          chamber: selectedType,
-                          gender: selectedGender,
-                          party_id: selectedChildParty || selectedParty,
+                          chamber: selectedType === 0 ? undefined : 
+                                  selectedType === 1 ? '衆議院' : 
+                                  selectedType === 2 ? '参議院' : 
+                                  selectedType === 3 ? '地方選挙' : undefined,
+                          gender: selectedGender === 0 ? undefined : 
+                                 selectedGender === 1 ? '男' : 
+                                 selectedGender === 2 ? '女' : undefined,
+                          party_id: selectedParty ? String(selectedParty) : undefined,
                           prefecture_id: selectedPrefecture,
-                          city_id: String(selectedCity)
+                          city_id: selectedCity ? String(selectedCity) : undefined
                         };
                         console.log('Sending search params:', searchParams);
                         handleSearch(searchParams);

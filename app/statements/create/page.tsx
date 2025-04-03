@@ -17,6 +17,23 @@ function CreateStatementContent() {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { user, loading } = useAuth();
 
+    // すべてのuseStateをトップレベルに移動
+    const [formData, setFormData] = useState({
+        title: '',
+        statement_date: '',
+        content: '',
+        speaker_id: speakerId,
+        evidence_url: '',
+    });
+    const [image, setImage] = useState<File | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [error, setError] = useState('');
+    const [selectedTags, setSelectedTags] = useState<number[]>([]);
+    const [availableTags, setAvailableTags] = useState<{id: number, name: string}[]>([]);
+    const [newTag, setNewTag] = useState('');
+    const [toastMessage, setToastMessage] = useState<string>('');
+    const [showToast, setShowToast] = useState(false);
+
     // ログインチェック
     useEffect(() => {
         if (!loading && !user) {
@@ -35,22 +52,6 @@ function CreateStatementContent() {
     if (!user) {
         return null;
     }
-
-    const [formData, setFormData] = useState({
-        title: '',
-        statement_date: '',
-        content: '',
-        speaker_id: speakerId,
-        evidence_url: '',
-    });
-    const [image, setImage] = useState<File | null>(null);
-    const [imagePreview, setImagePreview] = useState<string | null>(null);
-    const [error, setError] = useState('');
-    const [selectedTags, setSelectedTags] = useState<number[]>([]);
-    const [availableTags, setAvailableTags] = useState<{id: number, name: string}[]>([]);
-    const [newTag, setNewTag] = useState('');
-    const [toastMessage, setToastMessage] = useState<string>('');
-    const [showToast, setShowToast] = useState(false);
 
     // タグ一覧を取得
     useEffect(() => {
