@@ -3,6 +3,8 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { useAuth } from '@/contexts/AuthContext'
+import { useRouter } from 'next/navigation'
 
 interface HeaderProps {
   title?: string;
@@ -10,6 +12,18 @@ interface HeaderProps {
 
 export default function Header({ title }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false)
+  const { user, signOut } = useAuth()
+  const router = useRouter()
+
+  const handleScreenshotButtonClick = () => {
+    if (!user) {
+      // ログインしていない場合は認証ページへリダイレクト
+      router.push('/auth')
+      return
+    }
+    // ログインしている場合はスクショ登録処理を実行
+    // ここにスクショ登録処理を追加
+  }
 
   return (
     <>
@@ -61,6 +75,15 @@ export default function Header({ title }: HeaderProps) {
             >
               話題の問題発言
             </Link>
+            
+            {user && (
+              <button
+                onClick={signOut}
+                className="text-gray-900 hover:text-blue-700"
+              >
+                ログアウト
+              </button>
+            )}
           </div>
 
           <div className="flex md:order-2 ml-auto md:ml-0">
@@ -142,10 +165,36 @@ export default function Header({ title }: HeaderProps) {
                     政党を探す
                   </Link>
                 </li>
+                {user && (
+                  <li className="mb-2">
+                    <Link
+                      href="#"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        signOut();
+                        setIsOpen(false);
+                      }}
+                      className="block w-full text-right py-2 px-3 text-gray-900 rounded hover:bg-gray-100"
+                    >
+                      ログアウト
+                    </Link>
+                  </li>
+                )}
               </ul>
               {/* 登録ボタン */}
               <div className="container px-5 pt-8 mx-auto text-right">
-                <button className="bg-gray-800 text-sm text-white px-6 py-2 rounded-md hover:bg-gray-600">
+                <button 
+                  className="bg-gray-800 text-sm text-white px-6 py-2 rounded-md hover:bg-gray-600"
+                  onClick={() => {
+                    if (!user) {
+                      router.push('/auth');
+                      setIsOpen(false);
+                    } else {
+                      // ログインしている場合はスクショ登録処理を実行
+                      // ここにスクショ登録処理を追加
+                    }
+                  }}
+                >
                   スクショを登録する
                 </button>
               </div>

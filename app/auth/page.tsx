@@ -49,17 +49,19 @@ function AuthContent() {
   }
 
   return (
-    <div className="h-screen flex justify-center bg-gray-50">
-      <div className="max-w-md w-full pt-20 px-10 bg-white rounded-lg shadow">
+    <div className="h-screen flex justify-center">
+      <div className="max-w-md w-full pt-20 px-10 bg-white">
         <div className="text-center mb-5">
-          <div className="flex items-center justify-center gap-4">
-            <Image src="/images/logo.svg" alt="問題発言ドットコム" width={36} height={36} />
-            <h2 className="text-2xl font-bold text-gray-900">
+          <Link href="/">
+            <div className="flex items-center justify-center gap-4">
+              <Image src="/images/logo.svg" alt="問題発言ドットコム" width={36} height={36} />
+              <h2 className="text-2xl font-bold text-gray-900">
               問題発言ドットコム
             </h2>
           </div>
+          </Link>
           <p className="mt-8 text-sm text-gray-600">
-            ログインすると投稿ができるようになります
+            スクショ登録にはログインが必要です！
           </p>
         </div>
 
