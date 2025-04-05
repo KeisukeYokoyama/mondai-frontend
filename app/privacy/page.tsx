@@ -1,7 +1,7 @@
-'use client';
 import Link from 'next/link';
 import Footer from '@/components/Navs/Footer';
 import Header from '@/components/Navs/Header';
+
 export default function PrivacyPolicy() {
   return (
     <main className="w-full max-w-full overflow-x-hidden bg-gray-100">

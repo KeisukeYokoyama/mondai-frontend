@@ -1,5 +1,3 @@
-'use client';
-import Link from 'next/link';
 import Footer from '@/components/Navs/Footer';
 import Header from '@/components/Navs/Header';
 
