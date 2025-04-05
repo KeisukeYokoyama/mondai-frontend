@@ -54,7 +54,7 @@ function AuthContent() {
         <div className="text-center mb-5">
           <Link href="/">
             <div className="flex items-center justify-center gap-4">
-              <Image src="/images/logo.svg" alt="問題発言ドットコム" width={36} height={36} />
+              <Image src="/images/Logo.svg" alt="問題発言ドットコム" width={36} height={36} />
               <h2 className="text-2xl font-bold text-gray-900">
               問題発言ドットコム
             </h2>
