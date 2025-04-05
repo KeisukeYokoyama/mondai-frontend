@@ -103,7 +103,7 @@ export default function Home() {
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<SpeakerWithRelations[]>([]);
   const [selectedType, setSelectedType] = useState<number>(0);
-  const [selectedParty, setSelectedParty] = useState<number>(0);
+  const [selectedParty, setSelectedParty] = useState<number>(3924);
   const [selectedRegion, setSelectedRegion] = useState<number>(0);
   const [selectedPrefecture, setSelectedPrefecture] = useState<number>(0);
   const [selectedCity, setSelectedCity] = useState<number>(0);
@@ -117,6 +117,88 @@ export default function Home() {
   const [cities, setCities] = useState<City[]>([]);
   const [parties, setParties] = useState<Party[]>([]);
   
+  // 親政党のみをフィルタリング（orderでソート済み）
+  const parentParties = parties.filter(party => !party.parent_id);
+  
+  // 選択された親政党の子政党をフィルタリング
+  const childParties = parties.filter(party => {
+    if (!selectedParty) return false;
+    const parentId = String(selectedParty);
+    return String(party.parent_id) === parentId;
+  });
+
+  // 検索機能の実装
+  const handleSearch = useCallback(async (params: SearchParams) => {
+    setIsLoading(true);
+    try {
+      console.log('検索実行 - パラメータ:', {
+        検索文字列: params.s,
+        議員種別: params.chamber,
+        性別: params.gender,
+        政党ID: params.party_id,
+        都道府県ID: params.prefecture_id,
+        市区町村ID: params.city_id
+      });
+
+      const { data, error } = await politicianAPI.search({
+        s: params.s,
+        chamber: params.chamber,
+        gender: params.gender,
+        party_id: params.party_id,
+        prefecture_id: params.prefecture_id ? String(params.prefecture_id) : undefined,
+        city_id: params.city_id,
+        per_page: 20
+      });
+
+      if (error) throw error;
+      
+      console.log('検索結果の最初のデータ構造:', {
+        データ全体: data?.data?.[0],
+        政党情報: {
+          parties: data?.data?.[0]?.parties,
+        },
+        地域情報: {
+          prefectures: data?.data?.[0]?.prefectures,
+        }
+      });
+
+      console.log('検索結果の詳細:', {
+        最初の政治家: data?.data?.[0] ? {
+          名前: `${data.data[0].last_name} ${data.data[0].first_name}`,
+          政党情報: {
+            party: data.data[0].parties,
+            政党名: data.data[0].parties.name,
+            政党ID: data.data[0].parties.id
+          },
+          地域情報: {
+            prefecture: data.data[0].prefectures,
+            地域名: data.data[0].prefectures.name
+          }
+        } : '該当なし'
+      });
+
+      console.log('検索結果:', {
+        総件数: data?.total,
+        取得データ件数: data?.data?.length,
+        最初の結果: data?.data?.[0] ? {
+          名前: `${data.data[0].last_name} ${data.data[0].first_name}`,
+          政党: data.data[0].parties.name,
+          政党ID: data.data[0].parties.id,
+          議員種別: data.data[0].chamber
+        } : '該当なし'
+      });
+
+      setSearchResults(data?.data || []);
+      setTotalResults(data?.total || 0);
+    } catch (error) {
+      console.error('検索エラー:', error);
+      setSearchResults([]);
+      setTotalResults(0);
+    } finally {
+      setIsLoading(false);
+    }
+  }, []);
+
   // マウント時にクライアントサイドフラグを設定
   useEffect(() => {
     setIsClient(true);
@@ -126,7 +208,7 @@ export default function Home() {
       setSearchText(sessionStorage.getItem('searchText') || '');
       setSelectedGender(Number(sessionStorage.getItem('selectedGender')) || 0);
       setSelectedType(Number(sessionStorage.getItem('selectedType')) || 0);
-      setSelectedParty(Number(sessionStorage.getItem('selectedParty')) || 0);
+      setSelectedParty(Number(sessionStorage.getItem('selectedParty')) || 3924);
       setSelectedRegion(Number(sessionStorage.getItem('selectedRegion')) || 0);
       setSelectedPrefecture(Number(sessionStorage.getItem('selectedPrefecture')) || 0);
       setSelectedCity(Number(sessionStorage.getItem('selectedCity')) || 0);
@@ -144,6 +226,26 @@ export default function Home() {
       console.error('Error accessing sessionStorage:', error);
     }
   }, []);
+
+  // 初期検索を実行
+  useEffect(() => {
+    if (isClient) {
+      const searchParams = {
+        s: searchText,
+        chamber: selectedType === 0 ? undefined : 
+                selectedType === 1 ? '衆議院' : 
+                selectedType === 2 ? '参議院' : 
+                selectedType === 3 ? '地方選挙' : undefined,
+        gender: selectedGender === 0 ? undefined : 
+               selectedGender === 1 ? '男' : 
+               selectedGender === 2 ? '女' : undefined,
+        party_id: selectedParty ? String(selectedParty) : undefined,
+        prefecture_id: selectedPrefecture,
+        city_id: selectedCity ? String(selectedCity) : undefined
+      };
+      handleSearch(searchParams);
+    }
+  }, [isClient, handleSearch, searchText, selectedType, selectedGender, selectedParty, selectedPrefecture, selectedCity]);
 
   // クライアントサイドでのみsessionStorageに保存
   useEffect(() => {
@@ -253,88 +355,6 @@ export default function Home() {
 
     fetchParties();
   }, [supabase]);
-
-  // 親政党のみをフィルタリング（orderでソート済み）
-  const parentParties = parties.filter(party => !party.parent_id);
-  
-  // 選択された親政党の子政党をフィルタリング
-  const childParties = parties.filter(party => {
-    if (!selectedParty) return false;
-    const parentId = String(selectedParty);
-    return String(party.parent_id) === parentId;
-  });
-
-  // 検索機能の実装
-  const handleSearch = useCallback(async (params: SearchParams) => {
-    setIsLoading(true);
-    try {
-      console.log('検索実行 - パラメータ:', {
-        検索文字列: params.s,
-        議員種別: params.chamber,
-        性別: params.gender,
-        政党ID: params.party_id,
-        都道府県ID: params.prefecture_id,
-        市区町村ID: params.city_id
-      });
-
-      const { data, error } = await politicianAPI.search({
-        s: params.s,
-        chamber: params.chamber,
-        gender: params.gender,
-        party_id: params.party_id,
-        prefecture_id: params.prefecture_id ? String(params.prefecture_id) : undefined,
-        city_id: params.city_id,
-        per_page: 20
-      });
-
-      if (error) throw error;
-      
-      console.log('検索結果の最初のデータ構造:', {
-        データ全体: data?.data?.[0],
-        政党情報: {
-          parties: data?.data?.[0]?.parties,
-        },
-        地域情報: {
-          prefectures: data?.data?.[0]?.prefectures,
-        }
-      });
-
-      console.log('検索結果の詳細:', {
-        最初の政治家: data?.data?.[0] ? {
-          名前: `${data.data[0].last_name} ${data.data[0].first_name}`,
-          政党情報: {
-            party: data.data[0].parties,
-            政党名: data.data[0].parties.name,
-            政党ID: data.data[0].parties.id
-          },
-          地域情報: {
-            prefecture: data.data[0].prefectures,
-            地域名: data.data[0].prefectures.name
-          }
-        } : '該当なし'
-      });
-
-      console.log('検索結果:', {
-        総件数: data?.total,
-        取得データ件数: data?.data?.length,
-        最初の結果: data?.data?.[0] ? {
-          名前: `${data.data[0].last_name} ${data.data[0].first_name}`,
-          政党: data.data[0].parties.name,
-          政党ID: data.data[0].parties.id,
-          議員種別: data.data[0].chamber
-        } : '該当なし'
-      });
-
-      setSearchResults(data?.data || []);
-      setTotalResults(data?.total || 0);
-    } catch (error) {
-      console.error('検索エラー:', error);
-      setSearchResults([]);
-      setTotalResults(0);
-    } finally {
-      setIsLoading(false);
-    }
-  }, []);
 
   // デバウンスされた検索関数
   const debouncedSearch = useCallback(
