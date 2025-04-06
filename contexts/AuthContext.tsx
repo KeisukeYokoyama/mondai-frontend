@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import type { UserMetadata } from '@/types/supabase'
 
 type AuthContextType = {
-  user: { user_metadata: UserMetadata } | null
+  user: { id: string; user_metadata: UserMetadata } | null
   loading: boolean
   signOut: () => Promise<void>
 }
@@ -18,7 +18,7 @@ const AuthContext = createContext<AuthContextType>({
 })
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<{ user_metadata: UserMetadata } | null>(null)
+  const [user, setUser] = useState<{ id: string; user_metadata: UserMetadata } | null>(null)
   const [loading, setLoading] = useState(true)
   const router = useRouter()
   const supabase = createClientComponentClient()

@@ -62,7 +62,7 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
     <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
       <section className="text-gray-600 body-font bg-white">
         <div className="container px-5 py-2 mx-auto">
-          <Header title={`${politician.last_name}${politician.first_name}`} />
+          <Header />
         </div>
       </section>
       

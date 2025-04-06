@@ -9,11 +9,13 @@ import Footer from '@/components/Navs/Footer';
 import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
+import { Statement } from '@/utils/supabase/types';
+import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 
 function CreateStatementContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    const speakerId = searchParams.get('speaker_id');
+    const speaker_id = searchParams.get('speaker_id');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { user, loading } = useAuth();
 
@@ -22,7 +24,7 @@ function CreateStatementContent() {
         title: '',
         statement_date: '',
         content: '',
-        speaker_id: speakerId,
+        speaker_id: speaker_id,
         evidence_url: '',
     });
     const [image, setImage] = useState<File | null>(null);
@@ -134,6 +136,7 @@ function CreateStatementContent() {
         if (!newTag.trim()) return;
         
         try {
+            const supabase = createClientComponentClient()
             const { data, error } = await supabase
                 .from('tags')
                 .insert({ name: newTag.trim() })
@@ -153,33 +156,57 @@ function CreateStatementContent() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setError('');
+        console.log('送信ボタンがクリックされました');
 
-        if (!speakerId) {
-            setError('政治家IDが指定されていません');
+        if (!user) {
+            console.log('ユーザーが認証されていません');
+            return;
+        }
+
+        if (!speaker_id) {
+            console.log('政治家IDが指定されていません');
             return;
         }
 
         try {
-            const { data: statement } = await statementAPI.create({
-                ...formData,
-                speaker_id: speakerId,
-                image_path: image || undefined,
-            });
+            const supabase = createClientComponentClient();
+            const statementData: Omit<Statement, 'id' | 'created_at' | 'updated_at'> = {
+                title: formData.title,
+                statement_date: formData.statement_date,
+                content: formData.content,
+                speaker_id: formData.speaker_id,
+                evidence_url: formData.evidence_url || '',
+                user_id: user.id as string
+            };
 
-            if (!statement) {
-                throw new Error('発言の登録に失敗しました');
-            }
+            console.log('送信するデータ:', statementData);
+            const { data: statement, error: statementError } = await supabase
+                .from('statements')
+                .insert([statementData])
+                .select()
+                .single();
 
-            // タグがある場合は関連付け
+            if (statementError) throw statementError;
+            console.log('登録結果:', statement);
+
+            // タグの関連付け
             if (selectedTags.length > 0) {
-                await statementAPI.attachTags(statement.id, selectedTags);
+                const { error: tagError } = await supabase
+                    .from('statement_tag')
+                    .insert(
+                        selectedTags.map(tagId => ({
+                            statement_id: statement.id,
+                            tag_id: tagId
+                        }))
+                    );
+
+                if (tagError) throw tagError;
+                console.log('タグの関連付けが完了しました');
             }
 
-            router.push(`/politicians/${speakerId}`);
-        } catch (err) {
-            setError('発言の登録に失敗しました');
-            console.error(err);
+            router.push(`/politicians/${speaker_id}`);
+        } catch (error) {
+            console.error('発言の登録に失敗しました:', error);
         }
     };
 

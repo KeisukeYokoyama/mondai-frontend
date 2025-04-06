@@ -71,11 +71,12 @@ export interface Statement {
   id: string
   title: string
   content: string
-  speaker_id: string
+  speaker_id: string | null
   party_id?: number
   statement_date: string
   image_path?: string | File
   evidence_url?: string
+  user_id: string
   created_at: string
   updated_at: string
   statement_tag?: StatementTag[]
