@@ -11,6 +11,52 @@ import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { Statement } from '@/utils/supabase/types';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { politicianAPI } from '@/utils/supabase/politicians';
+import type { SpeakerWithRelations } from '@/utils/supabase/types';
+
+// 確認ダイアログのコンポーネント
+function ConfirmDialog({ 
+  isOpen, 
+  onClose, 
+  onConfirm, 
+  title, 
+  message 
+}: { 
+  isOpen: boolean; 
+  onClose: () => void; 
+  onConfirm: () => void; 
+  title: string; 
+  message: string;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-[45%]">
+      <div className="fixed inset-0 bg-gray-100/10 backdrop-blur-xl" onClick={onClose}></div>
+      <div className="relative bg-white rounded-lg p-6 max-w-md w-full mx-4 z-10 shadow-xl">
+        <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
+        <p className="text-red-500 mb-6 text-sm">{message}</p>
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={() => {
+              onConfirm();
+              onClose();
+            }}
+            className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+          >
+            追加する
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function CreateStatementContent() {
     const router = useRouter();
@@ -18,6 +64,9 @@ function CreateStatementContent() {
     const speaker_id = searchParams.get('speaker_id');
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { user, loading } = useAuth();
+    const [politician, setPolitician] = useState<SpeakerWithRelations | null>(null);
+    const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const [tagToAdd, setTagToAdd] = useState('');
 
     // すべてのuseStateをトップレベルに移動
     const [formData, setFormData] = useState({
@@ -35,6 +84,8 @@ function CreateStatementContent() {
     const [newTag, setNewTag] = useState('');
     const [toastMessage, setToastMessage] = useState<string>('');
     const [showToast, setShowToast] = useState(false);
+    const [showOptions, setShowOptions] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
 
     // ログインチェック
     useEffect(() => {
@@ -68,25 +119,42 @@ function CreateStatementContent() {
         }
     }, [user]);
 
-    // バケットの存在確認
+    // // バケットの存在確認
+    // useEffect(() => {
+    //     const checkBucket = async () => {
+    //         try {
+    //             const exists = await statementAPI.checkBucket();
+    //             if (!exists) {
+    //                 setError('statements バケットが存在しません');
+    //             }
+    //         } catch (err) {
+    //             console.error('バケットの確認に失敗しました', err);
+    //             setError('ストレージの設定を確認してください');
+    //         }
+    //     };
+
+    //     // ユーザーがログインしている場合のみバケットをチェック
+    //     if (user) {
+    //         checkBucket();
+    //     }
+    // }, [user]);
+
+    // 政治家の詳細情報を取得
     useEffect(() => {
-        const checkBucket = async () => {
+        const fetchPolitician = async () => {
+            if (!speaker_id) return;
+            
             try {
-                const exists = await statementAPI.checkBucket();
-                if (!exists) {
-                    setError('statements バケットが存在しません');
-                }
+                const { data, error } = await politicianAPI.getDetail(speaker_id);
+                if (error) throw new Error(error);
+                setPolitician(data);
             } catch (err) {
-                console.error('バケットの確認に失敗しました', err);
-                setError('ストレージの設定を確認してください');
+                console.error('政治家データの取得に失敗しました:', err);
             }
         };
 
-        // ユーザーがログインしている場合のみバケットをチェック
-        if (user) {
-            checkBucket();
-        }
-    }, [user]);
+        fetchPolitician();
+    }, [speaker_id]);
 
     // ローディング中または未ログインの場合のレンダリング
     if (loading || !user) {
@@ -120,26 +188,82 @@ function CreateStatementContent() {
     const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             const file = e.target.files[0];
-            setImage(file);
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result as string);
-            };
-            reader.readAsDataURL(file);
+            processFile(file);
         } else {
             setImage(null);
             setImagePreview(null);
         }
     };
 
+    // ファイル処理の共通関数
+    const processFile = (file: File) => {
+        // ファイルタイプの検証
+        if (!file.type.match('image/(jpeg|png)')) {
+            showToastMessage('PNGまたはJPG形式の画像のみアップロード可能です');
+            return;
+        }
+
+        // ファイルサイズの検証（5MB以下）
+        if (file.size > 5 * 1024 * 1024) {
+            showToastMessage('ファイルサイズは5MB以下にしてください');
+            return;
+        }
+
+        setImage(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
+    };
+
+    // ドラッグ＆ドロップのイベントハンドラ
+    const handleDragEnter = (e: React.DragEvent<HTMLDivElement | HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(true);
+    };
+
+    const handleDragLeave = (e: React.DragEvent<HTMLDivElement | HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // 子要素へのドラッグを検出するために、関連ターゲットをチェック
+        if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+            setIsDragging(false);
+        }
+    };
+
+    const handleDragOver = (e: React.DragEvent<HTMLDivElement | HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+    };
+
+    const handleDrop = (e: React.DragEvent<HTMLDivElement | HTMLLabelElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragging(false);
+
+        if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+            const file = e.dataTransfer.files[0];
+            processFile(file);
+        }
+    };
+
     const handleAddTag = async () => {
         if (!newTag.trim()) return;
         
+        // 確認ダイアログを表示するために状態を設定
+        setTagToAdd(newTag.trim());
+        setShowConfirmDialog(true);
+    };
+
+    // タグ追加の確認後の処理
+    const confirmAddTag = async () => {
         try {
             const supabase = createClientComponentClient()
             const { data, error } = await supabase
                 .from('tags')
-                .insert({ name: newTag.trim() })
+                .insert({ name: tagToAdd })
                 .select()
                 .single();
 
@@ -148,6 +272,7 @@ function CreateStatementContent() {
             setAvailableTags([...availableTags, data]);
             setSelectedTags([...selectedTags, data.id]);
             setNewTag('');
+            showToastMessage('タグを追加しました');
         } catch (error: unknown) {
             showToastMessage('タグの追加に失敗しました');
             console.error('タグの追加に失敗しました', error);
@@ -212,6 +337,15 @@ function CreateStatementContent() {
 
     return (
         <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
+            {/* 確認ダイアログ */}
+            <ConfirmDialog
+                isOpen={showConfirmDialog}
+                onClose={() => setShowConfirmDialog(false)}
+                onConfirm={confirmAddTag}
+                title={`「${tagToAdd}」というタグを追加しますか？`}
+                message={`追加する前に「${tagToAdd}」という名前の類似タグがないか確認してください。`}
+            />
+
             {showToast && (
                 <div className="fixed inset-0 flex items-center justify-center z-[9999]">
                     <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-md shadow-lg max-w-md animate-fade-in">
@@ -222,58 +356,83 @@ function CreateStatementContent() {
 
             <section className="text-gray-600 body-font bg-white">
                 <div className="container px-5 py-2 mx-auto">
-                    <Header title="新規発言登録" />
+                    <Header />
                 </div>
             </section>
 
-            <div className="container mx-auto px-5 py-8">
-                <div className="max-w-2xl mx-auto bg-white p-6 rounded-lg shadow-sm">
+            <div className="container mx-auto px-4 pt-4">
+                {politician && (
+                    <div className="max-w-2xl mx-auto bg-gray-700 rounded-t-md">
+                        <div className="p-4 flex items-center">
+                            {politician.image_path && (
+                                <div className="mr-4 ml-2 flex-shrink-0">
+                                    <div className="w-12 h-12 rounded-full overflow-hidden">
+                                        <Image
+                                            src={politician.image_path.startsWith('http') ? politician.image_path : `/${politician.image_path}`}
+                                            alt={`${politician.last_name}${politician.first_name}`}
+                                            width={64}
+                                            height={64}
+                                            className="w-full h-full object-cover border-2 border-white rounded-full"
+                                        />
+                                    </div>
+                                </div>
+                            )}
+                            <div>
+                                <h2 className="font-bold text-lg text-white">
+                                    {politician.last_name}{politician.first_name}の問題発言を登録
+                                </h2>
+                                <p className="text-xs text-white">
+                                    {politician.parties?.name || '無所属'}
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="max-w-2xl mx-auto bg-white p-6 rounded-b-md shadow-sm">
                     {error && (
-                        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+                        <div className="bg-red-50 border border-red-600 text-red-700 px-4 py-3 rounded mb-4">
                             {error}
                         </div>
                     )}
 
                     <form onSubmit={handleSubmit} className="space-y-4">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                タイトル
-                            </label>
-                            <input
-                                type="text"
-                                name="title"
-                                value={formData.title}
-                                onChange={handleChange}
-                                required
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                発言日
-                            </label>
-                            <input
-                                type="date"
-                                name="statement_date"
-                                value={formData.statement_date}
-                                onChange={handleChange}
-                                required
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                画像
-                            </label>
-                            <input
-                                type="file"
-                                ref={fileInputRef}
-                                onChange={handleImageChange}
-                                accept="image/*"
-                                className="mt-1 block w-full"
-                            />
+                        <div className="mb-6">
+                            {!imagePreview && (
+                                <div 
+                                    className="flex items-center justify-center w-full"
+                                    onDragEnter={handleDragEnter}
+                                    onDragLeave={handleDragLeave}
+                                    onDragOver={handleDragOver}
+                                    onDrop={handleDrop}
+                                >
+                                    <label 
+                                        htmlFor="dropzone-file" 
+                                        className={`flex flex-col items-center justify-center w-full h-52 border-2 ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'} border-dashed rounded-lg cursor-pointer`}
+                                        onDragEnter={handleDragEnter}
+                                        onDragLeave={handleDragLeave}
+                                        onDragOver={handleDragOver}
+                                        onDrop={handleDrop}
+                                    >
+                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">スクリーンショットを登録</span></p>
+                                            <svg className="w-8 h-8 mb-3 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                                                <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2"/>
+                                            </svg>
+                                            <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">クリックしてアップロード</span><br />またはドラッグ＆ドロップ</p>
+                                            <p className="text-xs text-gray-500">PNG, JPG (最大 1200x1200px)</p>
+                                        </div>
+                                        <input 
+                                            id="dropzone-file" 
+                                            type="file" 
+                                            ref={fileInputRef}
+                                            onChange={handleImageChange}
+                                            accept="image/png,image/jpeg"
+                                            className="hidden" 
+                                        />
+                                    </label>
+                                </div>
+                            )}
                             {imagePreview && (
                                 <div className="mt-4">
                                     <div className="relative w-full h-full">
@@ -302,40 +461,23 @@ function CreateStatementContent() {
                             )}
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                内容
-                            </label>
-                            <textarea
-                                name="content"
-                                value={formData.content}
-                                onChange={handleChange}
-                                required
-                                rows={5}
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700">
-                                エビデンスのURL
+                        <div className="mb-6">
+                            <label className="text-gray-700 text-sm font-bold mb-2 block">
+                              タイトル
                             </label>
                             <input
-                                type="url"
-                                name="evidence_url"
-                                value={formData.evidence_url}
+                                type="text"
+                                name="title"
+                                value={formData.title}
                                 onChange={handleChange}
-                                placeholder="https://www.youtube.com/watch?xxx"
-                                className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                required
+                                className="w-full px-4 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
                             />
-                            <small className="text-gray-500">
-                                発言の証拠となるURLを入力してください。
-                            </small>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="block text-sm font-medium text-gray-700">
-                                タグ
+                        <div className="space-y-2 mb-6">
+                            <label className="text-gray-700 text-sm font-bold mb-2 block">
+                              タグ
                             </label>
                             <div className="flex flex-wrap gap-2 mb-2">
                                 {availableTags.map(tag => (
@@ -361,8 +503,8 @@ function CreateStatementContent() {
                                     type="text"
                                     value={newTag}
                                     onChange={(e) => setNewTag(e.target.value)}
-                                    placeholder="新しいタグを追加"
-                                    className="flex-1 rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500"
+                                    placeholder="タグを追加"
+                                    className="w-2/3 px-4 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
                                     onKeyPress={(e) => {
                                         if (e.key === 'Enter') {
                                             e.preventDefault();
@@ -379,6 +521,71 @@ function CreateStatementContent() {
                                 </button>
                             </div>
                         </div>
+
+                        <div className="mb-6">
+                            <button
+                                type="button"
+                                onClick={() => setShowOptions(!showOptions)}
+                                className="flex items-center justify-center w-full text-sm text-gray-600 hover:text-gray-900"
+                            >
+                                <span className="mr-2 text-blue-700 font-semibold">暴言詳細を登録する</span>
+                                <svg
+                                    className={`text-blue-700 w-4 h-4 transform transition-transform ${showOptions ? 'rotate-180' : ''}`}
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                </svg>
+                            </button>
+                        </div>
+
+                        {showOptions && (
+                            <div className="space-y-4">
+                                <div className="mb-6">
+                                    <label className="text-gray-700 text-sm font-bold mb-2 block">
+                                        発言日
+                                    </label>
+                                    <input
+                                        type="date"
+                                        name="statement_date"
+                                        value={formData.statement_date}
+                                        onChange={handleChange}
+                                        className="w-full px-4 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="text-gray-700 text-sm font-bold mb-2 block">
+                                        内容
+                                    </label>
+                                    <textarea
+                                        name="content"
+                                        value={formData.content}
+                                        onChange={handleChange}
+                                        rows={5}
+                                        className="w-full px-4 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                </div>
+
+                                <div className="mb-6">
+                                    <label className="text-gray-700 text-sm font-bold mb-2 block">
+                                        エビデンスのURL
+                                    </label>
+                                    <input
+                                        type="url"
+                                        name="evidence_url"
+                                        value={formData.evidence_url}
+                                        onChange={handleChange}
+                                        placeholder="https://www.youtube.com/watch?xxx"
+                                        className="w-full px-4 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                                    />
+                                    <small className="text-gray-500">
+                                        発言の証拠となるURLを入力してください。
+                                    </small>
+                                </div>
+                            </div>
+                        )}
 
                         <div className="flex justify-end space-x-3">
                             <button
