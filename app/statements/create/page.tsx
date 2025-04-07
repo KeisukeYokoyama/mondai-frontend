@@ -85,6 +85,7 @@ function CreateStatementContent() {
   const [newTag, setNewTag] = useState('');
   const [toastMessage, setToastMessage] = useState<string>('');
   const [showToast, setShowToast] = useState(false);
+  const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [showOptions, setShowOptions] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -120,26 +121,6 @@ function CreateStatementContent() {
     }
   }, [user]);
 
-  // // バケットの存在確認
-  // useEffect(() => {
-  //     const checkBucket = async () => {
-  //         try {
-  //             const exists = await statementAPI.checkBucket();
-  //             if (!exists) {
-  //                 setError('statements バケットが存在しません');
-  //             }
-  //         } catch (err) {
-  //             console.error('バケットの確認に失敗しました', err);
-  //             setError('ストレージの設定を確認してください');
-  //         }
-  //     };
-
-  //     // ユーザーがログインしている場合のみバケットをチェック
-  //     if (user) {
-  //         checkBucket();
-  //     }
-  // }, [user]);
-
   // 政治家の詳細情報を取得
   useEffect(() => {
     const fetchPolitician = async () => {
@@ -169,9 +150,10 @@ function CreateStatementContent() {
     );
   }
 
-  // Toastを表示する関数
-  const showToastMessage = (message: string) => {
+  // Toastを表示する関数を修正
+  const showToastMessage = (message: string, type: 'success' | 'error' = 'error') => {
     setToastMessage(message);
+    setToastType(type);
     setShowToast(true);
     setTimeout(() => {
       setShowToast(false);
@@ -273,7 +255,7 @@ function CreateStatementContent() {
       setAvailableTags([...availableTags, data]);
       setSelectedTags([...selectedTags, data.id]);
       setNewTag('');
-      showToastMessage('タグを追加しました');
+      showToastMessage('タグを追加しました', 'success');
     } catch (error: unknown) {
       showToastMessage('タグの追加に失敗しました');
       console.error('タグの追加に失敗しました', error);
@@ -296,13 +278,35 @@ function CreateStatementContent() {
 
     try {
       const supabase = createClientComponentClient();
+
+      // 画像のアップロード処理
+      let image_path = null;
+      if (image) {
+        const fileExt = image.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from('statements')
+          .upload(filePath, image);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        // 画像のパスを設定
+        image_path = filePath;
+      }
+
       const statementData: Omit<Statement, 'id' | 'created_at' | 'updated_at'> = {
         title: formData.title,
-        statement_date: formData.statement_date,
+        statement_date: formData.statement_date || new Date().toISOString().split('T')[0],
         content: formData.content,
-        speaker_id: formData.speaker_id,
+        speaker_id: speaker_id as string,
         evidence_url: formData.evidence_url || '',
-        user_id: user.id as string
+        user_id: user.id as string,
+        image_path: image_path
       };
 
       console.log('送信するデータ:', statementData);
@@ -333,6 +337,7 @@ function CreateStatementContent() {
       router.push(`/politicians/${speaker_id}`);
     } catch (error) {
       console.error('発言の登録に失敗しました:', error);
+      showToastMessage('発言の登録に失敗しました');
     }
   };
 
@@ -365,7 +370,11 @@ function CreateStatementContent() {
 
       {showToast && (
         <div className="fixed inset-0 flex items-center justify-center z-[9999]">
-          <div className="bg-red-100 border border-red-400 text-red-700 px-6 py-4 rounded-md shadow-lg max-w-md animate-fade-in">
+          <div className={`${
+            toastType === 'success' 
+              ? 'bg-green-50 border-green-400 text-green-700' 
+              : 'bg-red-50 border-red-400 text-red-700'
+            } px-6 py-3 min-w-72 rounded-md shadow-lg max-w-md animate-fade-in border`}>
             {toastMessage}
           </div>
         </div>
@@ -490,6 +499,7 @@ function CreateStatementContent() {
                 required
                 className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
               />
+              <small className="text-gray-500">検索でヒットしやすいタイトルを入力してください</small>
             </div>
 
             <div className="space-y-2 mb-6">
@@ -537,6 +547,7 @@ function CreateStatementContent() {
                   追加
                 </button>
               </div>
+              <small className="text-gray-500 block -mt-1">類似するタグがない場合に追加してください</small>
             </div>
 
             <div className="mb-6">

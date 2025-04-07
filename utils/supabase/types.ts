@@ -71,10 +71,10 @@ export interface Statement {
   id: string
   title: string
   content: string
-  speaker_id: string | null
+  speaker_id: string
   party_id?: number
-  statement_date: string
-  image_path?: string | File
+  statement_date: string | null
+  image_path?: string | null
   evidence_url?: string
   user_id: string
   created_at: string
