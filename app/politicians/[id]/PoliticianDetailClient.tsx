@@ -176,13 +176,13 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
               <div key={statement.id} className="p-2 md:w-1/3 w-full">
                 <div className="border border-gray-200 rounded-md bg-white shadow-sm">
                   {statement.image_path && (
-                    <div className="flex items-center justify-center p-4">
+                    <div className="flex items-center justify-center pb-4">
                       <Image 
                         src={getImagePath(statement.image_path)}
                         alt={statement.title} 
                         width={400}
                         height={300}
-                        className="w-full h-full object-cover object-center rounded"
+                        className="w-full h-full object-cover object-center rounded-t-md"
                       />
                     </div>
                   )}
@@ -192,7 +192,7 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
                       {statement.content}
                     </p>
                     {statement.tags && statement.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-2">
+                      <div className="flex flex-wrap gap-1">
                         {statement.tags.map((tag) => (
                           <Link 
                             href={`/statements?tag=${tag.id}`} 
@@ -204,12 +204,12 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
                         ))}
                       </div>
                     )}
-                    <div className="text-xs text-gray-500">
+                    {/* <div className="text-xs text-gray-500">
                       {statement.statement_date 
                         ? new Date(statement.statement_date).toLocaleDateString('ja-JP')
                         : '日付なし'
                       }
-                    </div>
+                    </div> */}
                   </div>
                 </div>
               </div>
