@@ -514,7 +514,7 @@ export default function Home() {
 
             {/* モーダル */}
             {isModalOpen && (
-              <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start pt-12 justify-center z-50">
+              <div className="fixed inset-0 bg-gray-100/10 backdrop-blur-xl flex items-start pt-12 justify-center z-50">
                 <div className="bg-white p-6 rounded-lg w-full max-w-md mx-4">
                   <div className="flex justify-between items-center mb-4">
                     <h3 className="text-lg font-bold">詳細検索</h3>
