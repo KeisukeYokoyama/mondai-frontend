@@ -104,6 +104,7 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState<SpeakerWithRelations[]>([]);
   const [selectedType, setSelectedType] = useState<number>(0);
   const [selectedParty, setSelectedParty] = useState<number>(3924);
+  const [selectedChildParty, setSelectedChildParty] = useState<number | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<number>(0);
   const [selectedPrefecture, setSelectedPrefecture] = useState<number>(0);
   const [selectedCity, setSelectedCity] = useState<number>(0);
@@ -144,7 +145,7 @@ export default function Home() {
         s: params.s,
         chamber: params.chamber,
         gender: params.gender,
-        party_id: params.party_id,
+        party_id: selectedChildParty ? String(selectedChildParty) : params.party_id,
         prefecture_id: params.prefecture_id ? String(params.prefecture_id) : undefined,
         city_id: params.city_id,
         per_page: 20
@@ -433,7 +434,16 @@ export default function Home() {
   }, []);
 
   const handlePartyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedParty(Number(e.target.value));
+    const value = Number(e.target.value);
+    setSelectedParty(value);
+    if (value !== OTHER_PARTY_ID) {
+      setSelectedChildParty(null);
+    }
+  }, []);
+
+  const handleChildPartyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = Number(e.target.value);
+    setSelectedChildParty(value);
   }, []);
 
   const handleRegionChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -552,8 +562,8 @@ export default function Home() {
                       <div className="relative">
                         <select 
                           className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-md appearance-none bg-white"
-                          value={selectedParty}
-                          onChange={handlePartyChange}
+                          value={selectedChildParty || ''}
+                          onChange={handleChildPartyChange}
                         >
                           <option value="">選択してください</option>
                           {childParties.map((party) => (
@@ -741,7 +751,7 @@ export default function Home() {
                           gender: selectedGender === 0 ? undefined : 
                                  selectedGender === 1 ? '男' : 
                                  selectedGender === 2 ? '女' : undefined,
-                          party_id: selectedParty ? String(selectedParty) : undefined,
+                          party_id: selectedChildParty ? String(selectedChildParty) : selectedParty ? String(selectedParty) : undefined,
                           prefecture_id: selectedPrefecture,
                           city_id: selectedCity ? String(selectedCity) : undefined
                         };
