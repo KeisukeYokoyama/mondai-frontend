@@ -1,6 +1,13 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { Statement } from './types'
 
+// Fileライクなオブジェクトの型定義
+type FileObject = {
+  name: string;
+  type: string;
+  size: number;
+};
+
 export const statementAPI = {
   // バケットの存在確認
   checkBucket: async () => {
@@ -24,16 +31,11 @@ export const statementAPI = {
     
     // 画像アップロード処理
     let finalImagePath = image_path;
-    if (image_path && image_path instanceof File) {
-      // バケットの存在確認
-      const bucketExists = await statementAPI.checkBucket();
-      if (!bucketExists) {
-        throw new Error('statements バケットが存在しません');
-      }
-
+    const file = image_path as unknown as File;
+    if (file && typeof file === 'object' && 'name' in file) {
       const { data: uploadData, error: uploadError } = await supabase.storage
         .from('statements')
-        .upload(`${Date.now()}-${image_path.name}`, image_path);
+        .upload(`${Date.now()}-${file.name}`, file);
 
       if (uploadError) throw uploadError;
       finalImagePath = uploadData.path;
