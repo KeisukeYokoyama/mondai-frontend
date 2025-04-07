@@ -542,7 +542,7 @@ function CreateStatementContent() {
 
                         {showOptions && (
                             <div className="space-y-4">
-                                <div className="mb-6">
+                                <div>
                                     <label className="text-gray-700 text-sm font-bold mb-2 block">
                                         発言日
                                     </label>
@@ -551,11 +551,11 @@ function CreateStatementContent() {
                                         name="statement_date"
                                         value={formData.statement_date}
                                         onChange={handleChange}
-                                        className="w-full px-4 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                                        className="w-full px-4 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500 appearance-none"
                                     />
                                 </div>
 
-                                <div className="mb-6">
+                                <div>
                                     <label className="text-gray-700 text-sm font-bold mb-2 block">
                                         内容
                                     </label>
@@ -568,7 +568,7 @@ function CreateStatementContent() {
                                     />
                                 </div>
 
-                                <div className="mb-6">
+                                <div>
                                     <label className="text-gray-700 text-sm font-bold mb-2 block">
                                         エビデンスのURL
                                     </label>

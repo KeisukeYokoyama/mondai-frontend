@@ -498,7 +498,7 @@ export default function Home() {
             <div className="relative">
               <input 
                 type="text" 
-                className="w-full pl-4 pr-12 py-2 bg-white border border-gray-300 rounded-md text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="w-full pl-4 pr-12 py-3 bg-white border border-gray-300 rounded-md text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 placeholder="政治家名を入力" 
                 value={searchText}
                 onChange={handleInputChange}
@@ -527,33 +527,47 @@ export default function Home() {
                   </div>
 
                   <div className="space-y-4">
-                    <select 
-                      className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
-                      value={selectedParty}
-                      onChange={handlePartyChange}
-                    >
-                      <option value="">政党を選択</option>
-                      {parentParties.map((party) => (
-                        <option key={party.uuid} value={party.id}>
-                          {party.name}
-                        </option>
-                      ))}
-                    </select>
-
-                    {/* 「その他」が選択された場合のみ子政党を表示 */}
-                    {Number(selectedParty) === OTHER_PARTY_ID && childParties.length > 0 && (
+                    <div className="relative">
                       <select 
-                        className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
+                        className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-md appearance-none bg-white"
                         value={selectedParty}
                         onChange={handlePartyChange}
                       >
-                        <option value="">選択してください</option>
-                        {childParties.map((party) => (
+                        <option value="">政党を選択</option>
+                        {parentParties.map((party) => (
                           <option key={party.uuid} value={party.id}>
                             {party.name}
                           </option>
                         ))}
                       </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-2 text-gray-700">
+                        <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                          <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                        </svg>
+                      </div>
+                    </div>
+
+                    {/* その他政党が選択された場合の子政党選択 */}
+                    {Number(selectedParty) === OTHER_PARTY_ID && childParties.length > 0 && (
+                      <div className="relative">
+                        <select 
+                          className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-md appearance-none bg-white"
+                          value={selectedParty}
+                          onChange={handlePartyChange}
+                        >
+                          <option value="">選択してください</option>
+                          {childParties.map((party) => (
+                            <option key={party.uuid} value={party.id}>
+                              {party.name}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-2 text-gray-700">
+                          <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                          </svg>
+                        </div>
+                      </div>
                     )}
 
                     {/* 種別選択 */}
@@ -647,51 +661,72 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="space-y-4 pb-2">
+                    <div className="space-y-4">
                       {/* 地域選択 */}
-                      <select 
-                        className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
-                        value={selectedRegion}
-                        onChange={handleRegionChange}
-                      >
-                        <option value={0}>地域を選択</option>
-                        {regions.map((region) => (
-                          <option key={region.id} value={region.id}>
-                            {region.name}
-                          </option>
-                        ))}
-                      </select>
-
-                      {/* 都道府県選択（地域が選択されている場合のみ表示） */}
-                      {selectedRegion > 0 && (
+                      <div className="relative">
                         <select 
-                          className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
-                          value={selectedPrefecture}
-                          onChange={handlePrefectureChange}
+                          className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-md appearance-none bg-white"
+                          value={selectedRegion}
+                          onChange={handleRegionChange}
                         >
-                          <option value={0}>都道府県を選択</option>
-                          {prefectures.map((prefecture) => (
-                            <option key={prefecture.id} value={prefecture.id}>
-                              {prefecture.name}
+                          <option value={0}>地域を選択</option>
+                          {regions.map((region) => (
+                            <option key={region.id} value={region.id}>
+                              {region.name}
                             </option>
                           ))}
                         </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-2 text-gray-700">
+                          <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* 都道府県選択 */}
+                      {selectedRegion > 0 && (
+                        <div className="relative">
+                          <select 
+                            className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-md appearance-none bg-white"
+                            value={selectedPrefecture}
+                            onChange={handlePrefectureChange}
+                          >
+                            <option value={0}>都道府県を選択</option>
+                            {prefectures.map((prefecture) => (
+                              <option key={prefecture.id} value={prefecture.id}>
+                                {prefecture.name}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-2 text-gray-700">
+                            <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                            </svg>
+                          </div>
+                        </div>
                       )}
 
-                      {/* 市区町村選択（都道府県が選択されている場合のみ表示） */}
+                      {/* 市区町村選択 */}
                       {selectedPrefecture > 0 && (
-                        <select 
-                          className="w-full pl-4 pr-12 py-2 text-sm border border-gray-300 rounded-md"
-                          value={selectedCity}
-                          onChange={handleCityChange}
-                        >
-                          <option value={0}>市区町村を選択</option>
-                          {cities.map((city) => (
-                            <option key={city.id} value={city.id}>
-                              {city.name}
-                            </option>
-                          ))}
-                        </select>
+                        <div className="relative">
+                          <select 
+                            className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-md appearance-none bg-white"
+                            value={selectedCity}
+                            onChange={handleCityChange}
+                          >
+                            <option value={0}>市区町村を選択</option>
+                            {cities.map((city) => (
+                              <option key={city.id} value={city.id}>
+                                {city.name}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-2 text-gray-700">
+                            <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                            </svg>
+                          </div>
+                        </div>
                       )}
                     </div>
 
@@ -714,7 +749,7 @@ export default function Home() {
                         handleSearch(searchParams);
                         setIsModalOpen(false);
                       }}
-                      className="w-full pl-4 pr-12 py-2 text-sm border rounded-md bg-gray-900 text-white hover:bg-gray-800"
+                      className="w-full px-4 py-3 border rounded-md bg-gray-900 text-white hover:bg-gray-800"
                     >
                       検索
                     </button>
