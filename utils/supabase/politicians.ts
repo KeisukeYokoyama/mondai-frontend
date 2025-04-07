@@ -293,7 +293,10 @@ export const politicianAPI = {
           ),
           statements (
             id,
+            title,
             content,
+            statement_date,
+            image_path,
             created_at,
             statement_tag (
               tags (
@@ -313,7 +316,10 @@ export const politicianAPI = {
         ...data,
         statements: data.statements?.map((statement: {
           id: string;
+          title: string;
           content: string;
+          statement_date: string;
+          image_path: string;
           created_at: string;
           statement_tag?: Array<{
             tags: {

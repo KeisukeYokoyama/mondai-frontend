@@ -2,9 +2,12 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   images: {
-    domains: [
-      'pbs.twimg.com',  // Twitterの画像ドメインを許可
-      'jqfxwjhffbyketlrygiw.supabase.co'  // Supabaseのドメインを追加
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: '*.supabase.co',
+        pathname: '/storage/v1/object/public/**',
+      }
     ],
   },
 };
