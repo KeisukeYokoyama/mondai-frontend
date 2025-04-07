@@ -187,7 +187,7 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
                     </div>
                   )}
                   <div className="pb-4 px-4">
-                    <h3 className="font-bold text-sm mb-2">{statement.title}</h3>
+                    <h3 className="font-bold text-sm mb-2 text-gray-600">{statement.title}</h3>
                     <p className="text-sm text-gray-600 mb-2 line-clamp-3">
                       {statement.content}
                     </p>
