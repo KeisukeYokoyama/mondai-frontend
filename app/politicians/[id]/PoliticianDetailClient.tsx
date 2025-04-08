@@ -61,6 +61,11 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
       return `${supabaseUrl}/storage/v1/object/public/statements/${path}`;
     }
     
+    // /images/politicians/... のようなパスの場合
+    if (path.startsWith('/images/')) {
+      return path;
+    }
+    
     return path.startsWith('/') ? path : `/${path}`;
   };
 
@@ -195,16 +200,18 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
                       {statement.tags && statement.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
                           {statement.tags.map((tag) => (
-                            <span 
-                              key={tag.tags.id} 
-                              className="bg-gray-100 text-gray-500 text-xs px-2.5 py-0.5 rounded-md hover:bg-gray-200 cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.location.href = `/statements?tag=${tag.tags.id}`;
-                              }}
-                            >
-                              {tag.tags.name}
-                            </span>
+                            tag.tags ? (
+                              <span 
+                                key={tag.tags.id} 
+                                className="bg-gray-100 text-gray-500 text-xs px-2.5 py-0.5 rounded-md hover:bg-gray-200 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.location.href = `/statements?tag=${tag.tags.id}`;
+                                }}
+                              >
+                                {tag.tags.name}
+                              </span>
+                            ) : null
                           ))}
                         </div>
                       )}
