@@ -1,5 +1,5 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import { Statement } from './types'
+import { Statement, StatementWithRelations } from './types'
 
 // Fileライクなオブジェクトの型定義
 type FileObject = {
@@ -74,5 +74,31 @@ export const statementAPI = {
       );
 
     if (error) throw error;
+  },
+
+  // 詳細取得
+  getDetail: async (id: string) => {
+    const supabase = createClientComponentClient()
+    try {
+      const { data, error } = await supabase
+        .from('statements')
+        .select(`
+          *,
+          speaker:speakers(*, parties(*)),
+          tags:statement_tag(tags(*))
+        `)
+        .eq('id', id)
+        .single();
+      
+      if (error) {
+        console.error('Supabaseエラー:', error);
+        return { data: null, error };
+      }
+      
+      return { data, error: null };
+    } catch (err) {
+      console.error('予期せぬエラー:', err);
+      return { data: null, error: err };
+    }
   }
 }

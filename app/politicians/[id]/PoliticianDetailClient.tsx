@@ -174,44 +174,43 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
           <div className="flex flex-wrap -m-4">
             {politician.statements.map((statement) => (
               <div key={statement.id} className="p-2 md:w-1/3 w-full">
-                <div className="border border-gray-200 rounded-md bg-white shadow-sm">
-                  {statement.image_path && (
-                    <div className="flex items-center justify-center pb-4">
-                      <Image 
-                        src={getImagePath(statement.image_path)}
-                        alt={statement.title} 
-                        width={400}
-                        height={300}
-                        className="w-full h-full object-cover object-center rounded-t-md"
-                      />
-                    </div>
-                  )}
-                  <div className="pb-4 px-4">
-                    <h3 className="font-bold mb-2 text-gray-900">{statement.title}</h3>
-                    <p className="text-sm text-gray-600 mb-2 line-clamp-3">
-                      {statement.content}
-                    </p>
-                    {statement.tags && statement.tags.length > 0 && (
-                      <div className="flex flex-wrap gap-1">
-                        {statement.tags.map((tag) => (
-                          <Link 
-                            href={`/statements?tag=${tag.id}`} 
-                            key={tag.id} 
-                            className="bg-gray-100 text-gray-500 text-xs px-2.5 py-0.5 rounded-md hover:bg-gray-200"
-                          >
-                            {tag.name}
-                          </Link>
-                        ))}
+                <Link href={`/statements/${statement.id}`} className="block">
+                  <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
+                    {statement.image_path && (
+                      <div className="flex items-center justify-center pb-4">
+                        <Image 
+                          src={getImagePath(statement.image_path)}
+                          alt={statement.title} 
+                          width={400}
+                          height={300}
+                          className="w-full h-full object-cover object-center rounded-t-md"
+                        />
                       </div>
                     )}
-                    {/* <div className="text-xs text-gray-500">
-                      {statement.statement_date 
-                        ? new Date(statement.statement_date).toLocaleDateString('ja-JP')
-                        : '日付なし'
-                      }
-                    </div> */}
+                    <div className="pb-4 px-4">
+                      <h3 className="font-bold mb-2 text-gray-900">{statement.title}</h3>
+                      <p className="text-sm text-gray-600 mb-2 line-clamp-3">
+                        {statement.content}
+                      </p>
+                      {statement.tags && statement.tags.length > 0 && (
+                        <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
+                          {statement.tags.map((tag) => (
+                            <span 
+                              key={tag.id} 
+                              className="bg-gray-100 text-gray-500 text-xs px-2.5 py-0.5 rounded-md hover:bg-gray-200 cursor-pointer"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.location.href = `/statements?tag=${tag.id}`;
+                              }}
+                            >
+                              {tag.name}
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                </div>
+                </Link>
               </div>
             ))}
           </div>

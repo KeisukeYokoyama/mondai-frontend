@@ -86,6 +86,12 @@ export interface Statement {
   }[]
 }
 
+export interface StatementWithRelations extends Omit<Statement, 'speaker_id' | 'party_id'> {
+  speaker: Speaker;
+  parties?: Party;
+  tags?: Tag[];
+}
+
 export interface Tag {
   id: number
   name: string
