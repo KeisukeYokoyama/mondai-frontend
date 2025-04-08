@@ -494,7 +494,11 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Header />
+      <section className="text-gray-600 body-font bg-white">
+        <div className="container px-5 py-2 mx-auto">
+          <Header />
+        </div>
+      </section>
       <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
         {/* <section className="text-gray-600 body-font bg-white">
           <div className="container px-5 py-2 mx-auto">

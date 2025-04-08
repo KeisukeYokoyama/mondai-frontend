@@ -22,13 +22,13 @@ export default function Footer() {
             <details>
               <summary className="py-2 outline-none cursor-pointer text-sm">虚偽の暴言があるので削除したい</summary>
               <div className="px-4 pb-4 text-sm">
-                <p>みんなの暴言は、XのAPIを使用しています。XのAPIを使用しているため、虚偽の暴言は登録できません。</p>
+                <p>問題発言ドットコムは、XのAPIを使用しています。XのAPIを使用しているため、虚偽の暴言は登録できません。</p>
               </div>
             </details>
             <details>
               <summary className="py-2 outline-none cursor-pointer text-sm">政治家の画像を削除してほしい</summary>
               <div className="px-4 pb-4 text-sm">
-                <p>みんなの暴言は、XのAPIを使用しています。XのAPIを使用しているため、政治家の画像は削除できません。</p>
+                <p>問題発言ドットコムは、XのAPIを使用しています。XのAPIを使用しているため、政治家の画像は削除できません。</p>
               </div>
             </details>
           </div>

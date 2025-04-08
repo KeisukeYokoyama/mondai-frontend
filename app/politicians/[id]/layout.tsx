@@ -1,8 +1,8 @@
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = {
-  title: 'みんなの暴言',
-  description: 'みんなの暴言は、問題を発言するサイトです。',
+  title: '問題発言ドットコム',
+  description: '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
 }
 
 export default function Layout({

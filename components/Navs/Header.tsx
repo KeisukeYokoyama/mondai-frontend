@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
 import { useRouter } from 'next/navigation'
+import AuthStatus from '@/components/AuthStatus'
 
 interface HeaderProps {
   title?: string;
@@ -29,17 +30,17 @@ export default function Header({ title }: HeaderProps) {
     <>
       <nav className="bg-white border-gray-200 relative z-50">
         <div className="max-w-screen-xl flex items-center mx-auto p-2">
-          <Link href="/" className="flex items-center space-x-2">
+          <Link href="/" className="flex items-center space-x-3">
             <Image
               src='/images/Logo.svg'
-              alt='みんなの暴言'
+              alt='問題発言ドットコム'
               width={192}
               height={26}
-              className='h-6 w-auto'
+              className='h-8 w-auto'
               priority
             />
-            <span className="self-center text-base font-semibold whitespace-nowrap">
-              {title || 'みんなの暴言（仮）'}
+            <span className="self-center text-xl font-semibold whitespace-nowrap">
+              {title || '問題発言ドットコム'}
             </span>
           </Link>
 
@@ -75,6 +76,9 @@ export default function Header({ title }: HeaderProps) {
             >
               話題の問題発言
             </Link>
+            
+            {/* PC用のログイン状態表示 */}
+            <AuthStatus className="text-gray-900" />
             
             {user && (
               <button
@@ -121,6 +125,11 @@ export default function Header({ title }: HeaderProps) {
 
               {/* メニューリンク */}
               <ul className="p-4 text-right font-semibold">
+                {/* スマホ用のログイン状態表示 */}
+                <li className="mb-2">
+                  <AuthStatus className="text-gray-900" />
+                </li>
+                
                 <li className="mb-2">
                   <Link
                     href="/trending"

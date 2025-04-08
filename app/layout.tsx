@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { AuthProvider } from '@/contexts/AuthContext'
-import AuthStatus from '@/components/AuthStatus'
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -16,10 +15,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    template: '%s | みんなの暴言',
-    default: 'みんなの暴言', // デフォルトのタイトル
+    template: '%s | 問題発言ドットコム',
+    default: '問題発言ドットコム', // デフォルトのタイトル
   },
-  description: 'みんなの暴言は、問題を発言するサイトです。',
+  description: '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
 };
 
 export default function RootLayout({
@@ -33,7 +32,6 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <AuthProvider>
-          <AuthStatus />
           {children}
         </AuthProvider>
       </body>
