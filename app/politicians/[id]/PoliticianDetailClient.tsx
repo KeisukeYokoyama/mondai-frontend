@@ -196,14 +196,14 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
                         <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
                           {statement.tags.map((tag) => (
                             <span 
-                              key={tag.id} 
+                              key={tag.tags.id} 
                               className="bg-gray-100 text-gray-500 text-xs px-2.5 py-0.5 rounded-md hover:bg-gray-200 cursor-pointer"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                window.location.href = `/statements?tag=${tag.id}`;
+                                window.location.href = `/statements?tag=${tag.tags.id}`;
                               }}
                             >
-                              {tag.name}
+                              {tag.tags.name}
                             </span>
                           ))}
                         </div>
