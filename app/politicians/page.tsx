@@ -198,7 +198,7 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [selectedChildParty]);
 
   // マウント時にクライアントサイドフラグを設定
   useEffect(() => {

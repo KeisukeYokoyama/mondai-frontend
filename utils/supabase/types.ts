@@ -80,16 +80,13 @@ export interface Statement {
   created_at: string
   updated_at: string
   statement_tag?: StatementTag[]
-  tags?: {
-    id: number
-    name: string
-  }[]
+  tags?: StatementTag[]
 }
 
 export interface StatementWithRelations extends Omit<Statement, 'speaker_id' | 'party_id'> {
   speaker: Speaker;
   parties?: Party;
-  tags?: Tag[];
+  tags?: StatementTag[];
 }
 
 export interface Tag {

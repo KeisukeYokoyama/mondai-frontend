@@ -6,7 +6,7 @@ import Footer from '@/components/Navs/Footer';
 import Image from 'next/image';
 import Link from 'next/link';
 import { statementAPI } from '@/utils/supabase/statements';
-import type { StatementWithRelations } from '@/utils/supabase/types';
+import type { StatementWithRelations, StatementTag } from '@/utils/supabase/types';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 
 export default function StatementDetailClient({ id }: { id: string }) {
@@ -138,7 +138,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
                 </p>
                 {statement.tags && statement.tags.length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    {statement.tags.map((item: any, index: number) => {
+                    {statement.tags.map((item: StatementTag, index: number) => {
                       const tag = item.tags;
                       return (
                         <div key={index}>
