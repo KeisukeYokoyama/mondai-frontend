@@ -45,25 +45,13 @@ export default function Header({ title }: HeaderProps) {
           </Link>
 
           {/* デスクトップ用メニュー */}
-          <div className="hidden md:flex items-center space-x-8 text-sm font-semibold ml-auto py-3">
-            {/* <Link
-              href="/search"
-              className="text-gray-900 hover:text-blue-700"
-            >
-              問題発言を探す
-            </Link> */}
+          <div className="hidden md:flex items-center space-x-6 text-sm font-semibold ml-auto py-3">
             <Link
               href="/politicians"
               className="text-gray-900 hover:text-blue-700"
             >
               政治家を探す
             </Link>
-            <Link
-              href="/speakers"
-              className="text-gray-900 hover:text-blue-700"
-            >
-              言論人を探す
-            </Link> 
             <Link
               href="/parties"
               className="text-gray-900 hover:text-blue-700"
@@ -77,13 +65,10 @@ export default function Header({ title }: HeaderProps) {
               話題の問題発言
             </Link>
             
-            {/* PC用のログイン状態表示 */}
-            <AuthStatus className="text-gray-900" />
-            
             {user && (
               <button
                 onClick={signOut}
-                className="text-gray-900 hover:text-blue-700"
+                className="text-gray-900 hover:text-blue-700 cursor-pointer"
               >
                 ログアウト
               </button>
@@ -139,15 +124,6 @@ export default function Header({ title }: HeaderProps) {
                     話題の問題発言
                   </Link>
                 </li>
-                {/* <li className="mb-2">
-                  <Link
-                    href="/search"
-                    className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    問題発言を探す
-                  </Link>
-                </li> */}
                 <li className="mb-2">
                   <Link
                     href="/politicians"

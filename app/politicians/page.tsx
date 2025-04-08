@@ -500,13 +500,6 @@ export default function Home() {
         </div>
       </section>
       <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
-        {/* <section className="text-gray-600 body-font bg-white">
-          <div className="container px-5 py-2 mx-auto">
-            <h1 className="text-xl font-bold text-gray-900">
-              政治家一覧
-            </h1>
-          </div>
-        </section> */}
         <div className="container px-5 pt-8 mx-auto text-center relative">
           <div className="relative flex flex-col gap-4 max-w-md mx-auto">
             <div className="relative">
@@ -773,7 +766,7 @@ export default function Home() {
             )}
           </div>
         </div>
-        <div className="container px-3 pt-8 mx-auto">
+        <div className="container px-3 pt-8 mx-auto max-w-screen-md">
           <div className="flex justify-between items-center">
             <h1 className="text-xl font-bold text-gray-900">
               政治家一覧
@@ -789,13 +782,15 @@ export default function Home() {
             )}
           </div>
         </div>
-        <div className="container px-0 py-8 mx-auto">
+        <div className="container px-0 pt-6 pb-8 mx-auto max-w-screen-md">
           <div className="flex flex-col divide-y divide-gray-200">
             {Array.isArray(searchResults) && searchResults.length > 0 ? (
               searchResults.map((politician, index) => (
-                <div 
+                <Link 
+                  href={`/politicians/${politician.id}`}
                   key={politician.id || index} 
-                  className="flex items-center justify-between py-3 px-4 bg-white w-full hover:bg-gray-50 transition-colors"
+                  title={`${politician.last_name} ${politician.first_name}の問題発言`}
+                  className="flex items-center justify-between py-3 px-4 bg-white w-full hover:bg-gray-50 transition-colors cursor-pointer"
                 >
                   <div className="flex items-center">
                     <Image
@@ -829,11 +824,11 @@ export default function Home() {
                     </div>
                   </div>
                   <div className="min-w-[40px] text-right">
-                    <Link href={`/politicians/${politician.id}`} className="text-blue-500 text-sm font-bold">
+                    <span className="text-blue-500 text-sm font-bold">
                       詳細
-                    </Link>
+                    </span>
                   </div>
-                </div>
+                </Link>
               ))
             ) : searchText.length > 0 ? (
               <div className="text-center py-4 text-gray-500">
