@@ -319,7 +319,7 @@ function CreateStatementContent() {
 
       const statementData: Omit<Statement, 'id' | 'created_at' | 'updated_at'> = {
         title: formData.title,
-        statement_date: formData.statement_date || new Date().toISOString().split('T')[0],
+        statement_date: formData.statement_date || null,
         content: formData.content,
         speaker_id: speaker_id as string,
         evidence_url: formData.evidence_url || '',

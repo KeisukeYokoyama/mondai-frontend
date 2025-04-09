@@ -49,7 +49,7 @@ export const statementAPI = {
         content,
         speaker_id,
         party_id,
-        statement_date,
+        statement_date: statement_date || null,
         image_path: finalImagePath,
         evidence_url,
         user_id
