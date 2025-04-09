@@ -347,19 +347,19 @@ export default function StatementDetailClient({ id }: { id: string }) {
       <section className="mt-5 pt-2 px-4">
         <div className="max-w-screen-md mx-auto flex flex-row items-center">
           <div className="flex flex-col mb-4 w-full">
-            <h1 className="font-bold text-center">
+            <h1 className="text-center">
               <Link href={`/politicians/${statement.speaker.id}`}>
-                <span className=" text-3xl text-emerald-600">
+                <span className="font-bold text-4xl text-emerald-600 leading-tight">
                   {statement.speaker.last_name}{statement.speaker.first_name}
                 </span>
               </Link>
-              <span className="text-gray-900 text-sm ml-1">
+              <span className="text-gray-900 ml-1">
                 が
               </span>
-              <span className="text-3xl ml-1 text-red-400">
+              <span className="font-bold text-4xl ml-1 text-red-400 leading-tight">
                 {statement.title}
               </span>
-              <span className="text-gray-900 text-sm ml-1">
+              <span className="text-gray-900 ml-1">
                 という発言をしました！
               </span>
             </h1>
@@ -374,7 +374,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
                 <div key={index}>
                   <Link
                     href={`/statements?tag=${tag.id}`}
-                    className="bg-white border border-gray-200 text-gray-900 text-xs px-3 py-1 rounded-full"
+                    className="bg-white border border-gray-200 text-gray-900 text-sm px-3 py-1.5 rounded-full"
                   >
                     {tag.name}
                   </Link>
@@ -402,7 +402,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
                 </div>
               )}
               <div className="px-8 my-4">
-                <p className="text-gray-900 mb-2 pt-2">
+                <p className="text-gray-900 whitespace-pre-wrap mb-2 pt-2">
                   {statement.content}
                 </p>
                 {statement.statement_date && (
