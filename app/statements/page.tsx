@@ -18,9 +18,9 @@ interface Statement {
     id: string;
     last_name: string;
     first_name: string;
-    parties: {
+    party: {
       name: string;
-    }[];
+    };
     chamber: string | null;
     prefectures: {
       name: string;
@@ -40,9 +40,9 @@ type SupabaseStatement = {
     id: string;
     last_name: string;
     first_name: string;
-    parties: {
+    party: {
       name: string;
-    }[];
+    };
     chamber: string | null;
     prefectures: {
       name: string;
@@ -72,7 +72,7 @@ export default function Home() {
               id,
               last_name,
               first_name,
-              parties (
+              party:parties (
                 name
               ),
               chamber,
@@ -145,7 +145,7 @@ export default function Home() {
                             {statement.speaker.last_name} {statement.speaker.first_name}
                           </span>
                           <span className="text-gray-500 text-sm">
-                            ({statement.speaker.parties?.[0]?.name || '無所属'})
+                            {statement.speaker.party?.name || '無所属'}
                           </span>
                         </div>
                         {statement.content && (
