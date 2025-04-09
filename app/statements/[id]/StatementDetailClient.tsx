@@ -9,6 +9,7 @@ import { statementAPI } from '@/utils/supabase/statements';
 import { commentAPI } from '@/utils/supabase/comments';
 import type { StatementWithRelations, StatementTag } from '@/utils/supabase/types';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { recordStatementView } from '@/utils/statementViews';
 
 interface Comment {
   id: string;
@@ -116,6 +117,9 @@ export default function StatementDetailClient({ id }: { id: string }) {
         }
 
         setStatement(data);
+
+        // 表示回数を記録
+        await recordStatementView(id);
       } catch (err) {
         console.error('エラー詳細:', err);
         setError(err instanceof Error ? err.message : '問題発言データの取得に失敗しました');
