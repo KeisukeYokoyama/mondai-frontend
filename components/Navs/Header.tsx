@@ -59,10 +59,10 @@ export default function Header({ title }: HeaderProps) {
               政党を探す
             </Link>
             <Link
-              href="/trending"
+              href="/statements"
               className="text-gray-900 hover:text-blue-700"
             >
-              話題の問題発言
+              問題発言を探す
             </Link>
             
             {user && (
@@ -117,11 +117,11 @@ export default function Header({ title }: HeaderProps) {
                 
                 <li className="mb-2">
                   <Link
-                    href="/trending"
+                    href="/statements"
                     className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100"
                     onClick={() => setIsOpen(false)}
                   >
-                    話題の問題発言
+                    問題発言を探す
                   </Link>
                 </li>
                 <li className="mb-2">
