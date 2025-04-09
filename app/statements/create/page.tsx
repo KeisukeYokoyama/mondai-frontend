@@ -13,6 +13,7 @@ import { Statement } from '@/utils/supabase/types';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { politicianAPI } from '@/utils/supabase/politicians';
 import type { SpeakerWithRelations } from '@/utils/supabase/types';
+import imageCompression from 'browser-image-compression';
 
 // 確認ダイアログのコンポーネント
 function ConfirmDialog({
@@ -168,21 +169,11 @@ function CreateStatementContent() {
     });
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0];
-      processFile(file);
-    } else {
-      setImage(null);
-      setImagePreview(null);
-    }
-  };
-
-  // ファイル処理の共通関数
-  const processFile = (file: File) => {
+  // 画像処理の共通関数
+  const processFile = async (file: File) => {
     // ファイルタイプの検証
-    if (!file.type.match('image/(jpeg|png)')) {
-      showToastMessage('PNGまたはJPG形式の画像のみアップロード可能です');
+    if (!file.type.match('image/(jpeg|png|webp)')) {
+      showToastMessage('PNG、JPG、またはWebP形式の画像のみアップロード可能です');
       return;
     }
 
@@ -192,12 +183,39 @@ function CreateStatementContent() {
       return;
     }
 
-    setImage(file);
-    const reader = new FileReader();
-    reader.onloadend = () => {
-      setImagePreview(reader.result as string);
-    };
-    reader.readAsDataURL(file);
+    try {
+      // 画像圧縮のオプション設定
+      const options = {
+        maxSizeMB: 1,
+        maxWidthOrHeight: 1200,
+        useWebWorker: true,
+        fileType: 'image/jpeg',
+        initialQuality: 0.8
+      };
+
+      // 画像の圧縮とリサイズ
+      const compressedFile = await imageCompression(file, options);
+      
+      setImage(compressedFile);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(compressedFile);
+    } catch (error) {
+      console.error('画像の処理に失敗しました:', error);
+      showToastMessage('画像の処理に失敗しました');
+    }
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      await processFile(file);
+    } else {
+      setImage(null);
+      setImagePreview(null);
+    }
   };
 
   // ドラッグ＆ドロップのイベントハンドラ
@@ -221,14 +239,14 @@ function CreateStatementContent() {
     e.stopPropagation();
   };
 
-  const handleDrop = (e: React.DragEvent<HTMLDivElement | HTMLLabelElement>) => {
+  const handleDrop = async (e: React.DragEvent<HTMLDivElement | HTMLLabelElement>) => {
     e.preventDefault();
     e.stopPropagation();
     setIsDragging(false);
 
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
-      processFile(file);
+      await processFile(file);
     }
   };
 

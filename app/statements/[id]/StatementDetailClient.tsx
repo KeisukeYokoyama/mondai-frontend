@@ -16,6 +16,27 @@ interface Comment {
   created_at: string;
 }
 
+// URLをリンクに変換する関数
+const convertUrlsToLinks = (text: string) => {
+  const urlRegex = /(https?:\/\/[^\s]+)/g;
+  return text.split(urlRegex).map((part, index) => {
+    if (part.match(urlRegex)) {
+      return (
+        <a
+          key={index}
+          href={part}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-500 hover:underline break-all"
+        >
+          {part}
+        </a>
+      );
+    }
+    return <span key={index} className="break-all">{part}</span>;
+  });
+};
+
 // 確認モーダルのコンポーネント
 function ConfirmDialog({
   isOpen,
@@ -35,7 +56,9 @@ function ConfirmDialog({
       <div className="fixed inset-0 bg-gray-600/10 backdrop-blur-xl" onClick={onClose}></div>
       <div className="relative bg-white rounded-lg p-6 max-w-md w-full mx-4 z-10 shadow-xl/30">
         <h3 className="font-semibold mb-4">コメント投稿の確認</h3>
-        <div className="whitespace-pre-wrap bg-gray-100 p-3 rounded mb-4 text-sm">{content}</div>
+        <div className="whitespace-pre-wrap bg-gray-100 p-3 rounded mb-4 text-sm">
+          {convertUrlsToLinks(content)}
+        </div>
         <p className="mb-4 text-sm">
           <small>誹謗中傷、脅迫といった他人を傷つけるコメントを書き込もうとしていないか、ご確認ください。</small>
         </p>
@@ -385,9 +408,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
                 )}
                 {statement.evidence_url && (
                   <div className="mt-2 truncate text-sm">
-                    <a href={statement.evidence_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
-                      {statement.evidence_url}
-                    </a>
+                    {convertUrlsToLinks(statement.evidence_url)}
                   </div>
                 )}
               </div>
@@ -410,20 +431,25 @@ export default function StatementDetailClient({ id }: { id: string }) {
           </div>
           {/* コメント一覧 */}
           <div className="space-y-3 mb-4">
-            {comments.map((comment) => (
-              <div key={comment.id} className="bg-white p-4 rounded-sm shadow-sm">
-                <p className="text-gray-800 whitespace-pre-wrap">{comment.content}</p>
-                <p className="text-xs text-gray-500 mt-2">
-                  {new Date(comment.created_at).toLocaleString('ja-JP')}
-                  <button className="text-xs ml-2 text-blue-500">
-                    [通報]
-                  </button>
-                  <button className="text-xs ml-2 text-blue-500">
-                    [返信]
-                  </button>
-                </p>
-              </div>
-            ))}
+            {comments.map((comment, index) => {
+              const commentNumber = totalComments - ((currentPage - 1) * commentsPerPage + index);
+              return (
+                <div key={comment.id} className="bg-white py-4 px-4 rounded-sm shadow-sm">
+                  <p className="text-xs text-gray-500">
+                    #{commentNumber} {new Date(comment.created_at).toLocaleString('ja-JP')}
+                    <button className="text-xs ml-2 text-blue-500">
+                      [通報]
+                    </button>
+                    <button className="text-xs ml-2 text-blue-500">
+                      [返信]
+                    </button>
+                  </p>
+                  <p className="text-gray-800 whitespace-pre-wrap mt-2">
+                    {convertUrlsToLinks(comment.content)}
+                  </p>
+                </div>
+              );
+            })}
           </div>
 
           {/* ページネーション */}
