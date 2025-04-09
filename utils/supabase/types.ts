@@ -61,10 +61,7 @@ export interface Party {
 }
 
 export interface PartyDetail extends Party {
-  logo_url: string | null
-  headquarters: string | null
-  member_count: number | null
-  policy_summary: string | null
+  // 追加のプロパティはありません
 }
 
 export interface Statement {

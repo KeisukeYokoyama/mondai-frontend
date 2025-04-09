@@ -135,15 +135,6 @@ export default function Header({ title }: HeaderProps) {
                 </li>
                 <li className="mb-2">
                   <Link
-                    href="/speakers"
-                    className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100"
-                    onClick={() => setIsOpen(false)}
-                  >
-                    言論人を探す
-                  </Link>
-                </li>
-                <li className="mb-2">
-                  <Link
                     href="/parties"
                     className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100"
                   >

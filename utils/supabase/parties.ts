@@ -54,10 +54,6 @@ export const partiesAPI = {
         facebook_url,
         instagram_url,
         youtube_url,
-        logo_url,
-        headquarters,
-        member_count,
-        policy_summary,
         created_at,
         updated_at
       `)
