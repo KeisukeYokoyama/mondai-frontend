@@ -76,28 +76,18 @@ export default function PartyDetailClient({ id }: { id: string }) {
       <section className="mt-5 pt-2 px-4">
         <div className="w-full md:w-1/2 md:mx-auto flex flex-col md:flex-row items-center justify-center text-center">
           <div className="flex flex-col">
-            <div className="md:text-justify mb-3">
+            <div className="mb-3">
               <div className="flex flex-col mb-5">
                 <p className="text-gray-900 font-bold text-2xl">
                   {party.name}
                 </p>
-                {party.abbreviation && (
-                  <p className="text-gray-700 text-sm mt-2">
-                    略称: {party.abbreviation}
-                  </p>
-                )}
-                {party.leader_name && (
-                  <p className="text-gray-700 text-sm mt-1">
-                    代表: {party.leader_name}
-                  </p>
-                )}
                 {party.description && (
                   <p className="text-gray-700 text-sm mt-2">
                     {party.description}
                   </p>
                 )}
 
-                <ul className="mt-2 flex flex-row items-center justify-center md:justify-start">
+                <ul className="mt-2 flex flex-row items-center justify-center">
                   {isValidUrl(party.official_website) && (
                     <li className="mr-5">
                       <a href={party.official_website!} target="_blank" rel="noopener noreferrer" aria-label="公式サイト">
@@ -133,39 +123,53 @@ export default function PartyDetailClient({ id }: { id: string }) {
         </div>
       </section>
 
-      <section className="container px-5 py-8 mx-auto">
-        <h2 className="text-xl font-bold text-gray-900 mb-6">
-          {party.name}の基本情報
-        </h2>
-        
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <dl className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {party.founded_date && (
-              <div>
-                <dt className="text-sm font-medium text-gray-500">設立日</dt>
-                <dd className="mt-1 text-sm text-gray-900">{party.founded_date}</dd>
-              </div>
-            )}
-            {party.dissolved_date && (
-              <div>
-                <dt className="text-sm font-medium text-gray-500">解散日</dt>
-                <dd className="mt-1 text-sm text-gray-900">{party.dissolved_date}</dd>
-              </div>
-            )}
-            <div>
-              <dt className="text-sm font-medium text-gray-500">政党種別</dt>
-              <dd className="mt-1 text-sm text-gray-900">
-                {party.parent_id ? '諸派' : '国政政党'}
-              </dd>
-            </div>
-          </dl>
+      <section className="container px-5 pb-2 mx-auto max-w-2xl">
+        <div className="bg-white rounded-lg shadow-sm px-3 py-6 flex flex-col items-center">
+          <table className="min-w-1/2">
+            <tbody>
+              <tr className="border-b border-gray-200">
+                <td className="py-2 px-4 text-sm font-medium text-gray-500 w-1/4">政党名</td>
+                <td className="py-2 px-4 text-sm text-gray-900">
+                  {party.name}
+                </td>
+              </tr>
+              {party.leader_name && (
+                <tr className="border-b border-gray-200">
+                  <td className="py-2 px-4 text-sm font-medium text-gray-500">代表者</td>
+                  <td className="py-2 px-4 text-sm text-gray-900">{party.leader_name}</td>
+                </tr>
+              )}
+              {party.founded_date && (
+                <tr className="border-b border-gray-200">
+                  <td className="py-2 px-4 text-sm font-medium text-gray-500">設立日</td>
+                  <td className="py-2 px-4 text-sm text-gray-900">{party.founded_date}</td>
+                </tr>
+              )}
+              {party.dissolved_date && (
+                <tr className="border-b border-gray-200">
+                  <td className="py-2 px-4 text-sm font-medium text-gray-500">解散日</td>
+                  <td className="py-2 px-4 text-sm text-gray-900">{party.dissolved_date}</td>
+                </tr>
+              )}
+              {party.official_website && (
+                <tr className="border-b border-gray-200">
+                  <td className="py-2 px-4 text-sm font-medium text-gray-500">公式サイト</td>
+                  <td className="py-2 px-4 text-sm text-blue-500">
+                    <Link href={party.official_website} target="_blank" rel="noopener noreferrer" aria-label="公式サイト">
+                      {party.official_website}
+                    </Link>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
         </div>
       </section>
 
       {/* 所属政治家一覧 */}
-      <section className="container px-5 py-8 mx-auto">
+      <section className="container px-5 py-8 mx-auto max-w-2xl">
         <h2 className="text-xl font-bold text-gray-900 mb-6">
-          {party.name}に所属する政治家
+          {party.name}の政治家一覧
         </h2>
         
         <div className="container px-0 py-4 mx-auto">
