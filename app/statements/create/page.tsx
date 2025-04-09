@@ -406,7 +406,7 @@ function CreateStatementContent() {
 
       <div className="container mx-auto px-4 pt-4">
         {politician && (
-          <div className="max-w-2xl mx-auto bg-gray-700 rounded-t-md">
+          <div className="max-w-screen-md mx-auto bg-gray-700 rounded-t-md">
             <div className="p-4 flex items-center">
               {politician.image_path && (
                 <div className="mr-4 ml-2 flex-shrink-0">
@@ -433,7 +433,7 @@ function CreateStatementContent() {
           </div>
         )}
 
-        <div className="max-w-2xl mx-auto bg-white p-6 rounded-b-md shadow-sm">
+        <div className="max-w-screen-md mx-auto bg-white p-6 rounded-b-md shadow-sm">
           {error && (
             <div className="bg-red-50 border border-red-600 text-red-700 px-4 py-3 rounded mb-4">
               {error}
@@ -657,7 +657,7 @@ function CreateStatementContent() {
       {showRegisterConfirm && (
         <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-[45%] border-2">
           <div className="fixed inset-0 bg-gray-600/10 backdrop-blur-xl" onClick={handleRegisterCancel}></div>
-          <div className="relative bg-white rounded-lg p-6 max-w-md w-full mx-4 z-10 shadow-xl/30">
+          <div className="relative bg-white rounded-lg p-6 max-w-screen-md w-full mx-4 z-10 shadow-xl/30">
             <h3 className="font-semibold mb-4">登録確認</h3>
             <p className="mb-4 text-sm">登録内容を確認して登録してください。このスクショを登録しますか？</p>
             <div className="flex justify-end space-x-3">

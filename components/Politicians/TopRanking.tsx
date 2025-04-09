@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaCrown } from "react-icons/fa6";
 import Image from 'next/image';
-
+import Link from 'next/link';
 interface TopRankingProps {
   title: string;
 }
@@ -10,13 +10,12 @@ interface Politician {
   name: string;
   party: string;
   img: string;
+  url: string;
 }
 
 const politicians: Politician[] = [
-  { name: "百田 尚樹", party: "日本保守党", img: "/images/sample/politician01.jpg" },
-  { name: "有本 香", party: "日本保守党", img: "/images/sample/politician02.jpg" },
-  { name: "小野寺 まさる", party: "日本保守党", img: "/images/sample/politician03.jpg" },
-  { name: "島田 洋一", party: "日本保守党", img: "/images/sample/politician04.jpg" }
+  { name: "百田 尚樹", party: "日本保守党", img: "/images/sample/politician01.jpg", url: "/politicians/96c8c4a6-03a4-11f0-b8bb-0639f8cee915" },
+  { name: "有本 香", party: "日本保守党", img: "/images/sample/politician02.jpg", url: "/politicians/96c8dc52-03a4-11f0-b8bb-0639f8cee915" },
 ];
 
 export default function TopRanking({ title }: TopRankingProps) {
@@ -44,7 +43,7 @@ export default function TopRanking({ title }: TopRankingProps) {
                   <p className="text-gray-600 text-xs">{politician.party}</p>
                 </div>
               </div>
-              <button className="text-blue-700 hover:text-blue-500 text-sm">問題発言を見る</button>
+              <Link href={politician.url} className="text-blue-700 hover:text-blue-500 text-sm">問題発言を見る</Link>
             </div>
           ))}
         </div>

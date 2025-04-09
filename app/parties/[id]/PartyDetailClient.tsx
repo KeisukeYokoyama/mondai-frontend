@@ -123,7 +123,7 @@ export default function PartyDetailClient({ id }: { id: string }) {
         </div>
       </section>
 
-      <section className="container px-5 pb-2 mx-auto max-w-2xl">
+      <section className="container px-5 pb-2 mx-auto max-w-screen-md">
         <div className="bg-white rounded-lg shadow-sm px-3 py-6 flex flex-col items-center">
           <table className="min-w-1/2">
             <tbody>
@@ -167,7 +167,7 @@ export default function PartyDetailClient({ id }: { id: string }) {
       </section>
 
       {/* 所属政治家一覧 */}
-      <section className="container px-5 py-8 mx-auto max-w-2xl">
+      <section className="container px-5 py-8 mx-auto max-w-screen-md">
         <h2 className="text-xl font-bold text-gray-900 mb-6">
           {party.name}の政治家一覧
         </h2>

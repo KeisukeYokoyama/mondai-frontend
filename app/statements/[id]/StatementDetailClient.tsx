@@ -345,7 +345,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
       </section>
 
       <section className="mt-5 pt-2 px-4">
-        <div className="max-w-2xl mx-auto flex flex-row items-center">
+        <div className="max-w-screen-md mx-auto flex flex-row items-center">
           <div className="flex flex-col mb-4 w-full">
             <h1 className="font-bold text-center">
               <Link href={`/politicians/${statement.speaker.id}`}>
@@ -389,7 +389,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
       <section className="my-8 py-8 mx-auto bg-white">
         <div className="flex flex-wrap -m-4 justify-center">
           <div className="w-full">
-            <div className="bg-white max-w-2xl mx-auto">
+            <div className="bg-white max-w-screen-md mx-auto">
               {statement.image_path && (
                 <div className="flex items-center justify-center">
                   <Image
@@ -423,7 +423,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
 
       {/* コメントセクション */}
       <section className="container px-4 pb-4 mx-auto">
-        <div id="comments-section" className="w-full max-w-2xl mx-auto">
+        <div id="comments-section" className="w-full max-w-screen-md mx-auto">
           <h2 className="text-2xl font-bold mb-4">みんなのコメント</h2>
           <div className="flex justify-between items-center mb-4">
             <Link href="#comment-form" className="text-sm text-blue-500 hover:text-blue-700">

@@ -41,10 +41,10 @@ export default function PartiesPage() {
           <Header />
         </div>
       </section>
-      <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
-        <div className="container mx-auto px-4 py-8">
+      <main className="w-full overflow-x-hidden bg-gray-100">
+        <div className="container px-4 py-8 max-w-screen-md mx-auto text-center">
           <h1 className="text-2xl font-bold mb-6">政党一覧</h1>
-          <div className="relative overflow-x-auto shadow-md sm:rounded-lg">
+          <div className="relative overflow-x-auto shadow-md rounded-lg">
             <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
               <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
