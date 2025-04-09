@@ -31,7 +31,7 @@ export default function PrivacyPolicy() {
             <section>
               <h2 className="text-xl font-semibold text-gray-800 mb-4">取得する情報</h2>
               <p className="mb-4">
-                本サービスでは、以下の情報を取得する場合があります：
+                本サービスでは、以下の情報を取得する場合があります。
               </p>
               <ul className="list-disc list-inside space-y-2">
                 <li>ログインに必要なXアカウント情報</li>

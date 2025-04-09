@@ -16,6 +16,49 @@ interface Comment {
   created_at: string;
 }
 
+// 確認モーダルのコンポーネント
+function ConfirmDialog({
+  isOpen,
+  onClose,
+  onConfirm,
+  content
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  content: string;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-[45%]">
+      <div className="fixed inset-0 bg-gray-600/10 backdrop-blur-xl" onClick={onClose}></div>
+      <div className="relative bg-white rounded-lg p-6 max-w-md w-full mx-4 z-10 shadow-xl/30">
+        <h3 className="font-semibold mb-4">コメント投稿の確認</h3>
+        <div className="whitespace-pre-wrap bg-gray-100 p-3 rounded mb-4 text-sm">{content}</div>
+        <p className="mb-4 text-sm">
+          <small>誹謗中傷、脅迫といった他人を傷つけるコメントを書き込もうとしていないか、ご確認ください。</small>
+        </p>
+        <p className="mb-4 text-sm">本当にこの内容で投稿しますか？</p>
+        <div className="flex justify-end space-x-3">
+          <button
+            onClick={onClose}
+            className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100"
+          >
+            キャンセル
+          </button>
+          <button
+            onClick={onConfirm}
+            className="min-w-28 py-2.5 px-5 me-2 mb-2 text-sm font-medium text-white focus:outline-none bg-indigo-500 rounded-lg border border-gray-200 hover:bg-indigo-600"
+          >
+            投稿する
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function StatementDetailClient({ id }: { id: string }) {
   const supabase = createClientComponentClient();
   const [statement, setStatement] = useState<StatementWithRelations | null>(null);
@@ -25,6 +68,12 @@ export default function StatementDetailClient({ id }: { id: string }) {
   const [newComment, setNewComment] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [commentError, setCommentError] = useState<string | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [commentToSubmit, setCommentToSubmit] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalComments, setTotalComments] = useState(0);
+  const commentsPerPage = 10;
 
   useEffect(() => {
     async function loadData() {
@@ -58,11 +107,24 @@ export default function StatementDetailClient({ id }: { id: string }) {
   useEffect(() => {
     async function loadComments() {
       try {
+        // 総コメント数を取得
+        const { count } = await supabase
+          .from('comments')
+          .select('*', { count: 'exact', head: true })
+          .eq('statement_id', id);
+
+        if (count !== null) {
+          setTotalComments(count);
+          setTotalPages(Math.ceil(count / commentsPerPage));
+        }
+
+        // コメントを取得
         const { data, error } = await supabase
           .from('comments')
           .select('*')
           .eq('statement_id', id)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .range((currentPage - 1) * commentsPerPage, currentPage * commentsPerPage - 1);
 
         if (error) {
           console.error('コメントの取得エラー:', error);
@@ -79,13 +141,18 @@ export default function StatementDetailClient({ id }: { id: string }) {
     if (statement) {
       loadComments();
     }
-  }, [statement, id, supabase]);
+  }, [statement, id, supabase, currentPage]);
 
   // コメント投稿
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim()) return;
 
+    setCommentToSubmit(newComment.trim());
+    setShowConfirmDialog(true);
+  };
+
+  const handleConfirmSubmit = async () => {
     setIsSubmitting(true);
     setCommentError(null);
 
@@ -101,7 +168,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
         .insert([
           {
             statement_id: id,
-            content: newComment.trim(),
+            content: commentToSubmit,
             ip_address: ip,
             user_agent: userAgent,
           },
@@ -123,6 +190,17 @@ export default function StatementDetailClient({ id }: { id: string }) {
       }
 
       setNewComment('');
+      setShowConfirmDialog(false);
+
+      // 投稿完了後にコメントセクションのトップにスクロール
+      const commentsSection = document.getElementById('comments-section');
+      if (commentsSection) {
+        const top = commentsSection.getBoundingClientRect().top + window.scrollY - 28;
+        window.scrollTo({
+          top,
+          behavior: 'smooth'
+        });
+      }
     } catch (err) {
       console.error('コメント投稿エラー:', err);
       setCommentError('コメントの投稿に失敗しました。時間をおいて再度お試しください。');
@@ -157,6 +235,72 @@ export default function StatementDetailClient({ id }: { id: string }) {
     return path.startsWith('/') ? path : `/${path}`;
   };
 
+  // ページネーションのコンポーネント
+  const Pagination = () => {
+    const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+    const maxVisiblePages = 4;
+    let visiblePages = pages;
+
+    if (totalPages > maxVisiblePages) {
+      const start = Math.max(0, Math.min(currentPage - 3, totalPages - maxVisiblePages));
+      visiblePages = pages.slice(start, start + maxVisiblePages);
+    }
+
+    const handlePageClick = (page: number) => {
+      setCurrentPage(page);
+      const commentsSection = document.getElementById('comments-section');
+      if (commentsSection) {
+        const top = commentsSection.getBoundingClientRect().top + window.scrollY - 28;
+        window.scrollTo({
+          top,
+          behavior: 'smooth'
+        });
+      }
+    };
+
+    return (
+      <div className="flex justify-center items-center space-x-2 my-4">
+        {visiblePages[0] > 1 && (
+          <>
+            <button
+              onClick={() => handlePageClick(1)}
+              className="w-8 h-8 text-sm flex items-center justify-center border border-gray-200 bg-white"
+            >
+              1
+            </button>
+            {visiblePages[0] > 2 && <span className="px-2">...</span>}
+          </>
+        )}
+
+        {visiblePages.map((page) => (
+          <button
+            key={page}
+            onClick={() => handlePageClick(page)}
+            className={`w-8 h-8 text-sm flex items-center justify-center border border-gray-200 ${
+              currentPage === page ? 'bg-indigo-500 text-white' : 'bg-white'
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        {visiblePages[visiblePages.length - 1] < totalPages && (
+          <>
+            {visiblePages[visiblePages.length - 1] < totalPages - 1 && (
+              <span className="px-2">...</span>
+            )}
+            <button
+              onClick={() => handlePageClick(totalPages)}
+              className="w-8 h-8 text-sm flex items-center justify-center border border-gray-200 bg-white"
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
+      </div>
+    );
+  };
+
   if (loading) return <div>読み込み中...</div>;
   if (error) return <div>エラー: {error}</div>;
   if (!statement) return <div>データが見つかりませんでした</div>;
@@ -166,7 +310,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
   console.log('Is Array?', Array.isArray(statement.tags));
 
   return (
-    <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
+    <main className="w-full max-w-full overflow-x-hidden bg-gray-100 scroll-smooth">
       <section className="text-gray-600 body-font bg-white">
         <div className="container px-5 py-2 mx-auto">
           <Header />
@@ -174,18 +318,9 @@ export default function StatementDetailClient({ id }: { id: string }) {
       </section>
 
       <section className="mt-5 pt-2 px-4">
-        <div className="w-full md:w-4/6 md:mx-auto flex flex-row items-center">
-          {/* {statement.speaker.image_path && (
-            <Image
-              src={getImagePath(statement.speaker.image_path)}
-              alt={`${statement.speaker.last_name}${statement.speaker.first_name}`}
-              width={64}
-              height={64}
-              className="inline-flex object-cover border-2 border-indigo-500 rounded-full bg-gray-50 h-12 w-12 mr-3 aspect-square"
-            />
-          )} */}
-          <div className="flex flex-col mb-4">
-            <h1 className="font-bold">
+        <div className="max-w-2xl mx-auto flex flex-row items-center">
+          <div className="flex flex-col mb-4 w-full">
+            <h1 className="font-bold text-center">
               <Link href={`/politicians/${statement.speaker.id}`}>
                 <span className=" text-3xl text-emerald-600">
                   {statement.speaker.last_name}{statement.speaker.first_name}
@@ -212,7 +347,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
                 <div key={index}>
                   <Link
                     href={`/statements?tag=${tag.id}`}
-                    className="bg-gray-900 text-white text-xs px-2.5 py-1 rounded-lg"
+                    className="bg-white border border-gray-200 text-gray-900 text-xs px-3 py-1 rounded-full"
                   >
                     {tag.name}
                   </Link>
@@ -224,33 +359,30 @@ export default function StatementDetailClient({ id }: { id: string }) {
         </div>
       </section>
 
-      <section className="container px-5 py-8 mx-auto">
-
-        <div className="flex flex-wrap -m-4">
-          <div className="p-2 w-full">
-            <div className="border border-gray-200 rounded-md bg-white shadow-sm">
+      <section className="my-8 py-8 mx-auto bg-white">
+        <div className="flex flex-wrap -m-4 justify-center">
+          <div className="w-full">
+            <div className="bg-white max-w-2xl mx-auto">
               {statement.image_path && (
-                <div className="flex items-center justify-center pb-4">
+                <div className="flex items-center justify-center">
                   <Image
                     src={getImagePath(statement.image_path)}
                     alt={statement.title}
                     width={400}
                     height={300}
-                    className="w-full h-full object-cover object-center rounded-t-md"
+                    className="w-full h-full px-8"
                   />
                 </div>
               )}
-              <div className="pb-4 px-4">
-                <h3 className="font-bold mb-2 text-gray-900">{statement.title}</h3>
-                <p className="text-sm text-gray-600 mb-2">
+              <div className="px-8 my-4">
+                <p className="text-gray-900 mb-2 pt-2">
                   {statement.content}
                 </p>
-                <div className="text-xs text-gray-500">
-                  {statement.statement_date
-                    ? new Date(statement.statement_date).toLocaleDateString('ja-JP')
-                    : '日付なし'
-                  }
-                </div>
+                {statement.statement_date && (
+                  <div className="text-xs text-gray-500">
+                    {new Date(statement.statement_date).toLocaleDateString('ja-JP')}の発言
+                  </div>
+                )}
                 {statement.evidence_url && (
                   <div className="mt-2 truncate text-sm">
                     <a href={statement.evidence_url} target="_blank" rel="noopener noreferrer" className="text-blue-500 hover:underline">
@@ -265,17 +397,47 @@ export default function StatementDetailClient({ id }: { id: string }) {
       </section>
 
       {/* コメントセクション */}
-      <section className="container px-5 py-8 mx-auto">
-        <div className="w-full max-w-2xl mx-auto">
-          <h2 className="text-2xl font-bold mb-4">コメント</h2>
-          
+      <section className="container px-4 pb-4 mx-auto">
+        <div id="comments-section" className="w-full max-w-2xl mx-auto">
+          <h2 className="text-2xl font-bold mb-4">みんなのコメント</h2>
+          <div className="flex justify-between items-center mb-4">
+            <Link href="#comment-form" className="text-sm text-blue-500 hover:text-blue-700">
+              コメントを書く
+            </Link>
+            <span className="text-sm text-gray-500">
+              {totalComments}件
+            </span>
+          </div>
+          {/* コメント一覧 */}
+          <div className="space-y-3 mb-4">
+            {comments.map((comment) => (
+              <div key={comment.id} className="bg-white p-4 rounded-sm shadow-sm">
+                <p className="text-gray-800 whitespace-pre-wrap">{comment.content}</p>
+                <p className="text-xs text-gray-500 mt-2">
+                  {new Date(comment.created_at).toLocaleString('ja-JP')}
+                  <button className="text-xs ml-2 text-blue-500">
+                    [通報]
+                  </button>
+                  <button className="text-xs ml-2 text-blue-500">
+                    [返信]
+                  </button>
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* ページネーション */}
+          <Pagination />
+
           {/* コメント投稿フォーム */}
-          <form onSubmit={handleSubmitComment} className="mb-8">
-            <div className="mb-4">
-              <textarea
+          <div id="comment-form" className="mb-8 bg-white p-4 rounded-sm shadow-sm scroll-mt-20">
+            <h2 className="text-xl font-bold mb-4">コメントを投稿</h2>
+            <form onSubmit={handleSubmitComment}>
+              <div className="mb-4">
+                <textarea
                 value={newComment}
                 onChange={(e) => setNewComment(e.target.value)}
-                className="w-full p-2 border rounded-lg"
+                className="w-full p-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
                 rows={3}
                 placeholder="コメントを入力してください"
                 maxLength={1000}
@@ -284,28 +446,27 @@ export default function StatementDetailClient({ id }: { id: string }) {
             {commentError && (
               <p className="text-red-500 mb-2">{commentError}</p>
             )}
-            <button
-              type="submit"
-              disabled={isSubmitting || !newComment.trim()}
-              className="bg-blue-500 text-white px-4 py-2 rounded-lg disabled:bg-gray-300"
-            >
-              {isSubmitting ? '投稿中...' : 'コメントを投稿'}
-            </button>
-          </form>
-
-          {/* コメント一覧 */}
-          <div className="space-y-4">
-            {comments.map((comment) => (
-              <div key={comment.id} className="bg-white p-4 rounded-lg shadow">
-                <p className="text-gray-800">{comment.content}</p>
-                <p className="text-sm text-gray-500 mt-2">
-                  {new Date(comment.created_at).toLocaleString('ja-JP')}
-                </p>
-              </div>
-            ))}
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                disabled={isSubmitting || !newComment.trim()}
+                className="min-w-28 py-2.5 px-5 mb-2 text-sm font-medium text-white focus:outline-none bg-indigo-500 rounded-lg border border-gray-200 hover:bg-indigo-600"
+              >
+                {isSubmitting ? '投稿中...' : 'コメントを投稿'}
+              </button>
+            </div>
+            </form>
           </div>
         </div>
       </section>
+
+      {/* 確認モーダル */}
+      <ConfirmDialog
+        isOpen={showConfirmDialog}
+        onClose={() => setShowConfirmDialog(false)}
+        onConfirm={handleConfirmSubmit}
+        content={commentToSubmit}
+      />
 
       <Footer />
     </main>
