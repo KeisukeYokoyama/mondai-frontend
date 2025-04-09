@@ -108,7 +108,7 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
                   {politician.last_name_kana}{politician.first_name_kana} / {politician.age}歳 / {politician.gender}
                 </p>
                 <p className="text-gray-700 text-sm mt-1">
-                  {politician.parties.name} / {politician.chamber} ({politician.prefectures.name})
+                  {politician.parties.name}
                 </p>
 
                 <ul className="mt-2 flex flex-row items-center justify-center md:justify-start">

@@ -103,7 +103,7 @@ const processBatch = async () => {
           statement_id: item.statementId,
           ip_address: ip,
           user_agent: userAgent,
-          viewed_at: new Date(item.date).toISOString(),
+          viewed_at: isValidDate(item.date) ? new Date(item.date).toISOString() : new Date().toISOString(),
           view_date: item.date
         }))
       );
@@ -119,4 +119,10 @@ const processBatch = async () => {
   } catch (err) {
     console.error('バッチ処理のエラー:', err);
   }
-}; 
+};
+
+// 日付のバリデーション関数
+function isValidDate(dateString: string): boolean {
+  const date = new Date(dateString);
+  return date instanceof Date && !isNaN(date.getTime());
+} 
