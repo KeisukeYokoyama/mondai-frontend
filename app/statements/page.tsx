@@ -77,6 +77,11 @@ interface SupabaseStatement {
   }
 }
 
+interface StatementTag {
+  statement_id: string;
+  tag_id: string;
+}
+
 export default function Home() {
   const supabase = createClientComponentClient()
   const [statements, setStatements] = useState<Statement[]>([])
@@ -290,7 +295,7 @@ export default function Home() {
           if (tagError) throw tagError
 
           // 各statement_idが持つタグの数をカウント
-          const statementTagCounts: Record<string, number> = statementTags.reduce((acc, curr) => {
+          const statementTagCounts: Record<string, number> = (statementTags as StatementTag[]).reduce((acc, curr) => {
             acc[curr.statement_id] = (acc[curr.statement_id] || 0) + 1
             return acc
           }, {} as Record<string, number>)
@@ -377,7 +382,7 @@ export default function Home() {
 
     // 初期表示時または検索条件が変更された場合に検索を実行
     fetchStatements()
-  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty])
+  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty, childParties])
 
   // 日付入力のハンドラー
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
