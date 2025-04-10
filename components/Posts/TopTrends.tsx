@@ -2,6 +2,7 @@ import React from 'react';
 import { FcAreaChart } from "react-icons/fc";
 import { FaRegThumbsDown, FaRegThumbsUp, FaArrowRightLong } from "react-icons/fa6";
 import Image from 'next/image';
+import Link from 'next/link';
 interface TopTrendsProps {
   title: string;
   className?: string;
@@ -101,10 +102,12 @@ export default function TopTrends({ title, className }: TopTrendsProps) {
         </div>
       </div>
       <div className="container px-5 mx-auto text-right">
-        <button className="bg-gray-800 text-xs text-white px-4 py-2 rounded-md hover:bg-gray-600">
-          もっと見る
-          <FaArrowRightLong className="inline-block ml-2" />
-        </button>
+        <Link href="/statements">
+          <button className="bg-gray-800 text-xs text-white px-4 py-2 rounded-md hover:bg-gray-600">
+            もっと見る
+            <FaArrowRightLong className="inline-block ml-2" />
+          </button>
+        </Link>
       </div>
     </>
   );

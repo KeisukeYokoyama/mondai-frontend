@@ -16,10 +16,12 @@ export default function Home() {
         </div>
       </section>
       <Hero />
-      <TopTagCloud title="みんなの興味関心" />
-      <TopTrends title="トレンドの問題発言" />
-      <TopRanking title="殿堂入り暴言政治家ランキング" />
-      <TopUpdate title="新着の暴言" />
+      <main className="container px-5 py-8 mx-auto max-w-screen-md">
+        <TopTagCloud title="みんなの興味関心" />
+        <TopTrends title="トレンドの問題発言" />
+        <TopRanking title="殿堂入り暴言政治家ランキング" />
+        <TopUpdate title="新着の暴言" />
+      </main>
       <Footer />
     </main>
   )

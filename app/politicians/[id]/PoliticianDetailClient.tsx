@@ -170,19 +170,19 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
         </Link>
       </div>
 
-      <section className="container px-5 py-8 mx-auto">
+      <section className="container px-5 py-8 mx-auto max-w-screen-md">
         <h2 className="text-xl font-bold text-gray-900 mb-6">
           {politician.last_name}{politician.first_name}の問題発言
         </h2>
         
         {politician.statements && politician.statements.length > 0 ? (
-          <div className="flex flex-wrap -m-4">
+          <div className="columns-1 md:columns-2 gap-4">
             {politician.statements.map((statement) => (
-              <div key={statement.id} className="p-2 md:w-1/3 w-full">
+              <div key={statement.id} className="break-inside-avoid mb-4">
                 <Link href={`/statements/${statement.id}`} className="block">
                   <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
                     {statement.image_path && (
-                      <div className="flex items-center justify-center pb-4">
+                      <div className="flex items-center justify-center">
                         <Image 
                           src={getImagePath(statement.image_path)}
                           alt={statement.title} 
@@ -192,7 +192,7 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
                         />
                       </div>
                     )}
-                    <div className="pb-4 px-4">
+                    <div className="p-4">
                       <h3 className="font-bold mb-2 text-gray-900">{statement.title}</h3>
                       <p className="text-sm text-gray-600 mb-2 line-clamp-3">
                         {statement.content}

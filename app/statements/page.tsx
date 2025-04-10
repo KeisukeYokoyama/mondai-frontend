@@ -112,7 +112,7 @@ export default function Home() {
         </div>
       </section>
       <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
-        <div className="container px-5 py-8 mx-auto">
+        <div className="container px-5 py-8 mx-auto max-w-screen-md">
           <h1 className="text-xl font-bold text-gray-900 mb-6">
             問題発言一覧
           </h1>
@@ -122,11 +122,11 @@ export default function Home() {
               <p className="text-gray-500">読み込み中...</p>
             </div>
           ) : statements.length > 0 ? (
-            <div className="flex flex-wrap -m-4">
+            <div className="columns-1 md:columns-2 gap-4">
               {statements.map((statement) => (
-                <div key={statement.id} className="p-2 md:w-1/3 w-full">
+                <div key={statement.id} className="break-inside-avoid mb-4">
                   <Link href={`/statements/${statement.id}`} className="block">
-                    <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow h-full">
+                    <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
                       {statement.image_path && (
                         <div className="flex items-center justify-center">
                           <Image
