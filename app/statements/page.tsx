@@ -348,30 +348,7 @@ export default function Home() {
           throw error
         }
 
-        // 画像の処理
-        const processedData = data.map(async (statement: any) => {
-          if (statement.speaker?.image_url) {
-            // no-imageの場合は画像を保存しない
-            if (statement.speaker.image_url === 'https://go2senkyo.com/img/cmn/no-image_p.png') {
-              return statement
-            }
-
-            const imagePath = `public/speakers/${statement.speaker.id}.jpg`
-            const fullPath = path.join(process.cwd(), imagePath)
-
-            // 画像の保存
-            const response = await fetch(statement.speaker.image_url)
-            const blob = await response.blob()
-            const file = new File([blob], imagePath, { type: blob.type })
-            await supabase.storage.from('speakers').upload(imagePath, file)
-
-            return statement
-          }
-          return statement
-        })
-
-        const processedStatements = await Promise.all(processedData)
-        setStatements(processedStatements as unknown as Statement[])
+        setStatements(data as unknown as Statement[])
       } catch (error) {
         console.error('Error fetching statements:', error)
       } finally {
