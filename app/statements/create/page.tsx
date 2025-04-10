@@ -14,6 +14,7 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { politicianAPI } from '@/utils/supabase/politicians';
 import type { SpeakerWithRelations } from '@/utils/supabase/types';
 import imageCompression from 'browser-image-compression';
+import Link from 'next/link';
 
 // 確認ダイアログのコンポーネント
 function ConfirmDialog({
@@ -59,6 +60,43 @@ function ConfirmDialog({
   );
 }
 
+// サンプル画像モーダルのコンポーネント
+function SampleImageModal({
+  isOpen,
+  onClose,
+}: {
+  isOpen: boolean;
+  onClose: () => void;
+}) {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center">
+      <div className="fixed inset-0 bg-gray-600/10 backdrop-blur-xl" onClick={onClose}></div>
+      <div className="relative bg-white rounded-lg p-4 max-w-3xl w-full mx-4 z-10 shadow-xl/30">
+        <div className="flex justify-between items-center mb-4">
+          <h3 className="text-lg font-bold text-gray-900">表示例</h3>
+          <button
+            onClick={onClose}
+            className="text-gray-500 hover:text-gray-700"
+          >
+            ✕
+          </button>
+        </div>
+        <div className="relative w-full h-[80vh]">
+          <p className="text-gray-900 text-sm">ピンク色の文字箇所に「発言内容」が表示されます。</p>
+          <Image
+            src="/images/form_sample.jpg"
+            alt="サンプル画像"
+            fill
+            className="object-contain"
+          />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function CreateStatementContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -69,6 +107,7 @@ function CreateStatementContent() {
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [tagToAdd, setTagToAdd] = useState('');
   const [showRegisterConfirm, setShowRegisterConfirm] = useState(false);
+  const [showSampleModal, setShowSampleModal] = useState(false);
 
   // すべてのuseStateをトップレベルに移動
   const [formData, setFormData] = useState({
@@ -398,6 +437,12 @@ function CreateStatementContent() {
         </div>
       )}
 
+      {/* サンプル画像モーダル */}
+      <SampleImageModal
+        isOpen={showSampleModal}
+        onClose={() => setShowSampleModal(false)}
+      />
+
       <section className="text-gray-600 body-font bg-white">
         <div className="container px-5 py-2 mx-auto">
           <Header />
@@ -507,7 +552,21 @@ function CreateStatementContent() {
 
             <div className="mb-6">
               <label className="text-gray-700 text-sm font-bold mb-2 block">
-                タイトル <span className="bg-red-400 text-white text-xs font-medium me-2 px-1.5 py-0.5 rounded-sm">必須</span>
+                <div className="flex justify-between items-center">
+                  <div>
+                    発言内容 <span className="bg-red-400 text-white text-xs font-medium me-2 px-1.5 py-0.5 rounded-sm">必須</span>
+                  </div>
+                  <Link 
+                    href="#" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setShowSampleModal(true);
+                    }} 
+                    className="text-blue-500 hover:text-blue-700"
+                  >
+                    <small>表示例を見る</small>
+                  </Link>
+                </div>
               </label>
               <input
                 type="text"
@@ -517,7 +576,7 @@ function CreateStatementContent() {
                 required
                 className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
               />
-              <small className="text-gray-500">検索でヒットしやすいタイトルを入力してください</small>
+              <small className="text-gray-500">{politician?.last_name}{politician?.first_name}が●●●という発言をしましたと表示されます</small>
             </div>
 
             <div className="space-y-2 mb-6">
