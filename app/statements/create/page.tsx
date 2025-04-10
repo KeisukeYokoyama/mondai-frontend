@@ -83,14 +83,16 @@ function SampleImageModal({
             ✕
           </button>
         </div>
-        <div className="relative w-full h-[80vh]">
-          <p className="text-gray-900 text-sm">ピンク色の文字箇所に「発言内容」が表示されます。</p>
-          <Image
+        <div className="flex flex-col items-center justify-center">
+          <p className="text-gray-900 text-sm mb-4">ピンク色の文字箇所に「発言内容」が表示されます。</p>
+          <div className="relative w-full h-[80vh] max-h-[72vh]">
+            <Image
             src="/images/form_sample.jpg"
             alt="サンプル画像"
             fill
             className="object-contain"
           />
+          </div>
         </div>
       </div>
     </div>
