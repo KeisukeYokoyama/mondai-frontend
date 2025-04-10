@@ -5,6 +5,32 @@ import Header from '@/components/Navs/Header'
 import Footer from '@/components/Navs/Footer'
 import Link from 'next/link'
 import Image from 'next/image'
+import path from 'path'
+
+interface Tag {
+  id: string;
+  name: string;
+}
+
+interface Party {
+  id: number;
+  uuid: string;
+  name: string;
+  abbreviation?: string;
+  parent_id: number | null;
+  order: number;
+  leader_name?: string;
+  description?: string;
+  founded_date?: string;
+  dissolved_date?: string;
+  official_website?: string;
+  twitter_url?: string;
+  facebook_url?: string;
+  instagram_url?: string;
+  youtube_url?: string;
+  created_at: string;
+  updated_at: string;
+}
 
 interface Statement {
   id: string;
@@ -28,37 +54,183 @@ interface Statement {
   };
 }
 
-type SupabaseStatement = {
-  id: string;
-  title: string;
-  content: string | null;
-  statement_date: string | null;
-  image_path: string;
-  evidence_url: string | null;
-  created_at: string;
+interface SupabaseStatement {
+  id: string
+  title: string
+  content: string
+  statement_date: string
+  image_path: string | null
+  evidence_url: string | null
+  created_at: string
   speaker: {
-    id: string;
-    last_name: string;
-    first_name: string;
+    id: string
+    last_name: string
+    first_name: string
     party: {
-      name: string;
-    };
-    chamber: string | null;
+      name: string
+    }
+    chamber: string | null
     prefectures: {
-      name: string;
-    }[];
-  };
+      name: string
+    }[]
+    image_url?: string
+  }
 }
 
 export default function Home() {
   const supabase = createClientComponentClient()
   const [statements, setStatements] = useState<Statement[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [searchText, setSearchText] = useState('')
+  const [isSearching, setIsSearching] = useState(false)
+  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [tags, setTags] = useState<Tag[]>([])
+  const [selectedTags, setSelectedTags] = useState<Tag[]>([])
+  const [tagSearchText, setTagSearchText] = useState('')
+  const [isTagSearchOpen, setIsTagSearchOpen] = useState(false)
+  const [filteredTags, setFilteredTags] = useState<Tag[]>([])
+  const [selectedParty, setSelectedParty] = useState<number>(0)
+  const [selectedChildParty, setSelectedChildParty] = useState<number | null>(null)
+  const [parties, setParties] = useState<Party[]>([])
+
+  // 「その他」政党のIDを定数として定義
+  const OTHER_PARTY_ID = 3925
+
+  // タグ一覧の取得
+  useEffect(() => {
+    const fetchTags = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('tags')
+          .select('*')
+          .order('name', { ascending: true })
+
+        if (error) throw error
+        setTags(data || [])
+      } catch (error) {
+        console.error('Error fetching tags:', error)
+      }
+    }
+
+    fetchTags()
+  }, [supabase])
+
+  // 政党一覧の取得
+  useEffect(() => {
+    const fetchParties = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('parties')
+          .select('*')
+          .order('order', { ascending: true })
+          .order('name', { ascending: true })
+
+        if (error) throw error
+        console.log('取得した政党一覧:', data)
+        setParties(data || [])
+      } catch (error) {
+        console.error('Error fetching parties:', error)
+      }
+    }
+
+    fetchParties()
+  }, [supabase])
+
+  // 親政党のみをフィルタリング（orderでソート済み）
+  const parentParties = parties.filter(party => !party.parent_id).sort((a, b) => a.order - b.order)
+
+  // 選択された親政党の子政党をフィルタリング
+  const childParties = parties.filter(party => {
+    if (!selectedParty) return false
+    console.log('子政党判定:', {
+      partyId: party.id,
+      partyName: party.name,
+      partyParentId: party.parent_id,
+      selectedParty,
+      isChild: party.parent_id === selectedParty
+    })
+    return party.parent_id === selectedParty
+  }).sort((a, b) => a.order - b.order)
+
+  console.log('政党情報:', {
+    selectedParty,
+    childParties: childParties.map(p => ({ id: p.id, name: p.name, parent_id: p.parent_id })),
+    parties: parties.map(p => ({ id: p.id, name: p.name, parent_id: p.parent_id }))
+  })
+  console.log('親政党一覧:', parentParties)
+  console.log('子政党一覧:', childParties)
+  console.log('選択された政党:', selectedParty)
+  console.log('その他政党のID:', OTHER_PARTY_ID)
+  console.log('全政党一覧:', parties)
+
+  // タグ検索のフィルタリング
+  useEffect(() => {
+    if (tagSearchText) {
+      const filtered = tags.filter(tag =>
+        tag.name.toLowerCase().includes(tagSearchText.toLowerCase()) &&
+        !selectedTags.some(selected => selected.id === tag.id)
+      )
+      setFilteredTags(filtered)
+      setIsTagSearchOpen(true)
+    } else {
+      setFilteredTags([])
+      setIsTagSearchOpen(false)
+    }
+  }, [tagSearchText, tags, selectedTags])
+
+  // タグの追加
+  const handleAddTag = (tag: Tag) => {
+    setSelectedTags([...selectedTags, tag])
+    setTagSearchText('')
+    setIsTagSearchOpen(false)
+  }
+
+  // タグの削除
+  const handleRemoveTag = (tagId: string) => {
+    setSelectedTags(selectedTags.filter(tag => tag.id !== tagId))
+  }
+
+  // 政党選択のハンドラー
+  const handlePartyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = Number(e.target.value)
+    console.log('政党選択変更:', value)
+    setSelectedParty(value)
+    if (value !== OTHER_PARTY_ID) {
+      setSelectedChildParty(null)
+    }
+  }
+
+  const handleChildPartyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedChildParty(Number(e.target.value))
+  }
+
+  // 検索ボタンのハンドラー
+  const handleSearch = () => {
+    console.log('検索条件:', {
+      searchText,
+      startDate,
+      endDate,
+      selectedTags: selectedTags.map(tag => tag.name)
+    })
+    setIsModalOpen(false)
+  }
+
+  // 検索入力のハンドラー
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchText(value)
+    setIsSearching(!!value) // 検索テキストがある場合のみtrueに設定
+  }
 
   useEffect(() => {
     const fetchStatements = async () => {
       try {
-        const { data, error } = await supabase
+        setIsLoading(true)
+        setIsSearching(true)
+        console.log('検索開始')
+        let query = supabase
           .from('statements')
           .select(`
             id,
@@ -68,11 +240,12 @@ export default function Home() {
             image_path,
             evidence_url,
             created_at,
-            speaker:speakers (
+            speaker:speakers!inner (
               id,
               last_name,
               first_name,
-              party:parties (
+              party:parties!inner (
+                id,
                 name
               ),
               chamber,
@@ -81,20 +254,139 @@ export default function Home() {
               )
             )
           `)
-          .order('created_at', { ascending: false })
-          .limit(20)
 
-        if (error) throw error
-        setStatements((data as unknown as SupabaseStatement[]) || [])
+        // 検索テキストがある場合は、検索条件を追加
+        if (searchText) {
+          console.log('フリーワード検索:', searchText)
+          query = query
+            .or(`title.ilike.%${searchText}%`)
+            .or(`content.ilike.%${searchText}%`)
+        }
+
+        // 日付範囲検索
+        if (startDate || endDate) {
+          if (startDate) {
+            console.log('開始日:', startDate)
+            query = query.gte('statement_date', startDate)
+          }
+          if (endDate) {
+            console.log('終了日:', endDate)
+            query = query.lte('statement_date', endDate)
+          }
+        }
+
+        // タグ検索
+        if (selectedTags.length > 0) {
+          const tagIds = selectedTags.map(tag => tag.id)
+          console.log('選択タグ:', selectedTags.map(tag => tag.name))
+          console.log('タグID:', tagIds)
+
+          // 1つのクエリで全てのタグに紐づくstatement_idを取得
+          const { data: statementTags, error: tagError } = await supabase
+            .from('statement_tag')
+            .select('statement_id, tag_id')
+            .in('tag_id', tagIds)
+
+          if (tagError) throw tagError
+
+          // 各statement_idが持つタグの数をカウント
+          const statementTagCounts: Record<string, number> = statementTags.reduce((acc, curr) => {
+            acc[curr.statement_id] = (acc[curr.statement_id] || 0) + 1
+            return acc
+          }, {} as Record<string, number>)
+
+          // 選択されたタグの数と一致するstatement_idのみを抽出
+          const commonStatementIds = Object.entries(statementTagCounts)
+            .filter(([_, count]) => count === selectedTags.length)
+            .map(([statementId]) => statementId)
+
+          if (commonStatementIds.length > 0) {
+            query = query.in('id', commonStatementIds)
+          } else {
+            // 共通するstatement_idが存在しない場合は、空の結果を返す
+            query = query.eq('id', '00000000-0000-0000-0000-000000000000')
+          }
+        }
+
+        // 政党検索
+        if (selectedParty > 0) {
+          console.log('政党検索条件:', {
+            selectedParty,
+            selectedChildParty,
+            childParties: childParties.map(p => ({ id: p.id, name: p.name }))
+          })
+
+          if (selectedParty === OTHER_PARTY_ID && selectedChildParty) {
+            // その他政党の子政党が選択されている場合
+            query = query.eq('speaker.party_id', selectedChildParty)
+            console.log('子政党検索クエリ:', `speaker.party_id = ${selectedChildParty}`)
+          } else if (selectedParty === OTHER_PARTY_ID) {
+            // その他政党が選択されているが、子政党が選択されていない場合
+            const childPartyIds = childParties.map(party => party.id)
+            if (childPartyIds.length > 0) {
+              query = query.in('speaker.party_id', childPartyIds)
+              console.log('その他政党検索クエリ:', `speaker.party_id in (${childPartyIds.join(',')})`)
+            }
+          } else {
+            // 通常の政党が選択されている場合
+            query = query.eq('speaker.party_id', selectedParty)
+            console.log('通常政党検索クエリ:', `speaker.party_id = ${selectedParty}`)
+          }
+        }
+
+        // クエリの実行
+        const { data, error } = await query
+        console.log('検索結果:', { data, error })
+
+        if (error) {
+          console.error('クエリエラー:', error)
+          throw error
+        }
+
+        // 画像の処理
+        const processedData = data.map(async (statement: any) => {
+          if (statement.speaker?.image_url) {
+            // no-imageの場合は画像を保存しない
+            if (statement.speaker.image_url === 'https://go2senkyo.com/img/cmn/no-image_p.png') {
+              return statement
+            }
+
+            const imagePath = `public/speakers/${statement.speaker.id}.jpg`
+            const fullPath = path.join(process.cwd(), imagePath)
+
+            // 画像の保存
+            const response = await fetch(statement.speaker.image_url)
+            const blob = await response.blob()
+            const file = new File([blob], imagePath, { type: blob.type })
+            await supabase.storage.from('speakers').upload(imagePath, file)
+
+            return statement
+          }
+          return statement
+        })
+
+        const processedStatements = await Promise.all(processedData)
+        setStatements(processedStatements as unknown as Statement[])
       } catch (error) {
         console.error('Error fetching statements:', error)
       } finally {
         setIsLoading(false)
+        setIsSearching(false)
       }
     }
 
+    // 初期表示時または検索条件が変更された場合に検索を実行
     fetchStatements()
-  }, [supabase])
+  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty])
+
+  // 日付入力のハンドラー
+  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setStartDate(e.target.value)
+  }
+
+  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEndDate(e.target.value)
+  }
 
   // 画像パスを処理するヘルパー関数
   const getImagePath = (path: string) => {
@@ -112,19 +404,173 @@ export default function Home() {
         </div>
       </section>
       <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
-        <div className="container px-5 py-8 mx-auto max-w-screen-md">
-          <h1 className="text-xl font-bold text-gray-900 mb-6">
-            問題発言一覧
-          </h1>
-          
+        <div className="container px-5 pt-8 mx-auto text-center relative">
+          <div className="relative flex flex-col gap-4 max-w-md mx-auto">
+            <div className="relative">
+              <input
+                type="text"
+                className="w-full pl-4 pr-12 py-3 bg-white border border-gray-300 rounded-md text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                placeholder="フリーワード検索"
+                value={searchText}
+                onChange={handleSearchChange}
+              />
+              {isSearching && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                </div>
+              )}
+            </div>
+            <p
+              onClick={() => setIsModalOpen(true)}
+              className="text-sm text-blue-700 cursor-pointer text-right -mt-2 font-semibold"
+            >
+              高度な検索
+            </p>
+          </div>
+        </div>
+
+        {/* 詳細検索モーダル */}
+        {isModalOpen && (
+          <div className="fixed inset-0 bg-gray-100/10 backdrop-blur-xl flex items-start pt-12 justify-center z-50">
+            <div className="bg-white p-6 rounded-lg w-full max-w-md mx-4">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-bold">高度な検索</h3>
+                <button
+                  onClick={() => setIsModalOpen(false)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  ✕
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm text-gray-700 font-semibold">タグ</label>
+                <div className="relative">
+                  <input
+                    type="text"
+                    value={tagSearchText}
+                    onChange={(e) => setTagSearchText(e.target.value)}
+                    placeholder="タグを検索"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                  {isTagSearchOpen && filteredTags.length > 0 && (
+                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                      {filteredTags.map(tag => (
+                        <div
+                          key={tag.id}
+                          onClick={() => handleAddTag(tag)}
+                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                        >
+                          {tag.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2 mt-2">
+                  {selectedTags.map(tag => (
+                    <div
+                      key={tag.id}
+                      className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm mb-4"
+                    >
+                      <span>{tag.name}</span>
+                      <button
+                        onClick={() => handleRemoveTag(tag.id)}
+                        className="text-gray-500 hover:text-gray-700"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm text-gray-700 font-semibold">発言日</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={handleStartDateChange}
+                      className="w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <span className="text-gray-500">〜</span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={handleEndDateChange}
+                      className="w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <label className="text-sm text-gray-700 font-semibold">政党</label>
+                  <div className="relative">
+                    <select
+                      value={selectedParty}
+                      onChange={handlePartyChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value={0}>すべて</option>
+                      {parentParties.map(party => (
+                        <option key={party.id} value={party.id}>
+                          {party.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  {selectedParty === OTHER_PARTY_ID && childParties.length > 0 && (
+                    <div className="relative mt-2">
+                      <select
+                        value={selectedChildParty || ''}
+                        onChange={handleChildPartyChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option value="">選択してください</option>
+                        {childParties.map(party => (
+                          <option key={party.id} value={party.id}>
+                            {party.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+                </div>
+
+                <button
+                  onClick={handleSearch}
+                  className="w-full px-4 py-3 border rounded-md bg-gray-900 text-white hover:bg-gray-800"
+                >
+                  検索
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="container px-3 pt-8 mx-auto max-w-screen-md">
+          <div className="flex justify-between items-center">
+            <h1 className="text-xl font-bold text-gray-900">
+              問題発言一覧
+            </h1>
+            {statements.length > 0 && (
+              <p className="text-sm text-gray-600">
+                検索結果：{statements.length}件
+              </p>
+            )}
+          </div>
+        </div>
+        <div className="container px-0 pt-6 pb-8 mx-auto max-w-screen-md">
           {isLoading ? (
             <div className="text-center py-12 bg-white rounded-lg shadow-sm">
               <p className="text-gray-500">読み込み中...</p>
             </div>
           ) : statements.length > 0 ? (
-            <div className="columns-1 md:columns-2 gap-4">
+            <div className="columns-1 md:columns-2 gap-6 px-4">
               {statements.map((statement) => (
-                <div key={statement.id} className="break-inside-avoid mb-4">
+                <div key={statement.id} className="break-inside-avoid mb-6">
                   <Link href={`/statements/${statement.id}`} className="block">
                     <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
                       {statement.image_path && (
@@ -139,21 +585,21 @@ export default function Home() {
                           />
                         </div>
                       )}
-                      <div className="p-4">
-                        <div className="flex items-center gap-2 mb-2">
+                      <div className="p-6">
+                        <div className="flex items-center gap-2 mb-3">
                           <span className="font-bold text-gray-900">
-                            {statement.speaker.last_name} {statement.speaker.first_name}
+                            {statement.speaker?.last_name || ''} {statement.speaker?.first_name || ''}
                           </span>
                           <span className="text-gray-500 text-sm">
-                            {statement.speaker.party?.name || '無所属'}
+                            {statement.speaker?.party?.name || '無所属'}
                           </span>
                         </div>
                         {statement.content && (
-                          <p className="text-sm text-gray-600 mb-2 line-clamp-3">
+                          <p className="text-sm text-gray-600 mb-3 line-clamp-3">
                             {statement.content}
                           </p>
                         )}
-                        <div className="mt-2 flex items-center text-xs text-gray-500">
+                        <div className="mt-3 flex items-center text-xs text-gray-500">
                           {statement.statement_date && (
                             <span className="mr-4">
                               {new Date(statement.statement_date).toLocaleDateString('ja-JP')}
@@ -168,7 +614,7 @@ export default function Home() {
             </div>
           ) : (
             <div className="text-center py-12 bg-white rounded-lg shadow-sm">
-              <p className="text-gray-500">問題発言はありません</p>
+              <p className="text-gray-500">登録されている問題発言がありません</p>
             </div>
           )}
         </div>
