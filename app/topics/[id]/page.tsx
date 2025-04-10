@@ -3,8 +3,12 @@ import Header from '@/components/Navs/Header';
 import Footer from '@/components/Navs/Footer';
 import TopicDetailClient from './TopicDetailClient';
 
-export default function TopicDetailPage({ params }: { params: { id: string } }) {
-  const resolvedParams = use(Promise.resolve(params));
+interface PageProps {
+  params: Promise<{ id: string }>;
+}
+
+export default function TopicDetailPage({ params }: PageProps) {
+  const resolvedParams = use(params);
 
   return (
     <div className="min-h-screen bg-gray-50">
