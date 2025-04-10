@@ -74,7 +74,7 @@ export default function PartiesPage() {
               <input
                 type="text"
                 className="w-full px-4 py-2 border border-gray-300 bg-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="政党名または代表者名で絞り込み"
+                placeholder="政党名、代表者名で検索"
                 value={searchText}
                 onChange={handleInputChange}
               />
