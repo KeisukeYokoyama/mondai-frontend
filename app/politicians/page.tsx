@@ -117,6 +117,9 @@ export default function Home() {
   const [prefectures, setPrefectures] = useState<Prefecture[]>([]);
   const [cities, setCities] = useState<City[]>([]);
   const [parties, setParties] = useState<Party[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const politiciansPerPage = 20;
   
   // 親政党のみをフィルタリング（orderでソート済み）
   const parentParties = parties.filter(party => !party.parent_id);
@@ -148,7 +151,8 @@ export default function Home() {
         party_id: selectedChildParty ? String(selectedChildParty) : params.party_id,
         prefecture_id: params.prefecture_id ? String(params.prefecture_id) : undefined,
         city_id: params.city_id,
-        per_page: 20
+        per_page: politiciansPerPage,
+        page: currentPage
       });
 
       if (error) throw error;
@@ -191,14 +195,16 @@ export default function Home() {
 
       setSearchResults(data?.data || []);
       setTotalResults(data?.total || 0);
+      setTotalPages(Math.ceil((data?.total || 0) / politiciansPerPage));
     } catch (error) {
       console.error('検索エラー:', error);
       setSearchResults([]);
       setTotalResults(0);
+      setTotalPages(1);
     } finally {
       setIsLoading(false);
     }
-  }, [selectedChildParty]);
+  }, [selectedChildParty, currentPage]);
 
   // マウント時にクライアントサイドフラグを設定
   useEffect(() => {
@@ -491,6 +497,68 @@ export default function Home() {
 
     fetchData();
   }, [selectedType, selectedParty, selectedRegion, selectedPrefecture, selectedCity, selectedGender, supabase]);
+
+  // ページネーションのコンポーネント
+  const Pagination = () => {
+    const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
+    const maxVisiblePages = 4;
+    let visiblePages = pages;
+
+    if (totalPages > maxVisiblePages) {
+      const start = Math.max(0, Math.min(currentPage - 3, totalPages - maxVisiblePages));
+      visiblePages = pages.slice(start, start + maxVisiblePages);
+    }
+
+    const handlePageClick = (page: number) => {
+      setCurrentPage(page);
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    };
+
+    return (
+      <div className="flex justify-center items-center space-x-2 my-4">
+        {visiblePages[0] > 1 && (
+          <>
+            <button
+              onClick={() => handlePageClick(1)}
+              className="w-8 h-8 text-sm flex items-center justify-center border border-gray-200 bg-white"
+            >
+              1
+            </button>
+            {visiblePages[0] > 2 && <span className="px-2">...</span>}
+          </>
+        )}
+
+        {visiblePages.map((page) => (
+          <button
+            key={page}
+            onClick={() => handlePageClick(page)}
+            className={`w-8 h-8 text-sm flex items-center justify-center border border-gray-200 ${
+              currentPage === page ? 'bg-indigo-500 text-white' : 'bg-white'
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        {visiblePages[visiblePages.length - 1] < totalPages && (
+          <>
+            {visiblePages[visiblePages.length - 1] < totalPages - 1 && (
+              <span className="px-2">...</span>
+            )}
+            <button
+              onClick={() => handlePageClick(totalPages)}
+              className="w-8 h-8 text-sm flex items-center justify-center border border-gray-200 bg-white"
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -785,51 +853,54 @@ export default function Home() {
         <div className="container px-0 pt-6 pb-8 mx-auto max-w-screen-md">
           <div className="flex flex-col divide-y divide-gray-200">
             {Array.isArray(searchResults) && searchResults.length > 0 ? (
-              searchResults.map((politician, index) => (
-                <Link 
-                  href={`/politicians/${politician.id}`}
-                  key={politician.id || index} 
-                  title={`${politician.last_name} ${politician.first_name}の問題発言`}
-                  className="flex items-center justify-between py-3 px-4 bg-white w-full hover:bg-gray-50 transition-colors cursor-pointer"
-                >
-                  <div className="flex items-center">
-                    <Image
-                      src={getImagePath(politician.image_path)}
-                      alt={`${politician.last_name} ${politician.first_name}`} 
-                      className="w-16 h-16 object-cover rounded-full mr-4 shadow-md" 
-                      width={64}
-                      height={64}
-                    />
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-gray-900">
-                        <span className="font-bold">
-                          {politician.last_name} {politician.first_name}
-                        </span>
-                        <span className="text-gray-600 text-xs">
-                          （{politician.age ? `${politician.age}歳` : '-'} / {politician.gender || '-'}）
-                        </span>
-                      </h3>
-                      <p className="text-gray-600 text-xs">
-                        {politician.parties?.name || '無所属'} / 
-                        {politician.chamber === '地方選挙' ? '地方議員' : politician.chamber || '不明'} / 
-                        {politician.prefectures?.name || '地域不明'} /
-                        <span 
-                          className={politician.election_result === "0" ? 'text-red-600 font-semibold' : 
-                                   politician.election_result === "1" ? 'text-green-600 font-semibold' : ''}
-                        >
-                          {politician.election_result === "0" ? '😢 落選' : 
-                           politician.election_result === "1" ? '当選' : '不明'}
-                        </span>
-                      </p>
+              <>
+                {searchResults.map((politician, index) => (
+                  <Link 
+                    href={`/politicians/${politician.id}`}
+                    key={politician.id || index} 
+                    title={`${politician.last_name} ${politician.first_name}の問題発言`}
+                    className="flex items-center justify-between py-3 px-4 bg-white w-full hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
+                    <div className="flex items-center">
+                      <Image
+                        src={getImagePath(politician.image_path)}
+                        alt={`${politician.last_name} ${politician.first_name}`} 
+                        className="w-16 h-16 object-cover rounded-full mr-4 shadow-md" 
+                        width={64}
+                        height={64}
+                      />
+                      <div className="flex-1 min-w-0">
+                        <h3 className="text-gray-900">
+                          <span className="font-bold">
+                            {politician.last_name} {politician.first_name}
+                          </span>
+                          <span className="text-gray-600 text-xs">
+                            （{politician.age ? `${politician.age}歳` : '-'} / {politician.gender || '-'}）
+                          </span>
+                        </h3>
+                        <p className="text-gray-600 text-xs">
+                          {politician.parties?.name || '無所属'} / 
+                          {politician.chamber === '地方選挙' ? '地方議員' : politician.chamber || '不明'} / 
+                          {politician.prefectures?.name || '地域不明'} /
+                          <span 
+                            className={politician.election_result === "0" ? 'text-red-600 font-semibold' : 
+                                     politician.election_result === "1" ? 'text-green-600 font-semibold' : ''}
+                          >
+                            {politician.election_result === "0" ? '😢 落選' : 
+                             politician.election_result === "1" ? '当選' : '不明'}
+                          </span>
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="min-w-[40px] text-right">
-                    <span className="text-blue-500 text-sm font-bold">
-                      詳細
-                    </span>
-                  </div>
-                </Link>
-              ))
+                    <div className="min-w-[40px] text-right">
+                      <span className="text-blue-500 text-sm font-bold">
+                        詳細
+                      </span>
+                    </div>
+                  </Link>
+                ))}
+                <Pagination />
+              </>
             ) : searchText.length > 0 ? (
               <div className="text-center py-4 text-gray-500">
                 {isLoading ? "検索中..." : "検索結果がありません"}
