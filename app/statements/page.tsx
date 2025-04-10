@@ -234,7 +234,15 @@ export default function Home() {
       try {
         setIsLoading(true)
         setIsSearching(true)
-        console.log('検索開始')
+        console.log('検索開始:', {
+          searchText,
+          startDate,
+          endDate,
+          selectedTags: selectedTags.map(tag => tag.name),
+          selectedParty,
+          selectedChildParty
+        })
+
         let query = supabase
           .from('statements')
           .select(`
@@ -359,7 +367,7 @@ export default function Home() {
 
     // 初期表示時または検索条件が変更された場合に検索を実行
     fetchStatements()
-  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty, childParties])
+  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty])
 
   // 日付入力のハンドラー
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
