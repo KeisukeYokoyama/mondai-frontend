@@ -1,6 +1,6 @@
 'use client';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import Header from '@/components/Navs/Header'
 import Footer from '@/components/Navs/Footer'
 import Link from 'next/link'
@@ -110,6 +110,14 @@ const kanjiToHiragana = async (str: string) => {
 };
 
 export default function Home() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <StatementsContent />
+    </Suspense>
+  )
+}
+
+function StatementsContent() {
   const supabase = createClientComponentClient()
   const searchParams = useSearchParams()
   const [statements, setStatements] = useState<Statement[]>([])
@@ -237,31 +245,31 @@ export default function Home() {
       })
 
       let query = supabase
-        .from('statements')
-        .select(`
-          id,
-          title,
-          content,
-          statement_date,
-          image_path,
-          evidence_url,
-          created_at,
-          speaker:speakers!inner (
+          .from('statements')
+          .select(`
             id,
-            last_name,
-            first_name,
+            title,
+            content,
+            statement_date,
+            image_path,
+            evidence_url,
+            created_at,
+          speaker:speakers!inner (
+              id,
+              last_name,
+              first_name,
             last_name_kana,
             first_name_kana,
             party:parties!inner (
               id,
-              name
-            ),
-            chamber,
-            prefectures (
-              name
+                name
+              ),
+              chamber,
+              prefectures (
+                name
+              )
             )
-          )
-        `)
+          `)
 
       // 検索テキストがある場合は、検索条件を追加
       if (searchText) {
@@ -355,17 +363,17 @@ export default function Home() {
       }
 
       setStatements(data as unknown as Statement[])
-    } catch (error) {
-      console.error('Error fetching statements:', error)
-    } finally {
-      setIsLoading(false)
+      } catch (error) {
+        console.error('Error fetching statements:', error)
+      } finally {
+        setIsLoading(false)
       setIsSearching(false)
     }
   }
 
   useEffect(() => {
     fetchStatements()
-  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty, speakerSearchText])
+  }, [searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty, speakerSearchText, fetchStatements])
 
   // 検索ボタンのハンドラー
   const handleSearch = () => {
@@ -589,8 +597,8 @@ export default function Home() {
         <div className="container px-3 pt-8 mx-auto max-w-screen-md">
           <div className="flex justify-between items-center">
             <h1 className="text-xl font-bold text-gray-900">
-              問題発言一覧
-            </h1>
+            問題発言一覧
+          </h1>
             {statements.length > 0 && (
               <p className="text-sm text-gray-600">
                 検索結果：{statements.length}件
