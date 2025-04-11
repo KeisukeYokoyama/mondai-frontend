@@ -21,8 +21,11 @@ export default function PartiesPage() {
       try {
         const { data, error } = await partiesAPI.getParties()
         if (error) throw error
-        // カテゴリの政党（parent_id: 3925）を除外
-        const filteredParties = (data || []).filter(party => party.parent_id !== 3925)
+        // 「その他」カテゴリ（ID: 3925）を除外し、その子政党は表示
+        const filteredParties = (data || []).filter(party => 
+          party.id !== 3925 && // 「その他」カテゴリ自体は非表示
+          (!party.parent_id || party.parent_id === 3925) // 親政党がないか、「その他」の子政党
+        )
         setParties(filteredParties)
         setFilteredParties(filteredParties)
       } catch (err) {

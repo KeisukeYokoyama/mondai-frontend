@@ -44,7 +44,6 @@ interface SearchParams {
   gender?: string;   // undefinedのみを許可
   party_id?: string;
   prefecture_id?: number;
-  city_id?: string;
 }
 
 // 型定義の追加
@@ -107,7 +106,6 @@ export default function Home() {
   const [selectedChildParty, setSelectedChildParty] = useState<number | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<number>(0);
   const [selectedPrefecture, setSelectedPrefecture] = useState<number>(0);
-  const [selectedCity, setSelectedCity] = useState<number>(0);
   const [selectedGender, setSelectedGender] = useState<number>(0);
   const [totalResults, setTotalResults] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
@@ -140,8 +138,7 @@ export default function Home() {
         議員種別: params.chamber,
         性別: params.gender,
         政党ID: params.party_id,
-        都道府県ID: params.prefecture_id,
-        市区町村ID: params.city_id
+        都道府県ID: params.prefecture_id
       });
 
       const { data, error } = await politicianAPI.search({
@@ -150,7 +147,6 @@ export default function Home() {
         gender: params.gender,
         party_id: selectedChildParty ? String(selectedChildParty) : params.party_id,
         prefecture_id: params.prefecture_id ? String(params.prefecture_id) : undefined,
-        city_id: params.city_id,
         per_page: politiciansPerPage,
         page: currentPage
       });
@@ -218,7 +214,6 @@ export default function Home() {
       setSelectedParty(Number(sessionStorage.getItem('selectedParty')) || 3924);
       setSelectedRegion(Number(sessionStorage.getItem('selectedRegion')) || 0);
       setSelectedPrefecture(Number(sessionStorage.getItem('selectedPrefecture')) || 0);
-      setSelectedCity(Number(sessionStorage.getItem('selectedCity')) || 0);
       
       const savedResults = sessionStorage.getItem('searchResults');
       if (savedResults) {
@@ -247,12 +242,11 @@ export default function Home() {
                selectedGender === 1 ? '男' : 
                selectedGender === 2 ? '女' : undefined,
         party_id: selectedParty ? String(selectedParty) : undefined,
-        prefecture_id: selectedPrefecture,
-        city_id: selectedCity ? String(selectedCity) : undefined
+        prefecture_id: selectedPrefecture
       };
       handleSearch(searchParams);
     }
-  }, [isClient, handleSearch, searchText, selectedType, selectedGender, selectedParty, selectedPrefecture, selectedCity]);
+  }, [isClient, handleSearch, searchText, selectedType, selectedGender, selectedParty, selectedPrefecture]);
 
   // クライアントサイドでのみsessionStorageに保存
   useEffect(() => {
@@ -265,14 +259,13 @@ export default function Home() {
       sessionStorage.setItem('selectedParty', String(selectedParty));
       sessionStorage.setItem('selectedRegion', String(selectedRegion));
       sessionStorage.setItem('selectedPrefecture', String(selectedPrefecture));
-      sessionStorage.setItem('selectedCity', String(selectedCity));
       sessionStorage.setItem('searchResults', JSON.stringify(searchResults));
       sessionStorage.setItem('totalResults', String(totalResults));
     } catch (error) {
       console.error('Error saving to sessionStorage:', error);
     }
   }, [
-    isClient, searchText, selectedGender, selectedType, selectedParty, selectedRegion, selectedPrefecture, selectedCity,
+    isClient, searchText, selectedGender, selectedType, selectedParty, selectedRegion, selectedPrefecture,
     searchResults, totalResults
   ]);
 
@@ -379,8 +372,7 @@ export default function Home() {
             gender: selectedGender === 0 ? undefined : 
                    selectedGender === 1 ? '男' : 
                    selectedGender === 2 ? '女' : undefined,
-            prefecture_id: selectedPrefecture ? String(selectedPrefecture) : undefined,
-            city_id: selectedCity ? String(selectedCity) : undefined
+            prefecture_id: selectedPrefecture ? String(selectedPrefecture) : undefined
           });
           if (results.data) {
             setSearchResults(results.data.data || []);
@@ -399,7 +391,7 @@ export default function Home() {
       debouncedFn();
       return debouncedFn;
     },
-    [selectedParty, selectedType, selectedGender, selectedPrefecture, selectedCity, setSearchResults, setTotalResults, setIsLoading]
+    [selectedParty, selectedType, selectedGender, selectedPrefecture, setSearchResults, setTotalResults, setIsLoading]
   );
 
   // コンポーネントのクリーンアップ
@@ -455,19 +447,13 @@ export default function Home() {
   const handleRegionChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = Number(e.target.value);
     setSelectedRegion(value);
-    // 地域が変更されたら、都道府県と市区町村の選択をリセット
+    // 地域が変更されたら、都道府県の選択をリセット
     setSelectedPrefecture(0);
-    setSelectedCity(0);
   }, []);
 
   const handlePrefectureChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = Number(e.target.value);
     setSelectedPrefecture(value);
-    setSelectedCity(0);
-  }, []);
-
-  const handleCityChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedCity(Number(e.target.value));
   }, []);
 
   // 検索結果の更新処理
@@ -481,7 +467,6 @@ export default function Home() {
           .eq('party_id', selectedParty === 0 ? null : selectedParty)
           .eq('region_id', selectedRegion === 0 ? null : selectedRegion)
           .eq('prefecture_id', selectedPrefecture === 0 ? null : selectedPrefecture)
-          .eq('city_id', selectedCity === 0 ? null : selectedCity)
           .eq('gender', selectedGender === 0 ? null : selectedGender)
           .order('created_at', { ascending: false });
 
@@ -496,7 +481,7 @@ export default function Home() {
     };
 
     fetchData();
-  }, [selectedType, selectedParty, selectedRegion, selectedPrefecture, selectedCity, selectedGender, supabase]);
+  }, [selectedType, selectedParty, selectedRegion, selectedPrefecture, selectedGender, supabase]);
 
   // ページネーションのコンポーネント
   const Pagination = () => {
@@ -780,29 +765,6 @@ export default function Home() {
                           </div>
                         </div>
                       )}
-
-                      {/* 市区町村選択 */}
-                      {selectedPrefecture > 0 && (
-                        <div className="relative">
-                          <select 
-                            className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-md appearance-none bg-white"
-                            value={selectedCity}
-                            onChange={handleCityChange}
-                          >
-                            <option value={0}>市区町村を選択</option>
-                            {cities.map((city) => (
-                              <option key={city.id} value={city.id}>
-                                {city.name}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-2 text-gray-700">
-                            <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                            </svg>
-                          </div>
-                        </div>
-                      )}
                     </div>
 
                     <button 
@@ -817,8 +779,7 @@ export default function Home() {
                                  selectedGender === 1 ? '男' : 
                                  selectedGender === 2 ? '女' : undefined,
                           party_id: selectedChildParty ? String(selectedChildParty) : selectedParty ? String(selectedParty) : undefined,
-                          prefecture_id: selectedPrefecture,
-                          city_id: selectedCity ? String(selectedCity) : undefined
+                          prefecture_id: selectedPrefecture
                         };
                         console.log('Sending search params:', searchParams);
                         handleSearch(searchParams);

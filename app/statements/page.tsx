@@ -415,13 +415,13 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <section className="text-gray-600 body-font bg-white">
         <div className="container px-5 py-2 mx-auto">
           <Header />
         </div>
       </section>
-      <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
+      <main className="w-full max-w-full overflow-x-hidden bg-gray-50 flex-grow">
         <div className="container px-5 pt-8 mx-auto text-center relative">
           <div className="relative flex flex-col gap-4 max-w-md mx-auto">
             <div className="relative">
@@ -593,7 +593,7 @@ export default function Home() {
         </div>
         <div className="container px-0 pt-6 pb-8 mx-auto max-w-screen-md">
           {isLoading ? (
-            <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-500">読み込み中...</p>
             </div>
           ) : statements.length > 0 ? (
@@ -642,7 +642,7 @@ export default function Home() {
               ))}
             </div>
           ) : (
-            <div className="text-center py-12 bg-white rounded-lg shadow-sm">
+            <div className="text-center py-12 bg-gray-50 rounded-lg">
               <p className="text-gray-500">登録されている問題発言がありません</p>
             </div>
           )}

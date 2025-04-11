@@ -111,9 +111,8 @@ export interface SearchSpeakerParams {
   s?: string;
   chamber?: string;
   gender?: string;
-  party_id?: string;  // UUIDに変更
+  party_id?: string;
   prefecture_id?: string;
-  city_id?: string;
   per_page?: number;
   page?: number;
 }

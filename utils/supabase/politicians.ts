@@ -93,10 +93,6 @@ export const politicianAPI = {
         query = query.eq('prefecture_id', params.prefecture_id);
         console.log('都道府県条件を追加:', params.prefecture_id);
       }
-      if (params.city_id && params.city_id !== '0') {
-        query = query.eq('city_id', params.city_id);
-        console.log('市区町村条件を追加:', params.city_id);
-      }
 
       if (params.party_id && params.party_id !== '0') {
         const partyId = Number(params.party_id);

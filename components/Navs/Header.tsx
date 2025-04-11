@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useAuth } from '@/contexts/AuthContext'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import AuthStatus from '@/components/AuthStatus'
 
 interface HeaderProps {
@@ -15,6 +15,8 @@ export default function Header({ title }: HeaderProps) {
   const [isOpen, setIsOpen] = useState(false)
   const { user, signOut } = useAuth()
   const router = useRouter()
+  const pathname = usePathname()
+  const isHomePage = pathname === '/' || pathname === ''
 
   const handleScreenshotButtonClick = () => {
     if (!user) {
@@ -39,9 +41,15 @@ export default function Header({ title }: HeaderProps) {
               className='h-8 w-auto'
               priority
             />
-            <span className="self-center text-xl font-semibold whitespace-nowrap">
-              {title || '問題発言ドットコム'}
-            </span>
+            {isHomePage ? (
+              <h1 className="self-center text-xl font-semibold whitespace-nowrap">
+                {title || '問題発言ドットコム'}
+              </h1>
+            ) : (
+              <span className="self-center text-xl font-semibold whitespace-nowrap">
+                {title || '問題発言ドットコム'}
+              </span>
+            )}
           </Link>
 
           {/* デスクトップ用メニュー */}

@@ -1,7 +1,12 @@
-import React from 'react';
-import { MdOutlineSearch } from "react-icons/md";
+'use client';
 
+import React, { useState } from 'react';
+import { MdOutlineSearch } from "react-icons/md";
+import Link from 'next/link';
+import Image from 'next/image';
 export default function Hero() {
+  const [isModalOpen, setIsModalOpen] = useState(false);
+
   return (
     <>
       <div className="container px-5 pt-8 mx-auto text-center relative">
@@ -22,10 +27,52 @@ export default function Hero() {
       </div>
       {/* 登録するボタン */}
       <div className="container px-5 pt-8 mx-auto text-center">
-        <button className="bg-gray-800 text-sm text-white px-6 py-2 rounded-md hover:bg-gray-600">
+        <button 
+          onClick={() => setIsModalOpen(true)}
+          className="bg-gray-800 text-sm text-white px-6 py-2 rounded-md hover:bg-gray-600"
+        >
           スクショを登録する
         </button>
       </div>
+
+      {/* モーダル */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-gray-100/10 backdrop-blur-xl flex items-start pt-12 justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">スクショを登録するには？</h3>
+              <button 
+                onClick={() => setIsModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div className="text-left">
+                <ul className="list-decimal pl-5 space-y-1 text-sm">
+                  <li>まずは、発言者を検索してください</li>
+                  <li>発言者詳細ページにある「スクショを登録」ボタンをクリックしてください</li>
+                  <li>Xアカウントでログインしてください</li>
+                  <li>発言内容などの情報を追加してスクショをアップロードしてください</li>
+                </ul>
+              </div>
+              <Image src="/images/how_to_use_01.jpg" alt="X" width={480} height={270} />
+
+              <Link 
+                href="/politicians"
+                className="block w-full px-4 py-3 border rounded-md bg-gray-900 text-white hover:bg-gray-800 text-center"
+              >
+                政治家を探す
+              </Link>
+              <p className="text-sm">
+                  <span className="text-red-500">※</span> スクショの登録にはXアカウントが必要です<br />
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   );
 }
