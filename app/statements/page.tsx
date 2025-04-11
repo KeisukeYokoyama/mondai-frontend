@@ -264,9 +264,7 @@ export default function Home() {
       // 検索テキストがある場合は、検索条件を追加
       if (searchText) {
         console.log('フリーワード検索:', searchText)
-        query = query
-          .or(`title.ilike.%${searchText}%`)
-          .or(`content.ilike.%${searchText}%`)
+        query = query.or(`title.ilike.%${searchText}%,content.ilike.%${searchText}%`)
       }
 
       // 発言者検索
@@ -365,7 +363,7 @@ export default function Home() {
 
   useEffect(() => {
     fetchStatements()
-  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty])
+  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty, speakerSearchText])
 
   // 検索ボタンのハンドラー
   const handleSearch = () => {

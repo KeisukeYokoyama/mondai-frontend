@@ -55,6 +55,12 @@ export default function Header({ title }: HeaderProps) {
           {/* デスクトップ用メニュー */}
           <div className="hidden md:flex items-center space-x-6 text-sm font-semibold ml-auto py-3">
             <Link
+              href="/statements"
+              className="text-gray-900 hover:text-blue-700"
+            >
+              問題発言を探す
+            </Link>
+            <Link
               href="/politicians"
               className="text-gray-900 hover:text-blue-700"
             >
@@ -65,12 +71,6 @@ export default function Header({ title }: HeaderProps) {
               className="text-gray-900 hover:text-blue-700"
             >
               政党を探す
-            </Link>
-            <Link
-              href="/statements"
-              className="text-gray-900 hover:text-blue-700"
-            >
-              問題発言を探す
             </Link>
             
             {user && (

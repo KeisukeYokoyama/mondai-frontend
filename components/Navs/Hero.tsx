@@ -6,19 +6,24 @@ import Link from 'next/link';
 import Image from 'next/image';
 export default function Hero() {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
 
   return (
     <>
       <div className="container px-5 pt-8 mx-auto text-center relative">
-        <div className="relative flex max-w-md mx-auto">
+        <div 
+          className="relative flex max-w-md mx-auto cursor-pointer"
+          onClick={() => setIsSearchModalOpen(true)}
+        >
           <input 
             type="text" 
-            className="w-full pl-4 pr-12 py-2 bg-white border border-gray-300 rounded-l-md text-gray-600 focus:outline-none"
+            className="w-full pl-4 pr-12 py-3 bg-white border border-gray-300 rounded-l-md text-gray-600 focus:outline-none"
             placeholder="問題発言を検索" 
+            readOnly
           />
           <button 
             type="submit" 
-            className="px-4 py-2 text-sm font-medium text-white bg-gray-800 rounded-r-md hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-300"
+            className="px-4 py-2 font-medium text-white bg-gray-800 rounded-r-md hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-300"
           >
             <MdOutlineSearch size={20} className="text-white" />
           </button>
@@ -29,13 +34,45 @@ export default function Hero() {
       <div className="container px-5 pt-8 mx-auto text-center">
         <button 
           onClick={() => setIsModalOpen(true)}
-          className="bg-gray-800 text-sm text-white px-6 py-2 rounded-md hover:bg-gray-600"
+          className="bg-gray-800 text-white px-6 py-3 rounded-md hover:bg-gray-600"
         >
           スクショを登録する
         </button>
       </div>
 
-      {/* モーダル */}
+      {/* 検索モーダル */}
+      {isSearchModalOpen && (
+        <div 
+          className="fixed inset-0 bg-gray-100/10 backdrop-blur-xl flex items-start pt-12 justify-center z-50"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setIsSearchModalOpen(false);
+            }
+          }}
+        >
+          <div className="bg-white p-6 rounded-lg w-full max-w-md mx-4">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-bold">検索</h3>
+              <button 
+                onClick={() => setIsSearchModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </button>
+            </div>
+            <div className="space-y-4">
+              <input 
+                type="text" 
+                className="w-full pl-4 pr-12 py-3 bg-white border border-gray-300 rounded-md text-gray-600 focus:outline-none"
+                placeholder="問題発言を検索" 
+              />
+              <p className="text-sm text-gray-500">日付・人物・タグ・暴言などを検索</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 登録モーダル */}
       {isModalOpen && (
         <div 
           className="fixed inset-0 bg-gray-100/10 backdrop-blur-xl flex items-start pt-12 justify-center z-50"
