@@ -4,9 +4,30 @@ import React, { useState } from 'react';
 import { MdOutlineSearch } from "react-icons/md";
 import Link from 'next/link';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+
 export default function Hero() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [searchText, setSearchText] = useState('');
+  const [speakerSearchText, setSpeakerSearchText] = useState('');
+  const router = useRouter();
+
+  const handleSearch = () => {
+    if (searchText.trim() || speakerSearchText.trim()) {
+      const params = new URLSearchParams();
+      if (searchText.trim()) {
+        params.append('search', searchText.trim());
+      }
+      if (speakerSearchText.trim()) {
+        params.append('speaker', speakerSearchText.trim());
+      }
+      router.push(`/statements?${params.toString()}`);
+      setIsSearchModalOpen(false);
+      setSearchText('');
+      setSpeakerSearchText('');
+    }
+  };
 
   return (
     <>
@@ -18,7 +39,7 @@ export default function Hero() {
           <input 
             type="text" 
             className="w-full pl-4 pr-12 py-3 bg-white border border-gray-300 rounded-l-md text-gray-600 focus:outline-none"
-            placeholder="問題発言を検索" 
+            placeholder="問題発言からスクショを探す" 
             readOnly
           />
           <button 
@@ -28,8 +49,9 @@ export default function Hero() {
             <MdOutlineSearch size={20} className="text-white" />
           </button>
         </div>
-        <p className="text-xs text-gray-500 pt-2">日付・人物・タグ・暴言などを検索</p>
+        <p className="text-xs text-gray-500 pt-2">暴言内容や発言者名からスクショを検索</p>
       </div>
+
       {/* 登録するボタン */}
       <div className="container px-5 pt-8 mx-auto text-center">
         <button 
@@ -52,7 +74,7 @@ export default function Hero() {
         >
           <div className="bg-white p-6 rounded-lg w-full max-w-md mx-4">
             <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold">検索</h3>
+              <h3 className="text-lg font-bold">問題発言を検索</h3>
               <button 
                 onClick={() => setIsSearchModalOpen(false)}
                 className="text-gray-500 hover:text-gray-700"
@@ -61,12 +83,38 @@ export default function Hero() {
               </button>
             </div>
             <div className="space-y-4">
-              <input 
-                type="text" 
+              <div className="flex flex-col gap-2 mt-6">
+                <label className="text-sm text-gray-700 font-semibold">問題発言内容</label>
+                <input 
+                  type="text" 
                 className="w-full pl-4 pr-12 py-3 bg-white border border-gray-300 rounded-md text-gray-600 focus:outline-none"
-                placeholder="問題発言を検索" 
+                placeholder="発言をざっくり検索" 
+                value={searchText}
+                onChange={(e) => setSearchText(e.target.value)}
+                autoFocus
               />
-              <p className="text-sm text-gray-500">日付・人物・タグ・暴言などを検索</p>
+              </div>
+              <div className="flex flex-col gap-2 mb-6">
+                <label className="text-sm text-gray-700 font-semibold">発言者</label>
+                <input 
+                  type="text" 
+                  className="w-full pl-4 pr-12 py-3 bg-white border border-gray-300 rounded-md text-gray-600 focus:outline-none"
+                  placeholder="発言者名を入力" 
+                  value={speakerSearchText}
+                  onChange={(e) => setSpeakerSearchText(e.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-4">
+                <button
+                  onClick={handleSearch}
+                  className="w-full px-4 py-3 border rounded-md bg-gray-900 text-white hover:bg-gray-800"
+                >
+                  検索
+                </button>
+              </div>
+              <p className="text-sm text-gray-500 -mt-3 text-center">
+                  <small>検索結果で高度な絞り込みができます</small>
+                </p>
             </div>
           </div>
         </div>

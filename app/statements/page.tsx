@@ -6,6 +6,7 @@ import Footer from '@/components/Navs/Footer'
 import Link from 'next/link'
 import Image from 'next/image'
 import path from 'path'
+import { useSearchParams } from 'next/navigation'
 
 interface Tag {
   id: string;
@@ -110,9 +111,10 @@ const kanjiToHiragana = async (str: string) => {
 
 export default function Home() {
   const supabase = createClientComponentClient()
+  const searchParams = useSearchParams()
   const [statements, setStatements] = useState<Statement[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [searchText, setSearchText] = useState('')
+  const [searchText, setSearchText] = useState(searchParams.get('search') || '')
   const [isSearching, setIsSearching] = useState(false)
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [startDate, setStartDate] = useState('')
@@ -125,7 +127,7 @@ export default function Home() {
   const [selectedParty, setSelectedParty] = useState<number>(0)
   const [selectedChildParty, setSelectedChildParty] = useState<number | null>(null)
   const [parties, setParties] = useState<Party[]>([])
-  const [speakerSearchText, setSpeakerSearchText] = useState('')
+  const [speakerSearchText, setSpeakerSearchText] = useState(searchParams.get('speaker') || '')
 
   // タグ一覧の取得
   useEffect(() => {
