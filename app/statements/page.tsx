@@ -82,6 +82,32 @@ interface StatementTag {
   tag_id: string;
 }
 
+// ひらがなをカタカナに変換する関数
+const hiraganaToKatakana = (str: string) => {
+  return str.replace(/[\u3041-\u3096]/g, match => {
+    return String.fromCharCode(match.charCodeAt(0) + 0x60);
+  });
+};
+
+// カタカナをひらがなに変換する関数
+const katakanaToHiragana = (str: string) => {
+  return str.replace(/[\u30A1-\u30F6]/g, match => {
+    return String.fromCharCode(match.charCodeAt(0) - 0x60);
+  });
+};
+
+// 漢字をひらがなに変換する関数
+const kanjiToHiragana = async (str: string) => {
+  try {
+    const response = await fetch(`https://jqfxwjhffbyketlrygiw.supabase.co/functions/v1/convert-kana?text=${encodeURIComponent(str)}`)
+    const data = await response.json()
+    return data.hiragana
+  } catch (error) {
+    console.error('漢字変換エラー:', error)
+    return str
+  }
+};
+
 export default function Home() {
   const supabase = createClientComponentClient()
   const [statements, setStatements] = useState<Statement[]>([])
@@ -99,9 +125,7 @@ export default function Home() {
   const [selectedParty, setSelectedParty] = useState<number>(0)
   const [selectedChildParty, setSelectedChildParty] = useState<number | null>(null)
   const [parties, setParties] = useState<Party[]>([])
-
-  // 「その他」政党のIDを定数として定義
-  const OTHER_PARTY_ID = 3925
+  const [speakerSearchText, setSpeakerSearchText] = useState('')
 
   // タグ一覧の取得
   useEffect(() => {
@@ -133,7 +157,6 @@ export default function Home() {
           .order('name', { ascending: true })
 
         if (error) throw error
-        console.log('取得した政党一覧:', data)
         setParties(data || [])
       } catch (error) {
         console.error('Error fetching parties:', error)
@@ -149,26 +172,11 @@ export default function Home() {
   // 選択された親政党の子政党をフィルタリング
   const childParties = parties.filter(party => {
     if (!selectedParty) return false
-    console.log('子政党判定:', {
-      partyId: party.id,
-      partyName: party.name,
-      partyParentId: party.parent_id,
-      selectedParty,
-      isChild: party.parent_id === selectedParty
-    })
     return party.parent_id === selectedParty
   }).sort((a, b) => a.order - b.order)
 
-  console.log('政党情報:', {
-    selectedParty,
-    childParties: childParties.map(p => ({ id: p.id, name: p.name, parent_id: p.parent_id })),
-    parties: parties.map(p => ({ id: p.id, name: p.name, parent_id: p.parent_id }))
-  })
-  console.log('親政党一覧:', parentParties)
-  console.log('子政党一覧:', childParties)
-  console.log('選択された政党:', selectedParty)
-  console.log('その他政党のID:', OTHER_PARTY_ID)
-  console.log('全政党一覧:', parties)
+  // 「その他」政党のIDを定数として定義
+  const OTHER_PARTY_ID = 3925
 
   // タグ検索のフィルタリング
   useEffect(() => {
@@ -211,163 +219,183 @@ export default function Home() {
     setSelectedChildParty(Number(e.target.value))
   }
 
+  // 検索関数
+  const fetchStatements = async () => {
+    try {
+      setIsLoading(true)
+      setIsSearching(true)
+      console.log('検索開始:', {
+        searchText,
+        startDate,
+        endDate,
+        selectedTags: selectedTags.map(tag => tag.name),
+        selectedParty,
+        selectedChildParty,
+        speakerSearchText
+      })
+
+      let query = supabase
+        .from('statements')
+        .select(`
+          id,
+          title,
+          content,
+          statement_date,
+          image_path,
+          evidence_url,
+          created_at,
+          speaker:speakers!inner (
+            id,
+            last_name,
+            first_name,
+            last_name_kana,
+            first_name_kana,
+            party:parties!inner (
+              id,
+              name
+            ),
+            chamber,
+            prefectures (
+              name
+            )
+          )
+        `)
+
+      // 検索テキストがある場合は、検索条件を追加
+      if (searchText) {
+        console.log('フリーワード検索:', searchText)
+        query = query
+          .or(`title.ilike.%${searchText}%`)
+          .or(`content.ilike.%${searchText}%`)
+      }
+
+      // 発言者検索
+      if (speakerSearchText) {
+        console.log('発言者検索:', speakerSearchText)
+        
+        // 検索条件を1つずつ追加
+        query = query
+          .or(`last_name.ilike.%${speakerSearchText}%,first_name.ilike.%${speakerSearchText}%`, { foreignTable: 'speaker' })
+      }
+
+      // 日付範囲検索
+      if (startDate || endDate) {
+        if (startDate) {
+          console.log('開始日:', startDate)
+          query = query.gte('statement_date', startDate)
+        }
+        if (endDate) {
+          console.log('終了日:', endDate)
+          query = query.lte('statement_date', endDate)
+        }
+      }
+
+      // タグ検索
+      if (selectedTags.length > 0) {
+        const tagIds = selectedTags.map(tag => tag.id)
+        console.log('選択タグ:', selectedTags.map(tag => tag.name))
+        console.log('タグID:', tagIds)
+
+        // 1つのクエリで全てのタグに紐づくstatement_idを取得
+        const { data: statementTags, error: tagError } = await supabase
+          .from('statement_tag')
+          .select('statement_id, tag_id')
+          .in('tag_id', tagIds)
+
+        if (tagError) throw tagError
+
+        // 各statement_idが持つタグの数をカウント
+        const statementTagCounts: Record<string, number> = (statementTags as StatementTag[]).reduce((acc, curr) => {
+          acc[curr.statement_id] = (acc[curr.statement_id] || 0) + 1
+          return acc
+        }, {} as Record<string, number>)
+
+        // 選択されたタグの数と一致するstatement_idのみを抽出
+        const commonStatementIds = Object.entries(statementTagCounts)
+          .filter(([_, count]) => count === selectedTags.length)
+          .map(([statementId]) => statementId)
+
+        if (commonStatementIds.length > 0) {
+          query = query.in('id', commonStatementIds)
+        } else {
+          // 共通するstatement_idが存在しない場合は、空の結果を返す
+          query = query.eq('id', '00000000-0000-0000-0000-000000000000')
+        }
+      }
+
+      // 政党検索
+      if (selectedParty > 0) {
+        if (selectedParty === OTHER_PARTY_ID && selectedChildParty) {
+          // その他政党の子政党が選択されている場合
+          query = query.eq('speaker.party_id', selectedChildParty)
+        } else if (selectedParty === OTHER_PARTY_ID) {
+          // その他政党が選択されているが、子政党が選択されていない場合
+          const childPartyIds = childParties.map(party => party.id)
+          if (childPartyIds.length > 0) {
+            query = query.in('speaker.party_id', childPartyIds)
+          }
+        } else {
+          // 通常の政党が選択されている場合
+          query = query.eq('speaker.party_id', selectedParty)
+        }
+      }
+
+      // クエリの実行
+      console.log('実行するクエリ:', query)
+      const { data, error } = await query
+      console.log('検索結果:', {
+        data,
+        error,
+        count: data?.length
+      })
+
+      if (error) {
+        console.error('クエリエラー:', error)
+        throw error
+      }
+
+      setStatements(data as unknown as Statement[])
+    } catch (error) {
+      console.error('Error fetching statements:', error)
+    } finally {
+      setIsLoading(false)
+      setIsSearching(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchStatements()
+  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty])
+
   // 検索ボタンのハンドラー
   const handleSearch = () => {
     console.log('検索条件:', {
       searchText,
       startDate,
       endDate,
-      selectedTags: selectedTags.map(tag => tag.name)
+      selectedTags: selectedTags.map(tag => tag.name),
+      selectedParty,
+      selectedChildParty,
+      speakerSearchText
     })
     setIsModalOpen(false)
+    // 検索を実行
+    fetchStatements()
   }
 
   // 検索入力のハンドラー
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setSearchText(value)
-    setIsSearching(!!value) // 検索テキストがある場合のみtrueに設定
+    setIsSearching(!!value)
   }
 
-  useEffect(() => {
-    const fetchStatements = async () => {
-      try {
-        setIsLoading(true)
-        setIsSearching(true)
-        console.log('検索開始:', {
-          searchText,
-          startDate,
-          endDate,
-          selectedTags: selectedTags.map(tag => tag.name),
-          selectedParty,
-          selectedChildParty
-        })
-
-        let query = supabase
-          .from('statements')
-          .select(`
-            id,
-            title,
-            content,
-            statement_date,
-            image_path,
-            evidence_url,
-            created_at,
-            speaker:speakers!inner (
-              id,
-              last_name,
-              first_name,
-              party:parties!inner (
-                id,
-                name
-              ),
-              chamber,
-              prefectures (
-                name
-              )
-            )
-          `)
-
-        // 検索テキストがある場合は、検索条件を追加
-        if (searchText) {
-          console.log('フリーワード検索:', searchText)
-          query = query
-            .or(`title.ilike.%${searchText}%`)
-            .or(`content.ilike.%${searchText}%`)
-        }
-
-        // 日付範囲検索
-        if (startDate || endDate) {
-          if (startDate) {
-            console.log('開始日:', startDate)
-            query = query.gte('statement_date', startDate)
-          }
-          if (endDate) {
-            console.log('終了日:', endDate)
-            query = query.lte('statement_date', endDate)
-          }
-        }
-
-        // タグ検索
-        if (selectedTags.length > 0) {
-          const tagIds = selectedTags.map(tag => tag.id)
-          console.log('選択タグ:', selectedTags.map(tag => tag.name))
-          console.log('タグID:', tagIds)
-
-          // 1つのクエリで全てのタグに紐づくstatement_idを取得
-          const { data: statementTags, error: tagError } = await supabase
-            .from('statement_tag')
-            .select('statement_id, tag_id')
-            .in('tag_id', tagIds)
-
-          if (tagError) throw tagError
-
-          // 各statement_idが持つタグの数をカウント
-          const statementTagCounts: Record<string, number> = (statementTags as StatementTag[]).reduce((acc, curr) => {
-            acc[curr.statement_id] = (acc[curr.statement_id] || 0) + 1
-            return acc
-          }, {} as Record<string, number>)
-
-          // 選択されたタグの数と一致するstatement_idのみを抽出
-          const commonStatementIds = Object.entries(statementTagCounts)
-            .filter(([_, count]) => count === selectedTags.length)
-            .map(([statementId]) => statementId)
-
-          if (commonStatementIds.length > 0) {
-            query = query.in('id', commonStatementIds)
-          } else {
-            // 共通するstatement_idが存在しない場合は、空の結果を返す
-            query = query.eq('id', '00000000-0000-0000-0000-000000000000')
-          }
-        }
-
-        // 政党検索
-        if (selectedParty > 0) {
-          console.log('政党検索条件:', {
-            selectedParty,
-            selectedChildParty,
-            childParties: childParties.map(p => ({ id: p.id, name: p.name }))
-          })
-
-          if (selectedParty === OTHER_PARTY_ID && selectedChildParty) {
-            // その他政党の子政党が選択されている場合
-            query = query.eq('speaker.party_id', selectedChildParty)
-            console.log('子政党検索クエリ:', `speaker.party_id = ${selectedChildParty}`)
-          } else if (selectedParty === OTHER_PARTY_ID) {
-            // その他政党が選択されているが、子政党が選択されていない場合
-            const childPartyIds = childParties.map(party => party.id)
-            if (childPartyIds.length > 0) {
-              query = query.in('speaker.party_id', childPartyIds)
-              console.log('その他政党検索クエリ:', `speaker.party_id in (${childPartyIds.join(',')})`)
-            }
-          } else {
-            // 通常の政党が選択されている場合
-            query = query.eq('speaker.party_id', selectedParty)
-            console.log('通常政党検索クエリ:', `speaker.party_id = ${selectedParty}`)
-          }
-        }
-
-        // クエリの実行
-        const { data, error } = await query
-        console.log('検索結果:', { data, error })
-
-        if (error) {
-          console.error('クエリエラー:', error)
-          throw error
-        }
-
-        setStatements(data as unknown as Statement[])
-      } catch (error) {
-        console.error('Error fetching statements:', error)
-      } finally {
-        setIsLoading(false)
-        setIsSearching(false)
-      }
-    }
-
-    // 初期表示時または検索条件が変更された場合に検索を実行
-    fetchStatements()
-  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty])
+  // 発言者検索のハンドラー
+  const handleSpeakerSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSpeakerSearchText(value)
+    setIsSearching(!!value)
+  }
 
   // 日付入力のハンドラー
   const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -441,7 +469,7 @@ export default function Home() {
                     value={tagSearchText}
                     onChange={(e) => setTagSearchText(e.target.value)}
                     placeholder="タグを検索"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   {isTagSearchOpen && filteredTags.length > 0 && (
                     <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
@@ -449,7 +477,7 @@ export default function Home() {
                         <div
                           key={tag.id}
                           onClick={() => handleAddTag(tag)}
-                          className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+                          className="px-4 py-3 hover:bg-gray-100 cursor-pointer"
                         >
                           {tag.name}
                         </div>
@@ -477,20 +505,31 @@ export default function Home() {
 
               <div className="space-y-4">
                 <div className="flex flex-col gap-2">
+                  <label className="text-sm text-gray-700 font-semibold">発言者</label>
+                  <input
+                    type="text"
+                    value={speakerSearchText}
+                    onChange={handleSpeakerSearchChange}
+                    placeholder="発言者名を入力"
+                    className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+
+                <div className="flex flex-col gap-2">
                   <label className="text-sm text-gray-700 font-semibold">発言日</label>
                   <div className="flex items-center gap-2">
                     <input
                       type="date"
                       value={startDate}
                       onChange={handleStartDateChange}
-                      className="w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-1/2 px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                     <span className="text-gray-500">〜</span>
                     <input
                       type="date"
                       value={endDate}
                       onChange={handleEndDateChange}
-                      className="w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-1/2 px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </div>
                 </div>
@@ -501,7 +540,7 @@ export default function Home() {
                     <select
                       value={selectedParty}
                       onChange={handlePartyChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     >
                       <option value={0}>すべて</option>
                       {parentParties.map(party => (
@@ -516,7 +555,7 @@ export default function Home() {
                       <select
                         value={selectedChildParty || ''}
                         onChange={handleChildPartyChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="">選択してください</option>
                         {childParties.map(party => (
