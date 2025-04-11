@@ -65,7 +65,7 @@ export default function PartiesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <section className="text-gray-600 body-font bg-white">
-        <div className="container px-5 py-2 mx-auto">
+        <div className="container px-5 py-2 mx-auto max-w-screen-lg">
           <Header />
         </div>
       </section>

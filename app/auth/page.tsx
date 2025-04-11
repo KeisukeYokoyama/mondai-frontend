@@ -80,9 +80,13 @@ function AuthContent() {
           <Link href="/terms" className="text-blue-600 hover:text-blue-800">
             利用規約
           </Link>
+          <span className="text-gray-600 mx-2">|</span>
+          <Link href="/" className="text-blue-600 hover:text-blue-800">
+            トップページに戻る
+          </Link>
         </p>
         <p className="mt-4 text-xs text-gray-600 text-center">
-          上記リンクをご確認して同意の上ご利用ください
+          規約をご確認して同意の上ご利用ください
         </p>
       </div>
     </div>

@@ -415,7 +415,7 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <section className="text-gray-600 body-font bg-white">
-        <div className="container px-5 py-2 mx-auto">
+        <div className="container px-5 py-2 mx-auto max-w-screen-lg">
           <Header />
         </div>
       </section>
@@ -426,7 +426,7 @@ export default function Home() {
               <input
                 type="text"
                 className="w-full pl-4 pr-12 py-3 bg-white border border-gray-300 rounded-md text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="フリーワード検索"
+                placeholder="発言内容をざっくり入力"
                 value={searchText}
                 onChange={handleSearchChange}
               />

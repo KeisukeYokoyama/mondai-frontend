@@ -5,7 +5,7 @@ export default function TermsOfService() {
   return (
     <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
       <section className="text-gray-600 body-font bg-white">
-        <div className="container px-5 py-2 mx-auto">
+        <div className="container px-5 py-2 mx-auto max-w-screen-lg">
             <Header />
         </div>
       </section>
