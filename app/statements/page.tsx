@@ -1,6 +1,6 @@
 'use client';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import React, { useState, useEffect } from 'react'
+import React, { useState, useEffect, Suspense } from 'react'
 import Header from '@/components/Navs/Header'
 import Footer from '@/components/Navs/Footer'
 import Link from 'next/link'
@@ -109,7 +109,7 @@ const kanjiToHiragana = async (str: string) => {
   }
 };
 
-export default function Home() {
+function StatementsContent() {
   const supabase = createClientComponentClient()
   const searchParams = useSearchParams()
   const [statements, setStatements] = useState<Statement[]>([])
@@ -657,5 +657,13 @@ export default function Home() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={<div>読み込み中...</div>}>
+      <StatementsContent />
+    </Suspense>
   )
 }
