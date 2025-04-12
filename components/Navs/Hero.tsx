@@ -44,12 +44,13 @@ export default function Hero() {
           />
           <button 
             type="submit" 
+            aria-label="問題発言を検索"
             className="px-4 py-2 font-medium text-white bg-gray-800 rounded-r-md hover:bg-gray-700 focus:ring-4 focus:outline-none focus:ring-gray-300"
           >
             <MdOutlineSearch size={20} className="text-white" />
           </button>
         </div>
-        <p className="text-xs text-gray-500 pt-2">暴言内容をざっくり検索</p>
+        <p className="text-xs text-gray-800 pt-2">暴言内容をざっくり検索</p>
       </div>
 
       {/* 登録するボタン */}

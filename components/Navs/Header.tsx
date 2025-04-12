@@ -35,7 +35,7 @@ export default function Header({ title }: HeaderProps) {
           <Link href="/" className="flex items-center space-x-3">
             <Image
               src='/images/Logo.svg'
-              alt='問題発言ドットコム'
+              alt='問題発言ドットコム ロゴ'
               width={192}
               height={26}
               className='h-8 w-auto'
