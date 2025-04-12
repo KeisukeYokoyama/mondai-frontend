@@ -82,17 +82,27 @@ const SearchingIndicator = () => (
   </div>
 );
 
-// 画像パスを処理するヘルパー関数を追加
+// 画像パスを処理するヘルパー関数
 const getImagePath = (path: string | null) => {
   if (!path) return '/images/default-avatar.png';
   
-  // パスが完全なURLの場合はそのまま返す
   if (path.startsWith('http://') || path.startsWith('https://')) {
     return path;
   }
-  
-  // Supabaseのストレージパスを構築
-  return path.startsWith('/') ? path : `/${path}`;
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) {
+    console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
+    return '/images/default-avatar.png';
+  }
+
+  // パスからファイル名を抽出
+  const filename = path.split('/').pop();
+  if (!filename) {
+    return '/images/default-avatar.png';
+  }
+
+  return `${supabaseUrl}/storage/v1/object/public/politicians/${filename}`;
 };
 
 export default function Home() {
@@ -152,46 +162,27 @@ export default function Home() {
       });
 
       if (error) throw error;
-      
-      console.log('検索結果の最初のデータ構造:', {
-        データ全体: data?.data?.[0],
-        政党情報: {
-          parties: data?.data?.[0]?.parties,
-        },
-        地域情報: {
-          prefectures: data?.data?.[0]?.prefectures,
-        }
-      });
 
-      console.log('検索結果の詳細:', {
-        最初の政治家: data?.data?.[0] ? {
-          名前: `${data.data[0].last_name} ${data.data[0].first_name}`,
+      // データの存在チェックと型安全な処理
+      if (data?.data) {
+        console.log('検索結果の最初のデータ構造:', {
+          データ全体: data.data[0],
           政党情報: {
-            party: data.data[0].parties,
-            政党名: data.data[0].parties.name,
-            政党ID: data.data[0].parties.id
+            parties: data.data[0]?.parties,
           },
           地域情報: {
-            prefecture: data.data[0].prefectures,
-            地域名: data.data[0].prefectures.name
+            prefectures: data.data[0]?.prefectures,
           }
-        } : '該当なし'
-      });
+        });
 
-      console.log('検索結果:', {
-        総件数: data?.total,
-        取得データ件数: data?.data?.length,
-        最初の結果: data?.data?.[0] ? {
-          名前: `${data.data[0].last_name} ${data.data[0].first_name}`,
-          政党: data.data[0].parties.name,
-          政党ID: data.data[0].parties.id,
-          議員種別: data.data[0].chamber
-        } : '該当なし'
-      });
-
-      setSearchResults(data?.data || []);
-      setTotalResults(data?.total || 0);
-      setTotalPages(Math.ceil((data?.total || 0) / politiciansPerPage));
+        setSearchResults(data.data);
+        setTotalResults(data.total);
+        setTotalPages(Math.ceil(data.total / politiciansPerPage));
+      } else {
+        setSearchResults([]);
+        setTotalResults(0);
+        setTotalPages(1);
+      }
     } catch (error) {
       console.error('検索エラー:', error);
       setSearchResults([]);
@@ -200,7 +191,7 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
-  }, [selectedChildParty, currentPage]);
+  }, [selectedChildParty, currentPage, politiciansPerPage]);
 
   // マウント時にクライアントサイドフラグを設定
   useEffect(() => {
@@ -848,8 +839,8 @@ export default function Home() {
                         </h3>
                         <p className="text-gray-600 text-xs">
                           {politician.parties?.name || '無所属'} / 
-                          {politician.chamber === '地方選挙' ? '地方議員' : politician.chamber || '不明'} / 
-                          {politician.prefectures?.name || '地域不明'} /
+                          {politician.chamber || '不明'} / 
+                          {politician.district || '選挙区不明'} /
                           <span 
                             className={politician.election_result === "0" ? 'text-red-600 font-semibold' : 
                                      politician.election_result === "1" ? 'text-green-600 font-semibold' : ''}

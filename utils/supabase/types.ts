@@ -113,6 +113,7 @@ export interface SearchSpeakerParams {
   gender?: string;
   party_id?: string;
   prefecture_id?: string;
+  speaker_type?: number;
   per_page?: number;
   page?: number;
 }

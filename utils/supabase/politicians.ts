@@ -34,7 +34,7 @@ export const politicianAPI = {
         .from('speakers')
         .select(`
           *,
-          parties!inner (
+          parties (
             id,
             uuid,
             name,
@@ -42,17 +42,16 @@ export const politicianAPI = {
             order,
             parent_id
           ),
-          prefectures!inner (
+          prefectures (
             id,
             name
           ),
-          cities!inner (
+          cities (
             id,
             name,
             prefecture_id
           )
-        `, { count: 'exact' })
-        .eq('speaker_type', 1);
+        `, { count: 'exact' });
 
       console.log('基本クエリを構築');
 
@@ -73,44 +72,31 @@ export const politicianAPI = {
         ].join(',');
 
         query = query.or(searchCondition);
-        
-        console.log('名前検索条件を追加:', {
-          original: searchTerm,
-          hiragana: hiragana,
-          katakana: katakana,
-          condition: searchCondition
-        });
       }
+
       if (params.chamber) {
         query = query.eq('chamber', params.chamber);
-        console.log('議員種別条件を追加:', params.chamber);
       }
       if (params.gender) {
         query = query.eq('gender', params.gender);
-        console.log('性別条件を追加:', params.gender);
       }
       if (params.prefecture_id) {
         query = query.eq('prefecture_id', params.prefecture_id);
-        console.log('都道府県条件を追加:', params.prefecture_id);
       }
 
       if (params.party_id && params.party_id !== '0') {
         const partyId = Number(params.party_id);
         console.log('政党ID処理開始:', partyId);
         
-        // その他の党（ID: 3925）の場合は、その子政党も含めて検索
         if (partyId === 3925) {
-          // 親政党が3925の政党IDを取得
           const { data: childParties } = await supabase
             .from('parties')
             .select('id')
             .eq('parent_id', partyId);
           
           const partyIds = [partyId, ...(childParties?.map(p => p.id) || [])];
-          console.log('検索対象の政党ID一覧:', partyIds);
           query = query.in('party_id', partyIds);
         } else {
-          console.log('単一政党での検索:', partyId);
           query = query.eq('party_id', partyId);
         }
       }
@@ -120,33 +106,12 @@ export const politicianAPI = {
       const start = (page - 1) * perPage;
       const end = start + perPage - 1;
 
-      console.log('ページネーション設定:', { page, perPage, start, end });
-
       const { data, error, count } = await query
         .range(start, end)
         .order('last_name', { ascending: true })
         .order('first_name', { ascending: true });
 
-      if (error) {
-        console.error('Error searching politicians:', error);
-        console.error('Error details:', {
-          message: error.message || 'No message',
-          details: error.details || 'No details',
-          hint: error.hint || 'No hint',
-          code: error.code || 'No code'
-        });
-        return { data: null, error };
-      }
-
-      // 検索結果のログ出力を改善
-      console.log('検索成功:', {
-        総件数: count || 0,
-        取得データ件数: data?.length || 0,
-        最初のデータ: data?.[0] ? {
-          名前: `${data[0].last_name} ${data[0].first_name}`,
-          カナ: `${data[0].last_name_kana || ''} ${data[0].first_name_kana || ''}`
-        } : 'データなし'
-      });
+      if (error) throw error;
 
       return {
         data: {
@@ -156,16 +121,10 @@ export const politicianAPI = {
         error: null
       };
     } catch (err) {
-      // エラーハンドリングの改善
       console.error('Unexpected error in search:', err);
-      const errorMessage = err instanceof Error ? err.message : '予期せぬエラーが発生しました';
-      console.error('Error details:', {
-        type: err instanceof Error ? 'Error' : typeof err,
-        stack: err instanceof Error ? err.stack : 'No stack trace'
-      });
       return { 
         data: null, 
-        error: errorMessage
+        error: err instanceof Error ? err.message : '予期せぬエラーが発生しました'
       };
     }
   },

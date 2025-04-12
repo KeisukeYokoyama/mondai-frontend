@@ -39,8 +39,8 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
   }, [id]);
 
   // 画像パスを処理するヘルパー関数
-  const getImagePath = (path: string | File | null) => {
-    if (!path) return '/images/default-profile.jpg';
+  const getImagePath = (path: string | File | null, type: 'politician' | 'statement' = 'politician') => {
+    if (!path) return type === 'politician' ? '/images/default-profile.jpg' : '/images/default-statement.jpg';
     
     if (path instanceof File) return URL.createObjectURL(path);
     
@@ -48,25 +48,14 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
       return path;
     }
 
-    // Supabaseのストレージパスの場合
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!supabaseUrl) {
       console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
-      return path;
+      return type === 'politician' ? '/images/default-profile.jpg' : '/images/default-statement.jpg';
     }
 
-    // パスがUUID/ファイル名の形式かチェック
-    const pathRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/.*$/i;
-    if (pathRegex.test(path)) {
-      return `${supabaseUrl}/storage/v1/object/public/statements/${path}`;
-    }
-    
-    // /images/politicians/... のようなパスの場合
-    if (path.startsWith('/images/')) {
-      return path;
-    }
-    
-    return path.startsWith('/') ? path : `/${path}`;
+    const bucket = type === 'politician' ? 'politicians' : 'statements';
+    return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
   };
 
   // URLが有効かどうかをチェックするヘルパー関数
@@ -90,7 +79,7 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
         <div className="w-full md:w-1/2 md:mx-auto flex flex-col md:flex-row items-center justify-center text-center">
           {politician.image_path && (
             <Image 
-              src={getImagePath(politician.image_path)}
+              src={getImagePath(politician.image_path, 'politician')}
               alt={`${politician.last_name}${politician.first_name}`}
               width={128}
               height={128}
@@ -184,7 +173,7 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
                     {statement.image_path && (
                       <div className="flex items-center justify-center">
                         <Image 
-                          src={getImagePath(statement.image_path)}
+                          src={getImagePath(statement.image_path, 'statement')}
                           alt={statement.title} 
                           width={400}
                           height={300}
