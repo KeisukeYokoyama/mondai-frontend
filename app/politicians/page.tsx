@@ -856,14 +856,14 @@ export default function Home() {
                         height={64}
                       />
                       <div className="flex-1 min-w-0">
-                        <h3 className="text-gray-900">
+                        <h2 className="text-gray-900">
                           <span className="font-bold">
                             {politician.last_name} {politician.first_name}
                           </span>
                           <span className="text-gray-600 text-xs">
                             （{politician.age ? `${politician.age}歳` : '-'} / {politician.gender || '-'}）
                           </span>
-                        </h3>
+                        </h2>
                         <p className="text-gray-600 text-xs">
                           {politician.parties?.name || '無所属'} / 
                           {politician.chamber || '不明'} / 
@@ -879,7 +879,7 @@ export default function Home() {
                       </div>
                     </div>
                     <div className="min-w-[40px] text-right">
-                      <span className="text-blue-500 text-sm font-bold">
+                      <span className="text-blue-600 text-sm font-bold">
                         詳細
                       </span>
                     </div>

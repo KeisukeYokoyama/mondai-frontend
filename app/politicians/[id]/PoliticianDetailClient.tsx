@@ -174,7 +174,7 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
                       <div className="flex items-center justify-center">
                         <Image 
                           src={getImagePath(statement.image_path, 'statement')}
-                          alt={statement.title} 
+                          alt={`「${statement.title}」に関するスクショ`}
                           width={400}
                           height={300}
                           className="w-full h-full object-cover object-center rounded-t-md"
