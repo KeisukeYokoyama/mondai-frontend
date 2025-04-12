@@ -51,7 +51,8 @@ export const politicianAPI = {
             name,
             prefecture_id
           )
-        `, { count: 'exact' });
+        `, { count: 'exact' })
+        .eq('speaker_type', 1);
 
       console.log('基本クエリを構築');
 

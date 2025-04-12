@@ -57,8 +57,20 @@ export default function PartyDetailClient({ id }: { id: string }) {
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return path;
     }
-    
-    return path.startsWith('/') ? path : `/${path}`;
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
+      return '/images/default-avatar.png';
+    }
+
+    // パスからファイル名を抽出
+    const filename = path.split('/').pop();
+    if (!filename) {
+      return '/images/default-avatar.png';
+    }
+
+    return `${supabaseUrl}/storage/v1/object/public/politicians/${filename}`;
   };
 
   if (loading) return <div>読み込み中...</div>;

@@ -99,6 +99,29 @@ function SampleImageModal({
   );
 }
 
+// 画像パスを処理するヘルパー関数を追加
+const getImagePath = (path: string | null) => {
+  if (!path) return '/images/default-avatar.png';
+  
+  if (path.startsWith('http://') || path.startsWith('https://')) {
+    return path;
+  }
+
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) {
+    console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
+    return '/images/default-avatar.png';
+  }
+
+  // パスからファイル名を抽出
+  const filename = path.split('/').pop();
+  if (!filename) {
+    return '/images/default-avatar.png';
+  }
+
+  return `${supabaseUrl}/storage/v1/object/public/politicians/${filename}`;
+};
+
 function CreateStatementContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -459,7 +482,7 @@ function CreateStatementContent() {
                 <div className="mr-4 ml-2 flex-shrink-0">
                   <div className="w-12 h-12 rounded-full overflow-hidden">
                     <Image
-                      src={politician.image_path.startsWith('http') ? politician.image_path : `/${politician.image_path}`}
+                      src={getImagePath(politician.image_path)}
                       alt={`${politician.last_name}${politician.first_name}`}
                       width={64}
                       height={64}

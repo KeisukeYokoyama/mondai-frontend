@@ -111,7 +111,6 @@ export default function Home() {
   // 状態管理
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<SpeakerWithRelations[]>([]);
-  const [selectedType, setSelectedType] = useState<number>(0);
   const [selectedParty, setSelectedParty] = useState<number>(3924);
   const [selectedChildParty, setSelectedChildParty] = useState<number | null>(null);
   const [selectedRegion, setSelectedRegion] = useState<number>(0);
@@ -128,6 +127,7 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const politiciansPerPage = 20;
+  const [selectedType, setSelectedType] = useState(0);
   
   // 親政党のみをフィルタリング（orderでソート済み）
   const parentParties = parties.filter(party => !party.parent_id);
@@ -201,10 +201,10 @@ export default function Home() {
     try {
       setSearchText(sessionStorage.getItem('searchText') || '');
       setSelectedGender(Number(sessionStorage.getItem('selectedGender')) || 0);
-      setSelectedType(Number(sessionStorage.getItem('selectedType')) || 0);
       setSelectedParty(Number(sessionStorage.getItem('selectedParty')) || 3924);
       setSelectedRegion(Number(sessionStorage.getItem('selectedRegion')) || 0);
       setSelectedPrefecture(Number(sessionStorage.getItem('selectedPrefecture')) || 0);
+      setSelectedType(Number(sessionStorage.getItem('selectedType')) || 0);
       
       const savedResults = sessionStorage.getItem('searchResults');
       if (savedResults) {
@@ -233,7 +233,8 @@ export default function Home() {
                selectedGender === 1 ? '男' : 
                selectedGender === 2 ? '女' : undefined,
         party_id: selectedParty ? String(selectedParty) : undefined,
-        prefecture_id: selectedPrefecture
+        prefecture_id: selectedPrefecture,
+        speaker_type: 1  // 政治家のみを対象とする
       };
       handleSearch(searchParams);
     }
@@ -246,17 +247,17 @@ export default function Home() {
     try {
       sessionStorage.setItem('searchText', searchText);
       sessionStorage.setItem('selectedGender', String(selectedGender));
-      sessionStorage.setItem('selectedType', String(selectedType));
       sessionStorage.setItem('selectedParty', String(selectedParty));
       sessionStorage.setItem('selectedRegion', String(selectedRegion));
       sessionStorage.setItem('selectedPrefecture', String(selectedPrefecture));
+      sessionStorage.setItem('selectedType', String(selectedType));
       sessionStorage.setItem('searchResults', JSON.stringify(searchResults));
       sessionStorage.setItem('totalResults', String(totalResults));
     } catch (error) {
       console.error('Error saving to sessionStorage:', error);
     }
   }, [
-    isClient, searchText, selectedGender, selectedType, selectedParty, selectedRegion, selectedPrefecture,
+    isClient, searchText, selectedGender, selectedParty, selectedRegion, selectedPrefecture, selectedType,
     searchResults, totalResults
   ]);
 
@@ -355,7 +356,6 @@ export default function Home() {
           setIsLoading(true);
           const results = await politicianAPI.search({
             s: term || undefined,
-            party_id: selectedParty ? String(selectedParty) : undefined,
             chamber: selectedType === 0 ? undefined : 
                     selectedType === 1 ? '衆議院' : 
                     selectedType === 2 ? '参議院' : 
@@ -363,7 +363,10 @@ export default function Home() {
             gender: selectedGender === 0 ? undefined : 
                    selectedGender === 1 ? '男' : 
                    selectedGender === 2 ? '女' : undefined,
-            prefecture_id: selectedPrefecture ? String(selectedPrefecture) : undefined
+            party_id: selectedParty ? String(selectedParty) : undefined,
+            prefecture_id: selectedPrefecture ? String(selectedPrefecture) : undefined,
+            per_page: politiciansPerPage,
+            page: currentPage
           });
           if (results.data) {
             setSearchResults(results.data.data || []);
@@ -382,7 +385,7 @@ export default function Home() {
       debouncedFn();
       return debouncedFn;
     },
-    [selectedParty, selectedType, selectedGender, selectedPrefecture, setSearchResults, setTotalResults, setIsLoading]
+    [selectedParty, selectedGender, selectedPrefecture, setSearchResults, setTotalResults, setIsLoading, selectedType, currentPage, politiciansPerPage]
   );
 
   // コンポーネントのクリーンアップ
@@ -418,10 +421,6 @@ export default function Home() {
     setSelectedGender(Number(e.target.value));
   }, []);
 
-  const handleTypeChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedType(Number(e.target.value));
-  }, []);
-
   const handlePartyChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
     const value = Number(e.target.value);
     setSelectedParty(value);
@@ -447,6 +446,11 @@ export default function Home() {
     setSelectedPrefecture(value);
   }, []);
 
+  const handleTypeChange = useCallback((e: React.ChangeEvent<HTMLSelectElement>) => {
+    const value = Number(e.target.value);
+    setSelectedType(value);
+  }, []);
+
   // 検索結果の更新処理
   const updateSearchResults = useCallback(() => {
     const fetchData = async () => {
@@ -454,7 +458,7 @@ export default function Home() {
         const { data: speakers, error } = await supabase
           .from('speakers')
           .select('*')
-          .eq('speaker_type', selectedType === 0 ? null : selectedType)
+          .eq('speaker_type', 1)  // speaker_type=1 に固定
           .eq('party_id', selectedParty === 0 ? null : selectedParty)
           .eq('region_id', selectedRegion === 0 ? null : selectedRegion)
           .eq('prefecture_id', selectedPrefecture === 0 ? null : selectedPrefecture)
@@ -472,7 +476,7 @@ export default function Home() {
     };
 
     fetchData();
-  }, [selectedType, selectedParty, selectedRegion, selectedPrefecture, selectedGender, supabase]);
+  }, [selectedGender, selectedParty, selectedRegion, selectedPrefecture, supabase]);
 
   // ページネーションのコンポーネント
   const Pagination = () => {
@@ -628,7 +632,53 @@ export default function Home() {
                       </div>
                     )}
 
-                    {/* 種別選択 */}
+                    <div className="space-y-4">
+                      {/* 地域選択 */}
+                      <div className="relative">
+                        <select 
+                          className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-md appearance-none bg-white"
+                          value={selectedRegion}
+                          onChange={handleRegionChange}
+                        >
+                          <option value={0}>地域を選択</option>
+                          {regions.map((region) => (
+                            <option key={region.id} value={region.id}>
+                              {region.name}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-2 text-gray-700">
+                          <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                          </svg>
+                        </div>
+                      </div>
+
+                      {/* 都道府県選択 */}
+                      {selectedRegion > 0 && (
+                        <div className="relative">
+                          <select 
+                            className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-md appearance-none bg-white"
+                            value={selectedPrefecture}
+                            onChange={handlePrefectureChange}
+                          >
+                            <option value={0}>都道府県を選択</option>
+                            {prefectures.map((prefecture) => (
+                              <option key={prefecture.id} value={prefecture.id}>
+                                {prefecture.name}
+                              </option>
+                            ))}
+                          </select>
+                          <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-2 text-gray-700">
+                            <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                            </svg>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* 議員種別選択 */}
                     <div className="flex flex-col items-start gap-2 pb-2">
                       <p className="text-sm text-gray-700 font-bold">議員種別</p>
                       <div className="flex gap-3">
@@ -638,7 +688,7 @@ export default function Home() {
                             name="type" 
                             value="0"
                             checked={selectedType === 0}
-                            onChange={handleTypeChange}
+                            onChange={(e) => setSelectedType(Number(e.target.value))}
                             className="mr-1" 
                           />
                           <span className="text-sm">すべて</span>
@@ -649,7 +699,7 @@ export default function Home() {
                             name="type" 
                             value="1"
                             checked={selectedType === 1}
-                            onChange={handleTypeChange}
+                            onChange={(e) => setSelectedType(Number(e.target.value))}
                             className="mr-1" 
                           />
                           <span className="text-sm">衆議院</span>
@@ -660,7 +710,7 @@ export default function Home() {
                             name="type" 
                             value="2"
                             checked={selectedType === 2}
-                            onChange={handleTypeChange}
+                            onChange={(e) => setSelectedType(Number(e.target.value))}
                             className="mr-1" 
                           />
                           <span className="text-sm">参議院</span>
@@ -671,7 +721,7 @@ export default function Home() {
                             name="type" 
                             value="3"
                             checked={selectedType === 3}
-                            onChange={handleTypeChange}
+                            onChange={(e) => setSelectedType(Number(e.target.value))}
                             className="mr-1" 
                           />
                           <span className="text-sm">地方議員</span>
@@ -717,52 +767,6 @@ export default function Home() {
                           <span className="text-sm">女性</span>
                         </label>
                       </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      {/* 地域選択 */}
-                      <div className="relative">
-                        <select 
-                          className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-md appearance-none bg-white"
-                          value={selectedRegion}
-                          onChange={handleRegionChange}
-                        >
-                          <option value={0}>地域を選択</option>
-                          {regions.map((region) => (
-                            <option key={region.id} value={region.id}>
-                              {region.name}
-                            </option>
-                          ))}
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-2 text-gray-700">
-                          <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                          </svg>
-                        </div>
-                      </div>
-
-                      {/* 都道府県選択 */}
-                      {selectedRegion > 0 && (
-                        <div className="relative">
-                          <select 
-                            className="w-full px-4 py-3 pr-10 border border-gray-300 rounded-md appearance-none bg-white"
-                            value={selectedPrefecture}
-                            onChange={handlePrefectureChange}
-                          >
-                            <option value={0}>都道府県を選択</option>
-                            {prefectures.map((prefecture) => (
-                              <option key={prefecture.id} value={prefecture.id}>
-                                {prefecture.name}
-                              </option>
-                            ))}
-                          </select>
-                          <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-2 text-gray-700">
-                            <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
-                              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
-                            </svg>
-                          </div>
-                        </div>
-                      )}
                     </div>
 
                     <button 
