@@ -14,8 +14,8 @@ interface Politician {
 }
 
 const politicians: Politician[] = [
-  { name: "百田 尚樹", party: "日本保守党", img: "/images/sample/politician01.jpg", url: "/politicians/96c8c4a6-03a4-11f0-b8bb-0639f8cee915" },
-  { name: "有本 香", party: "日本保守党", img: "/images/sample/politician02.jpg", url: "/politicians/96c8dc52-03a4-11f0-b8bb-0639f8cee915" },
+  { name: "百田 尚樹", party: "日本保守党", img: "/images/sample/politician01.jpg", url: "/politicians/47319947-e977-4522-9448-0437a36b21df" },
+  { name: "有本 香", party: "日本保守党", img: "/images/sample/politician02.jpg", url: "/politicians/3ef5eee7-9a8d-4270-9060-4069722bd203" },
 ];
 
 export default function TopRanking({ title }: TopRankingProps) {

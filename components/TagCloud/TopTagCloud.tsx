@@ -3,8 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { supabase } from '@/lib/supabase';
-import { FcSpeaker } from "react-icons/fc";
-
+import { FaArrowRightLong } from 'react-icons/fa6';
 interface TopTagCloudProps {
   title: string;
 }
@@ -19,7 +18,8 @@ export default function TopTagCloud({ title }: TopTagCloudProps) {
         const { data, error } = await supabase
           .from('tags')
           .select('*')
-          .order('name');
+          .order('name')
+          .limit(10);
 
         if (error) throw error;
         setTags(data || []);
@@ -38,7 +38,6 @@ export default function TopTagCloud({ title }: TopTagCloudProps) {
       <>
         <div className="container px-3 pt-8 mx-auto">
           <h2 className="text-xl font-bold text-gray-900">
-            <FcSpeaker className="inline-block mr-2" />
             {title}
           </h2>
         </div>
@@ -57,7 +56,6 @@ export default function TopTagCloud({ title }: TopTagCloudProps) {
     <>
       <div className="container px-3 pt-8 mx-auto">
         <h2 className="text-xl font-bold text-gray-900">
-          <FcSpeaker className="inline-block mr-2" />
           {title}
         </h2>
       </div>
@@ -69,6 +67,14 @@ export default function TopTagCloud({ title }: TopTagCloudProps) {
             </Link>
           </span>
         ))}
+      </div>
+      <div className="container mx-auto text-right mt-4">
+        <Link href="/topics">
+          <button className="bg-gray-800 text-xs text-white px-4 py-2 rounded-md hover:bg-gray-600">
+            もっと見る
+            <FaArrowRightLong className="inline-block ml-2" />
+          </button>
+        </Link>
       </div>
     </>
   );
