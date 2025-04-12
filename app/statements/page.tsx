@@ -1,6 +1,6 @@
 'use client';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import React, { useState, useEffect, Suspense } from 'react'
+import React, { useState, useEffect } from 'react'
 import Header from '@/components/Navs/Header'
 import Footer from '@/components/Navs/Footer'
 import Link from 'next/link'
@@ -110,14 +110,6 @@ const kanjiToHiragana = async (str: string) => {
 };
 
 export default function Home() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <StatementsContent />
-    </Suspense>
-  )
-}
-
-function StatementsContent() {
   const supabase = createClientComponentClient()
   const searchParams = useSearchParams()
   const [statements, setStatements] = useState<Statement[]>([])
@@ -373,7 +365,7 @@ function StatementsContent() {
 
   useEffect(() => {
     fetchStatements()
-  }, [searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty, speakerSearchText, fetchStatements])
+  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty, speakerSearchText])
 
   // 検索ボタンのハンドラー
   const handleSearch = () => {

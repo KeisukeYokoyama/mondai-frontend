@@ -39,7 +39,7 @@ export default function Hero() {
           <input 
             type="text" 
             className="w-full pl-4 pr-12 py-3 bg-white border border-gray-300 rounded-l-md text-gray-600 focus:outline-none"
-            placeholder="問題発言からスクショを探す" 
+            placeholder="問題発言をざっくり検索" 
             readOnly
           />
           <button 
@@ -49,7 +49,7 @@ export default function Hero() {
             <MdOutlineSearch size={20} className="text-white" />
           </button>
         </div>
-        <p className="text-xs text-gray-500 pt-2">暴言内容や発言者名からスクショを検索</p>
+        <p className="text-xs text-gray-500 pt-2">暴言内容をざっくり検索</p>
       </div>
 
       {/* 登録するボタン */}
@@ -83,18 +83,15 @@ export default function Hero() {
               </button>
             </div>
             <div className="space-y-4">
-              <div className="flex flex-col gap-2 mt-6">
-                <label className="text-sm text-gray-700 font-semibold">問題発言内容</label>
-                <input 
-                  type="text" 
+              <input 
+                type="text" 
                 className="w-full pl-4 pr-12 py-3 bg-white border border-gray-300 rounded-md text-gray-600 focus:outline-none"
-                placeholder="発言をざっくり検索" 
+                placeholder="暴言内容をざっくり検索" 
                 value={searchText}
                 onChange={(e) => setSearchText(e.target.value)}
                 autoFocus
               />
-              </div>
-              <div className="flex flex-col gap-2 mb-6">
+              <div className="flex flex-col gap-2">
                 <label className="text-sm text-gray-700 font-semibold">発言者</label>
                 <input 
                   type="text" 
@@ -105,6 +102,9 @@ export default function Hero() {
                 />
               </div>
               <div className="flex flex-col gap-4">
+                <p className="text-sm text-gray-500 -mt-3">
+                  <small>検索結果で高度な絞り込みができます</small>
+                </p>
                 <button
                   onClick={handleSearch}
                   className="w-full px-4 py-3 border rounded-md bg-gray-900 text-white hover:bg-gray-800"
@@ -112,9 +112,6 @@ export default function Hero() {
                   検索
                 </button>
               </div>
-              <p className="text-sm text-gray-500 -mt-3 text-center">
-                  <small>検索結果で高度な絞り込みができます</small>
-                </p>
             </div>
           </div>
         </div>
