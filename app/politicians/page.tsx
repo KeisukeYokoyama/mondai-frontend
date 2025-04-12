@@ -199,12 +199,35 @@ export default function Home() {
     
     // sessionStorageから値を取得
     try {
-      setSearchText(sessionStorage.getItem('searchText') || '');
-      setSelectedGender(Number(sessionStorage.getItem('selectedGender')) || 0);
-      setSelectedParty(Number(sessionStorage.getItem('selectedParty')) || 3924);
-      setSelectedRegion(Number(sessionStorage.getItem('selectedRegion')) || 0);
-      setSelectedPrefecture(Number(sessionStorage.getItem('selectedPrefecture')) || 0);
-      setSelectedType(Number(sessionStorage.getItem('selectedType')) || 0);
+      const storedSearchText = sessionStorage.getItem('searchText');
+      if (storedSearchText) {
+        setSearchText(storedSearchText);
+      }
+      
+      const storedParty = sessionStorage.getItem('selectedParty');
+      if (storedParty) {
+        setSelectedParty(Number(storedParty));
+      }
+      
+      const storedGender = sessionStorage.getItem('selectedGender');
+      if (storedGender) {
+        setSelectedGender(Number(storedGender));
+      }
+      
+      const storedRegion = sessionStorage.getItem('selectedRegion');
+      if (storedRegion) {
+        setSelectedRegion(Number(storedRegion));
+      }
+      
+      const storedPrefecture = sessionStorage.getItem('selectedPrefecture');
+      if (storedPrefecture) {
+        setSelectedPrefecture(Number(storedPrefecture));
+      }
+      
+      const storedType = sessionStorage.getItem('selectedType');
+      if (storedType) {
+        setSelectedType(Number(storedType));
+      }
       
       const savedResults = sessionStorage.getItem('searchResults');
       if (savedResults) {
