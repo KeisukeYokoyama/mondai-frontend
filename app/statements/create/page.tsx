@@ -250,9 +250,9 @@ function CreateStatementContent() {
     try {
       // 画像圧縮のオプション設定
       const options = {
-        maxSizeMB: 2,
+        maxSizeMB: 1.5,
         maxWidth: 1200,
-        maxHeight: 2400,
+        maxHeight: 1800,
         useWebWorker: true,
         fileType: 'image/jpeg',
         initialQuality: 0.8
