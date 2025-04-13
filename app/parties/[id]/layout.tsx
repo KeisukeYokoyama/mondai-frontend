@@ -1,12 +1,17 @@
-import type { Metadata } from 'next'
-import { partiesAPI } from '@/utils/supabase/parties';
+import { Metadata } from 'next'
+import { supabase } from '@/lib/supabase'
 
 type Props = {
   params: { id: string }
+  children: React.ReactNode
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { data: party } = await partiesAPI.getPartyDetail(Number(params.id));
+  const { data: party } = await supabase
+    .from('parties')
+    .select('*')
+    .eq('id', params.id)
+    .single();
   
   return {
     title: party ? `${party.name} | 問題発言ドットコム` : '問題発言ドットコム',
