@@ -80,10 +80,10 @@ export interface Statement {
   tags?: StatementTag[]
 }
 
-export interface StatementWithRelations extends Omit<Statement, 'speaker_id' | 'party_id'> {
-  speaker: Speaker;
-  parties?: Party;
-  tags?: StatementTag[];
+export interface StatementWithRelations extends Statement {
+  speaker: SpeakerWithRelations;
+  tags: StatementTag[];
+  related_speakers: SpeakerWithRelations[];
 }
 
 export interface Tag {

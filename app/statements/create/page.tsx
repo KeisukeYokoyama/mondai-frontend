@@ -153,6 +153,10 @@ function CreateStatementContent() {
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [showOptions, setShowOptions] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
+  const [relatedSpeakers, setRelatedSpeakers] = useState<SpeakerWithRelations[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<SpeakerWithRelations[]>([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   // ログインチェック
   useEffect(() => {
@@ -345,6 +349,50 @@ function CreateStatementContent() {
     }
   };
 
+  // 検索機能を追加
+  const searchSpeakers = async (query: string) => {
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    setIsSearching(true);
+    try {
+      const { data, error } = await supabase
+        .from('speakers')
+        .select(`
+          *,
+          parties (
+            name
+          )
+        `)
+        .or(`last_name.ilike.%${query}%,first_name.ilike.%${query}%,last_name_kana.ilike.%${query}%,first_name_kana.ilike.%${query}%`)
+        .limit(10);
+
+      if (error) throw error;
+      setSearchResults(data || []);
+    } catch (error) {
+      console.error('発言者の検索に失敗しました:', error);
+      showToastMessage('発言者の検索に失敗しました');
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // 関連人物を追加する関数
+  const addRelatedSpeaker = (speaker: SpeakerWithRelations) => {
+    if (!relatedSpeakers.find(s => s.id === speaker.id)) {
+      setRelatedSpeakers([...relatedSpeakers, speaker]);
+    }
+    setSearchQuery('');
+    setSearchResults([]);
+  };
+
+  // 関連人物を削除する関数
+  const removeRelatedSpeaker = (speakerId: string) => {
+    setRelatedSpeakers(relatedSpeakers.filter(s => s.id !== speakerId));
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('送信ボタンがクリックされました');
@@ -382,7 +430,8 @@ function CreateStatementContent() {
         image_path = filePath;
       }
 
-      const statementData: Omit<Statement, 'id' | 'created_at' | 'updated_at'> = {
+      // statementの登録
+      const statementData = {
         title: formData.title,
         statement_date: formData.statement_date || null,
         content: formData.content,
@@ -415,6 +464,24 @@ function CreateStatementContent() {
 
         if (tagError) throw tagError;
         console.log('タグの関連付けが完了しました');
+      }
+
+      // 関連人物の登録
+      if (statement && relatedSpeakers.length > 0) {
+        const { error: relatedError } = await supabase
+          .from('statement_speaker')
+          .insert(
+            relatedSpeakers.map(speaker => ({
+              statement_id: statement.id,
+              speaker_id: speaker.id
+            }))
+          );
+
+        if (relatedError) {
+          console.error('関連人物の登録に失敗しました:', relatedError);
+          showToastMessage('関連人物の登録に失敗しました');
+          return;
+        }
       }
 
       router.push(`/politicians/${speaker_id}`);
@@ -714,6 +781,92 @@ function CreateStatementContent() {
                   />
                   <small className="text-gray-500">
                     発言の証拠となるURLを入力してください。
+                  </small>
+                </div>
+
+                <div>
+                  <label className="text-gray-700 text-sm font-bold mb-2 block">
+                    関連人物 <span className="bg-gray-400 text-white text-xs font-medium me-2 px-1.5 py-0.5 rounded-sm">任意</span>
+                  </label>
+                  
+                  {/* 選択された関連人物の表示 */}
+                  {relatedSpeakers.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {relatedSpeakers.map(speaker => (
+                        <div
+                          key={speaker.id}
+                          className="flex items-center bg-gray-100 rounded-full px-3 py-1"
+                        >
+                          <span className="text-sm">
+                            {speaker.last_name}{speaker.first_name}
+                            {speaker.parties?.name && ` (${speaker.parties.name})`}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => removeRelatedSpeaker(speaker.id)}
+                            className="ml-2 text-gray-500 hover:text-gray-700"
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 検索フォーム */}
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={searchQuery}
+                      onChange={(e) => {
+                        setSearchQuery(e.target.value);
+                        searchSpeakers(e.target.value);
+                      }}
+                      placeholder="名前を入力して検索"
+                      className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                    />
+                    
+                    {/* 検索結果のドロップダウン */}
+                    {searchResults.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                        {searchResults.map(speaker => (
+                          <button
+                            key={speaker.id}
+                            type="button"
+                            onClick={() => addRelatedSpeaker(speaker)}
+                            className="w-full text-left px-4 py-2 hover:bg-gray-100 flex items-center"
+                          >
+                            {speaker.image_path && (
+                              <div className="w-8 h-8 rounded-full overflow-hidden mr-2">
+                                <Image
+                                  src={getImagePath(speaker.image_path)}
+                                  alt={`${speaker.last_name}${speaker.first_name}`}
+                                  width={32}
+                                  height={32}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                            )}
+                            <div>
+                              <div>{speaker.last_name}{speaker.first_name}</div>
+                              {speaker.parties?.name && (
+                                <div className="text-sm text-gray-500">{speaker.parties.name}</div>
+                              )}
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* 検索中のローディング表示 */}
+                    {isSearching && (
+                      <div className="absolute right-3 top-2">
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+                      </div>
+                    )}
+                  </div>
+                  <small className="text-gray-500">
+                    発言に関連する人物を追加してください
                   </small>
                 </div>
               </div>

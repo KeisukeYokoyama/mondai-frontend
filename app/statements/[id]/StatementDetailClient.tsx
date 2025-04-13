@@ -7,7 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { statementAPI } from '@/utils/supabase/statements';
 import { commentAPI } from '@/utils/supabase/comments';
-import type { StatementWithRelations, StatementTag } from '@/utils/supabase/types';
+import type { StatementWithRelations, StatementTag, SpeakerWithRelations } from '@/utils/supabase/types';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { recordStatementView } from '@/utils/statementViews';
 
@@ -103,7 +103,25 @@ export default function StatementDetailClient({ id }: { id: string }) {
     async function loadData() {
       try {
         setLoading(true);
-        const { data, error } = await statementAPI.getDetail(id);
+        const { data, error } = await supabase
+          .from('statements')
+          .select(`
+            *,
+            speaker:speakers (*),
+            tags:statement_tag (
+              tags (*)
+            ),
+            related_speakers:statement_speaker (
+              speakers (
+                *,
+                parties (
+                  name
+                )
+              )
+            )
+          `)
+          .eq('id', id)
+          .single();
 
         if (error) {
           console.error('問題発言データの取得エラー:', error);
@@ -116,7 +134,13 @@ export default function StatementDetailClient({ id }: { id: string }) {
           throw new Error('問題発言データが見つかりませんでした');
         }
 
-        setStatement(data);
+        // データの整形
+        const formattedData = {
+          ...data,
+          related_speakers: data.related_speakers.map((rel: any) => rel.speakers)
+        };
+
+        setStatement(formattedData);
 
         // 表示回数を記録
         await recordStatementView(id);
@@ -236,30 +260,23 @@ export default function StatementDetailClient({ id }: { id: string }) {
     }
   };
 
-  // 画像パスを処理するヘルパー関数
-  const getImagePath = (path: string | File | null) => {
-    if (!path) return '/images/default-profile.jpg';
-
-    if (path instanceof File) return URL.createObjectURL(path);
+  // 画像パスを処理するヘルパー関数を修正
+  const getImagePath = (path: string | null, type: 'politician' | 'statement' = 'politician') => {
+    if (!path) return '/images/default-avatar.png';
 
     if (path.startsWith('http://') || path.startsWith('https://')) {
       return path;
     }
 
-    // Supabaseのストレージパスの場合
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!supabaseUrl) {
       console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
-      return path;
+      return '/images/default-avatar.png';
     }
 
-    // パスがUUID/ファイル名の形式かチェック
-    const pathRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/.*$/i;
-    if (pathRegex.test(path)) {
-      return `${supabaseUrl}/storage/v1/object/public/statements/${path}`;
-    }
-
-    return path.startsWith('/') ? path : `/${path}`;
+    // パスからファイル名を抽出
+    const bucket = type === 'politician' ? 'politicians' : 'statements';
+    return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
   };
 
   // ページネーションのコンポーネント
@@ -303,9 +320,8 @@ export default function StatementDetailClient({ id }: { id: string }) {
           <button
             key={page}
             onClick={() => handlePageClick(page)}
-            className={`w-8 h-8 text-sm flex items-center justify-center border border-gray-200 ${
-              currentPage === page ? 'bg-indigo-500 text-white' : 'bg-white'
-            }`}
+            className={`w-8 h-8 text-sm flex items-center justify-center border border-gray-200 ${currentPage === page ? 'bg-indigo-500 text-white' : 'bg-white'
+              }`}
           >
             {page}
           </button>
@@ -366,23 +382,23 @@ export default function StatementDetailClient({ id }: { id: string }) {
           </div>
         </div>
         <div className="flex flex-row items-center justify-center">
-        {statement.tags && statement.tags.length > 0 && (
-          <div className="flex flex-wrap gap-1">
-            {statement.tags.map((item: StatementTag, index: number) => {
-              const tag = item.tags;
-              return (
-                <div key={index}>
-                  <Link
-                    href={`/statements?tag=${tag.id}`}
-                    className="bg-white border border-gray-200 text-gray-900 text-sm px-3 py-1.5 rounded-full"
-                  >
-                    {tag.name}
-                  </Link>
-                </div>
-              );
-            })}
-          </div>
-        )}
+          {statement.tags && statement.tags.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {statement.tags.map((item: StatementTag, index: number) => {
+                const tag = item.tags;
+                return (
+                  <div key={index}>
+                    <Link
+                      href={`/statements?tag=${tag.id}`}
+                      className="bg-white border border-gray-200 text-gray-900 text-sm px-3 py-1.5 rounded-full"
+                    >
+                      {tag.name}
+                    </Link>
+                  </div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </section>
 
@@ -393,7 +409,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
               {statement.image_path && (
                 <div className="flex items-center justify-center">
                   <Image
-                    src={getImagePath(statement.image_path)}
+                    src={getImagePath(statement.image_path, 'statement')}
                     alt={statement.title}
                     width={400}
                     height={300}
@@ -416,6 +432,35 @@ export default function StatementDetailClient({ id }: { id: string }) {
                   </div>
                 )}
               </div>
+              {statement?.related_speakers && statement.related_speakers.length > 0 && (
+                <div className="px-8">
+                  <h2 className="text-2xl font-bold mb-4">関連人物</h2>
+                  <div className="flex flex-wrap gap-2 mb-4">
+                    {statement.related_speakers.map((speaker: SpeakerWithRelations) => (
+                      <Link 
+                        key={speaker.id} 
+                        href={`/politicians/${speaker.id}`}
+                        className="flex items-center bg-white border border-gray-200 rounded-full px-4 py-2 hover:bg-gray-50 transition-colors"
+                      >
+                        {speaker.image_path && (
+                          <div className="w-8 h-8 rounded-full overflow-hidden mr-2 border border-gray-100">
+                            <Image
+                              src={getImagePath(speaker.image_path, 'politician')}
+                              alt={`${speaker.last_name}${speaker.first_name}`}
+                              width={32}
+                              height={32}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-gray-900">{speaker.last_name}{speaker.first_name}</span>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -465,26 +510,26 @@ export default function StatementDetailClient({ id }: { id: string }) {
             <form onSubmit={handleSubmitComment}>
               <div className="mb-4">
                 <textarea
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                className="w-full p-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
-                rows={3}
-                placeholder="コメントを入力してください"
-                maxLength={1000}
-              />
-            </div>
-            {commentError && (
-              <p className="text-red-500 mb-2">{commentError}</p>
-            )}
-            <div className="flex justify-end">
-              <button
-                type="submit"
-                disabled={isSubmitting || !newComment.trim()}
-                className="min-w-28 py-2.5 px-5 mb-2 text-sm font-medium text-white focus:outline-none bg-indigo-500 rounded-lg border border-gray-200 hover:bg-indigo-600"
-              >
-                {isSubmitting ? '投稿中...' : 'コメントを投稿'}
-              </button>
-            </div>
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                  className="w-full p-2 border border-gray-300 rounded-sm focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                  rows={3}
+                  placeholder="コメントを入力してください"
+                  maxLength={1000}
+                />
+              </div>
+              {commentError && (
+                <p className="text-red-500 mb-2">{commentError}</p>
+              )}
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !newComment.trim()}
+                  className="min-w-28 py-2.5 px-5 mb-2 text-sm font-medium text-white focus:outline-none bg-indigo-500 rounded-lg border border-gray-200 hover:bg-indigo-600"
+                >
+                  {isSubmitting ? '投稿中...' : 'コメントを投稿'}
+                </button>
+              </div>
             </form>
           </div>
         </div>

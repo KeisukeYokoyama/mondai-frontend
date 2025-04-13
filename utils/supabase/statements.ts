@@ -85,7 +85,13 @@ export const statementAPI = {
         .select(`
           *,
           speaker:speakers(*, parties(*)),
-          tags:statement_tag(tags(*))
+          tags:statement_tag(tags(*)),
+          related_speakers:statement_speaker(
+            speakers(
+              *,
+              parties(*)
+            )
+          )
         `)
         .eq('id', id)
         .single();
@@ -93,6 +99,11 @@ export const statementAPI = {
       if (error) {
         console.error('Supabaseエラー:', error);
         return { data: null, error };
+      }
+      
+      // データの整形
+      if (data) {
+        data.related_speakers = data.related_speakers.map((rel: any) => rel.speakers);
       }
       
       return { data, error: null };
