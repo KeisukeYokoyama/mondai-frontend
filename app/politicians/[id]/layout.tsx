@@ -2,11 +2,13 @@ import type { Metadata } from 'next'
 import { politicianAPI } from '@/utils/supabase/politicians';
 
 type Props = {
-  params: { id: string }
+  params: Promise<{ id: string }>;
+  children: React.ReactNode;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { data: politician } = await politicianAPI.getDetail(params.id);
+  const resolvedParams = await params;
+  const { data: politician } = await politicianAPI.getDetail(resolvedParams.id);
   
   return {
     title: politician ? `${politician.last_name}${politician.first_name}の問題発言スクリーンショット | 問題発言ドットコム` : '問題発言ドットコム',
