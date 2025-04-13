@@ -886,7 +886,7 @@ export default function Home() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center ml-4 -mr-2 bg-gray-100 rounded-full p-2">
+                    <div className="flex items-center ml-4 -mr-1 bg-gray-100 rounded-full p-2">
                       <span className="text-gray-700 text-sm font-bold">
                       <MdArrowForwardIos />
                       </span>
