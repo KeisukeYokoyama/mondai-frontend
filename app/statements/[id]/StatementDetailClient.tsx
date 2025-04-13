@@ -491,12 +491,12 @@ export default function StatementDetailClient({ id }: { id: string }) {
                 <div key={comment.id} className="bg-white py-4 px-4 rounded-sm shadow-sm">
                   <p className="text-xs text-gray-500">
                     #{commentNumber} {new Date(comment.created_at).toLocaleString('ja-JP')}
-                    <button className="text-xs ml-2 text-blue-600">
+                    {/* <button className="text-xs ml-2 text-blue-600">
                       [通報]
                     </button>
                     <button className="text-xs ml-2 text-blue-600">
                       [返信]
-                    </button>
+                    </button> */}
                   </p>
                   <p className="text-gray-800 whitespace-pre-wrap mt-2">
                     {convertUrlsToLinks(comment.content)}

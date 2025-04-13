@@ -1,8 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { MdTipsAndUpdates } from "react-icons/md";
-import { FaRegThumbsDown, FaRegThumbsUp, FaArrowRightLong } from "react-icons/fa6";
+import { FaArrowRightLong } from "react-icons/fa6";
 import Image from 'next/image';
 import Link from 'next/link';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -95,7 +94,6 @@ export default function TopUpdate({ title }: TopUpdateProps) {
     <>
       <div className="container px-3 pt-8 mx-auto">
         <h2 className="text-xl font-bold text-gray-900">
-          <MdTipsAndUpdates className="inline-block mr-2 text-yellow-500" />
           {title}
         </h2>
       </div>
@@ -103,7 +101,7 @@ export default function TopUpdate({ title }: TopUpdateProps) {
         {loading ? (
           <div className="flex flex-wrap -m-4">
             {[...Array(4)].map((_, index) => (
-              <div key={index} className="p-2 md:w-1/3 w-full">
+              <div key={index} className="p-2 md:w-1/2 w-full">
                 <div className="animate-pulse border border-gray-200 rounded-md bg-white shadow-sm h-64">
                   <div className="bg-gray-200 h-40 rounded-t-md"></div>
                   <div className="p-4">
@@ -117,7 +115,7 @@ export default function TopUpdate({ title }: TopUpdateProps) {
         ) : (
           <div className="flex flex-wrap -m-4">
             {statements.map((statement) => (
-              <div key={statement.id} className="p-2 md:w-1/4 w-full">
+              <div key={statement.id} className="p-2 md:w-1/2 w-full">
                 <Link href={`/statements/${statement.id}`}>
                   <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
                     {statement.image_path && (
