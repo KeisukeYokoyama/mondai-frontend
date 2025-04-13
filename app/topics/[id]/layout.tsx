@@ -1,11 +1,14 @@
-import { Metadata } from 'next';
+import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase';
 
-type Props = {
-  params: { id: string }
+interface GenerateMetadataProps {
+  params: { id: string };
+  searchParams: { [key: string]: string | string[] | undefined };
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
+export async function generateMetadata(
+  { params, searchParams }: GenerateMetadataProps,
+): Promise<Metadata> {
   const { data: topic } = await supabase
     .from('tags')
     .select('*')
@@ -18,7 +21,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function TopicLayout({
+export default function Layout({
   children,
 }: {
   children: React.ReactNode;
