@@ -33,7 +33,7 @@ export default function Hero() {
     <>
       <div className="container px-5 pt-8 mx-auto text-center relative">
         <div 
-          className="relative flex max-w-md mx-auto cursor-pointer"
+          className="relative flex max-w-md mx-auto cursor-pointer mt-4"
           onClick={() => setIsSearchModalOpen(true)}
         >
           <input 
