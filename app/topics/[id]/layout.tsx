@@ -1,15 +1,11 @@
-import type { Metadata, ResolvingMetadata } from 'next'
+import { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 
 type Props = {
   params: { id: string }
-  searchParams: { [key: string]: string | string[] | undefined }
 }
 
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data: topic } = await supabase
     .from('tags')
     .select('*')
@@ -22,7 +18,7 @@ export async function generateMetadata(
   }
 }
 
-export default function Layout({
+export default function TopicLayout({
   children,
 }: {
   children: React.ReactNode;

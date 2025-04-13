@@ -1,6 +1,4 @@
-import type { Metadata } from 'next'
-
-export const metadata: Metadata = {
+export const metadata = {
   title: '問題発言のトピックス一覧 | 問題発言ドットコム',
   description: '問題発言のトピックス（タグ）一覧画面です。',
 }

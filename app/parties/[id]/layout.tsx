@@ -1,16 +1,12 @@
 import type { Metadata } from 'next'
-import { supabase } from '@/lib/supabase'
+import { partiesAPI } from '@/utils/supabase/parties';
 
-export async function generateMetadata({
-  params,
-}: {
+type Props = {
   params: { id: string }
-}): Promise<Metadata> {
-  const { data: party } = await supabase
-    .from('parties')
-    .select('*')
-    .eq('id', params.id)
-    .single();
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { data: party } = await partiesAPI.getPartyDetail(Number(params.id));
   
   return {
     title: party ? `${party.name} | 問題発言ドットコム` : '問題発言ドットコム',

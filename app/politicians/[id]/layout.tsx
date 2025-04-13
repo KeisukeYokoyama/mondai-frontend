@@ -1,15 +1,11 @@
-import type { Metadata, ResolvingMetadata } from 'next'
+import type { Metadata } from 'next'
 import { politicianAPI } from '@/utils/supabase/politicians';
 
 type Props = {
   params: { id: string }
-  searchParams: { [key: string]: string | string[] | undefined }
 }
 
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data: politician } = await politicianAPI.getDetail(params.id);
   
   return {
