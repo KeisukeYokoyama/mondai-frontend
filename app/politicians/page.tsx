@@ -866,10 +866,16 @@ export default function Home() {
                             （{politician.age ? `${politician.age}歳` : '-'} / {politician.gender || '-'}）
                           </span>
                         </h2>
-                        <p className="text-gray-600 text-xs">
-                          {politician.parties?.name || '無所属'} / 
-                          {politician.chamber || '不明'} / 
-                          {politician.district || '選挙区不明'} /
+                        <p className="text-gray-600 text-sm">
+                          <span className="mr-1">
+                            {politician.parties?.name || '無所属'} / 
+                          </span>
+                          <span className="mr-1">
+                            {politician.chamber || '不明'} / 
+                          </span>
+                          <span className="mr-1">
+                            {politician.district || '選挙区不明'} /
+                          </span>
                           <span 
                             className={politician.election_result === "0" ? 'text-red-600 font-semibold' : 
                                      politician.election_result === "1" ? 'text-green-600 font-semibold' : ''}
@@ -880,7 +886,7 @@ export default function Home() {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center ml-2 bg-gray-100 rounded-full p-2">
+                    <div className="flex items-center ml-4 -mr-2 bg-gray-100 rounded-full p-2">
                       <span className="text-gray-700 text-sm font-bold">
                       <MdArrowForwardIos />
                       </span>
