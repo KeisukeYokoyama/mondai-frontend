@@ -1,6 +1,6 @@
 export const metadata = {
-  title: '問題発言一覧 | 問題発言を探す',
-  description: '問題発言一覧画面',
+  title: '問題発言を探す',
+  description: '政治家や言論人の問題発言を証拠付きで検索できます。発言日や政党、関連トピックスで絞り込みができます。',
 }
 
 export default function Layout({

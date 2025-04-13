@@ -1,6 +1,5 @@
 import React from 'react';
 import { supabase } from '@/lib/supabase';
-import { FcSpeaker } from "react-icons/fc";
 import Link from 'next/link';
 import Header from '@/components/Navs/Header';
 import Footer from '@/components/Navs/Footer';
@@ -26,7 +25,7 @@ const TopicsPage = async () => {
       <main className="w-full max-w-full overflow-x-hidden bg-gray-100">
         <div className="container px-5 py-8 mx-auto max-w-screen-md">
           <h1 className="text-xl font-bold text-gray-900 mb-6">
-            トピックス
+            トピックス一覧
           </h1>
           <div className="bg-white p-6 rounded-lg shadow">
             <div className="flex flex-wrap gap-3">

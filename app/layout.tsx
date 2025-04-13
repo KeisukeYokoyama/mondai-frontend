@@ -16,9 +16,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: {
     template: '%s | 問題発言ドットコム',
-    default: '問題発言ドットコム', // デフォルトのタイトル
+    default: '問題発言ドットコム',
   },
-  description: '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
+  description: '政治家の問題発言や言動不一致などのスクショを登録して、過去の暴言を検索できるサービスです。',
 };
 
 export default function RootLayout({
