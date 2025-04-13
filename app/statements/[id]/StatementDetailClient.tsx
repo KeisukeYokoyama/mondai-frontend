@@ -83,6 +83,11 @@ function ConfirmDialog({
   );
 }
 
+// データの整形部分を修正
+interface RelatedSpeakerData {
+  speakers: SpeakerWithRelations;
+}
+
 export default function StatementDetailClient({ id }: { id: string }) {
   const supabase = createClientComponentClient();
   const [statement, setStatement] = useState<StatementWithRelations | null>(null);
@@ -137,7 +142,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
         // データの整形
         const formattedData = {
           ...data,
-          related_speakers: data.related_speakers.map((rel: any) => rel.speakers)
+          related_speakers: data.related_speakers.map((rel: RelatedSpeakerData) => rel.speakers)
         };
 
         setStatement(formattedData);
@@ -152,7 +157,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
       }
     }
     loadData();
-  }, [id]);
+  }, [id, supabase]);
 
   // コメントの読み込み
   useEffect(() => {
@@ -433,8 +438,8 @@ export default function StatementDetailClient({ id }: { id: string }) {
                 )}
               </div>
               {statement?.related_speakers && statement.related_speakers.length > 0 && (
-                <div className="px-8">
-                  <h2 className="text-2xl font-bold mb-4">関連人物</h2>
+                <div className="px-8 pt-4">
+                  <h2 className="text-xl font-bold mb-4">関連人物</h2>
                   <div className="flex flex-wrap gap-2 mb-4">
                     {statement.related_speakers.map((speaker: SpeakerWithRelations) => (
                       <Link 
