@@ -11,37 +11,79 @@ export default function UpdateInfo() {
         </div>
       </section>
       <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-white">
-        <div className="max-w-3xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-900 mb-8">要望集</h1>
+        <div className="mx-auto max-w-screen-md">
+          <h1 className="text-2xl font-bold text-gray-900 mb-8">開発予定・ご要望</h1>
 
-          <div className="space-y-8 text-gray-600">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">ご要望一覧</h2>
-            <div className="bg-white p-6 rounded-md shadow-sm">
-              <h2 className="text-xl font-semibold text-gray-800 mb-4">2025年4月11日</h2>
-              <p className="mb-4">
-                問題発言ドットコムの更新情報を追加しました。
-              </p>
-            </div>
-          </div>
-          <div className="space-y-8 text-gray-600 mt-8">
-            <h2 className="text-xl font-semibold text-gray-800 mb-4">開発予定</h2>
-            <table className="w-full border-collapse border border-gray-300">
-              <thead>
+          <div className="relative overflow-x-auto shadow-md rounded-lg">
+            <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+              <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                 <tr>
-                  <th className="border border-gray-300 p-2">開発予定</th>
-                  <th className="border border-gray-300 p-2">内容</th>
-                  <th className="border border-gray-300 p-2">優先度</th>
+                  <th scope="col" className="px-6 py-3 min-w-52">
+                    開発予定・ご要望
+                  </th>
+                  <th scope="col" className="px-6 py-3">
+                    内容
+                  </th>
+                  <th scope="col" className="px-6 py-3 w-1/6">
+                    ステータス
+                  </th>
                 </tr>
               </thead>
               <tbody>
-                <tr>
-                  <td className="border border-gray-300 p-2">項目</td>
-                  <td className="border border-gray-300 p-2">内容</td>
-                  <td className="border border-gray-300 p-2">優先度</td>
+                <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-normal min-w-52 dark:text-white">
+                    人気の発言を表示できるようにする
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-normal dark:text-white">
+                    コメント数が多い発言や表示件数を考慮して、人気の発言をランキング形式で表示する
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-normal dark:text-white w-1/6">
+                    <span className="bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
+                      開発中
+                    </span>
+                  </td>
+                </tr>
+                <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-normal min-w-52 dark:text-white">
+                    発言内容の変更
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-normal dark:text-white">
+                    ログインユーザーが発言内容を変更することができるようにする。変更した発言はモデレーターによって承認されるまで公開されない。
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-normal dark:text-white w-1/6">
+                    <span className="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">
+                      検討中
+                    </span>
+                  </td>
+                </tr>
+                <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-normal min-w-52 dark:text-white">
+                    関連スクショを登録できるようにする
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-normal dark:text-white">
+                    発言に関連するスクショを登録できるようにする。
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-normal dark:text-white w-1/6">
+                    <span className="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">
+                      検討中
+                    </span>
+                  </td>
+                </tr>
+                <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-gray-50 dark:hover:bg-gray-600">
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-normal min-w-52 dark:text-white">
+                    スクショの通報機能
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-normal dark:text-white">
+                    スクショの通報機能を追加する。スクショの通報が一定条件を満たした場合、モデレーターによって承認されるまで非公開にする。
+                  </td>
+                  <td className="px-6 py-4 font-medium text-gray-900 whitespace-normal dark:text-white w-1/6">
+                    <span className="bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-yellow-900 dark:text-yellow-300">
+                      検討中
+                    </span>
+                  </td>
                 </tr>
               </tbody>
             </table>
-
           </div>
         </div>
       </div>
