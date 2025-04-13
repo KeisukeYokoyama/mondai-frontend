@@ -1,15 +1,11 @@
-import type { Metadata, ResolvingMetadata } from 'next'
+import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase'
 
-type Props = {
+export async function generateMetadata({
+  params,
+}: {
   params: { id: string }
-  searchParams: { [key: string]: string | string[] | undefined }
-}
-
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+}): Promise<Metadata> {
   const { data: party } = await supabase
     .from('parties')
     .select('*')
