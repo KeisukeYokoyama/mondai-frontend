@@ -8,6 +8,8 @@ import debounce from 'lodash/debounce'
 import Image from 'next/image'
 import { politicianAPI } from '@/utils/supabase/politicians'
 import type { SpeakerWithRelations } from '@/utils/supabase/types'
+import { MdArrowForwardIos } from "react-icons/md";
+
 
 interface Region {
   id: number;
@@ -845,22 +847,22 @@ export default function Home() {
                     href={`/politicians/${politician.id}`}
                     key={politician.id || index} 
                     title={`${politician.last_name} ${politician.first_name}の問題発言`}
-                    className="flex items-center justify-between py-3 px-4 bg-white w-full hover:bg-gray-50 transition-colors cursor-pointer"
+                    className="flex items-center justify-between py-4 px-4 bg-white w-full hover:bg-gray-50 transition-colors cursor-pointer"
                   >
-                    <div className="flex items-center">
+                    <div className="flex items-center flex-grow">
                       <Image
                         src={getImagePath(politician.image_path)}
                         alt={`${politician.last_name} ${politician.first_name}`} 
-                        className="w-16 h-16 object-cover rounded-full mr-4 shadow-md" 
+                        className="w-20 h-20 object-cover rounded-full mr-4 shadow-md" 
                         width={64}
                         height={64}
                       />
                       <div className="flex-1 min-w-0">
                         <h2 className="text-gray-900">
-                          <span className="font-bold">
+                          <span className="font-bold text-lg">
                             {politician.last_name} {politician.first_name}
                           </span>
-                          <span className="text-gray-600 text-xs">
+                          <span className="text-gray-600 text-sm">
                             （{politician.age ? `${politician.age}歳` : '-'} / {politician.gender || '-'}）
                           </span>
                         </h2>
@@ -878,9 +880,9 @@ export default function Home() {
                         </p>
                       </div>
                     </div>
-                    <div className="min-w-[40px] text-right">
-                      <span className="text-blue-600 text-sm font-bold">
-                        詳細
+                    <div className="flex items-center ml-2 bg-gray-100 rounded-full p-2">
+                      <span className="text-gray-700 text-sm font-bold">
+                      <MdArrowForwardIos />
                       </span>
                     </div>
                   </Link>
