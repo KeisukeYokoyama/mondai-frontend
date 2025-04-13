@@ -52,6 +52,7 @@ export default function Footer() {
           <div className="flex space-x-4 pb-4">
             <Link href="/privacy" className="text-xs text-white hover:text-gray-300">プライバシーポリシー</Link>
             <Link href="/terms" className="text-xs text-white hover:text-gray-300">利用規約</Link>
+            <Link href="/update-info" className="text-xs text-white hover:text-gray-300">更新情報</Link>
           </div>
           <p className="text-xs text-white">
             <Link href="/">© 問題発言ドットコム</Link>

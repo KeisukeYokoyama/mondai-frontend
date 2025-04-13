@@ -12,7 +12,7 @@ export default function UpdateInfo() {
       </section>
       <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 bg-white">
         <div className="mx-auto max-w-screen-md">
-          <h1 className="text-2xl font-bold text-gray-900 mb-8">開発予定・ご要望</h1>
+          <h1 className="text-2xl font-bold text-gray-900 mb-8">更新情報</h1>
 
           <div className="relative overflow-x-auto shadow-md rounded-lg">
             <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
