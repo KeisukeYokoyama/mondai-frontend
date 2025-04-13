@@ -367,7 +367,7 @@ function CreateStatementContent() {
           )
         `)
         .or(`last_name.ilike.%${query}%,first_name.ilike.%${query}%,last_name_kana.ilike.%${query}%,first_name_kana.ilike.%${query}%`)
-        .limit(10);
+        .limit(30);
 
       if (error) throw error;
       setSearchResults(data || []);
