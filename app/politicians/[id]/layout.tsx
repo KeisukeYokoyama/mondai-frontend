@@ -1,13 +1,14 @@
-import type { Metadata } from 'next'
+import type { Metadata, ResolvingMetadata } from 'next'
 import { politicianAPI } from '@/utils/supabase/politicians';
 
-interface GenerateMetadataProps {
-  params: { id: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+type Props = {
+  params: { id: string }
+  searchParams: { [key: string]: string | string[] | undefined }
 }
 
 export async function generateMetadata(
-  { params, searchParams }: GenerateMetadataProps,
+  { params }: Props,
+  parent: ResolvingMetadata
 ): Promise<Metadata> {
   const { data: politician } = await politicianAPI.getDetail(params.id);
   
