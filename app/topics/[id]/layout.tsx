@@ -2,14 +2,16 @@ import { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
 
 type Props = {
-  params: { id: string }
+  params: Promise<{ id: string }>;
+  children: React.ReactNode;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params;
   const { data: topic } = await supabase
     .from('tags')
     .select('*')
-    .eq('id', params.id)
+    .eq('id', resolvedParams.id)
     .single();
   
   return {
