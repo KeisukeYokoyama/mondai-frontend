@@ -2,11 +2,13 @@ import type { Metadata } from 'next'
 import { statementAPI } from '@/utils/supabase/statements';
 
 type Props = {
-  params: { id: string }
+  params: Promise<{ id: string }>;
+  children: React.ReactNode;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { data: statement } = await statementAPI.getDetail(params.id);
+  const resolvedParams = await params;
+  const { data: statement } = await statementAPI.getDetail(resolvedParams.id);
   
   return {
     title: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name}が「${statement.title}」と発言しました | 問題発言ドットコム` : '問題発言ドットコム',
