@@ -1,11 +1,11 @@
-import { Metadata } from 'next'
+import type { Metadata } from 'next'
 import { supabase } from '@/lib/supabase'
 
-interface GenerateMetadataProps {
+type Props = {
   params: { id: string }
 }
 
-export async function generateMetadata({ params }: GenerateMetadataProps): Promise<Metadata> {
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { data: party } = await supabase
     .from('parties')
     .select('*')
