@@ -33,7 +33,7 @@ function ConfirmDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-[45%]">
+    <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-28">
       <div className="fixed inset-0 bg-gray-600/10 backdrop-blur-xl" onClick={onClose}></div>
       <div className="relative bg-white rounded-lg p-6 max-w-md w-full mx-4 z-10 shadow-xl/30">
         <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
@@ -892,7 +892,7 @@ function CreateStatementContent() {
 
       {/* 登録確認モーダル */}
       {showRegisterConfirm && (
-        <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-[45%] border-2">
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-28 border-2">
           <div className="fixed inset-0 bg-gray-600/10 backdrop-blur-xl" onClick={handleRegisterCancel}></div>
           <div className="relative bg-white rounded-lg p-6 max-w-screen-md w-full mx-4 z-10 shadow-xl/30">
             <h3 className="font-semibold mb-4">登録確認</h3>
