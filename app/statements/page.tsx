@@ -7,6 +7,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import path from 'path'
 import { useSearchParams } from 'next/navigation'
+import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
+
 
 interface Tag {
   id: string;
@@ -237,8 +239,8 @@ function StatementsContent() {
       })
 
       let query = supabase
-          .from('statements')
-          .select(`
+        .from('statements')
+        .select(`
             id,
             title,
             content,
@@ -272,7 +274,7 @@ function StatementsContent() {
       // 発言者検索
       if (speakerSearchText) {
         console.log('発言者検索:', speakerSearchText)
-        
+
         // 検索条件を1つずつ追加
         query = query
           .or(`last_name.ilike.%${speakerSearchText}%,first_name.ilike.%${speakerSearchText}%`, { foreignTable: 'speaker' })
@@ -355,10 +357,10 @@ function StatementsContent() {
       }
 
       setStatements(data as unknown as Statement[])
-      } catch (error) {
-        console.error('Error fetching statements:', error)
-      } finally {
-        setIsLoading(false)
+    } catch (error) {
+      console.error('Error fetching statements:', error)
+    } finally {
+      setIsLoading(false)
       setIsSearching(false)
     }
   }
@@ -415,248 +417,256 @@ function StatementsContent() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      <section className="text-gray-600 body-font bg-white">
-        <div className="container px-5 py-2 mx-auto max-w-screen-lg">
-          <Header />
-        </div>
-      </section>
-      <main className="w-full max-w-full overflow-x-hidden bg-gray-50 flex-grow">
-        <div className="container px-5 pt-8 mx-auto text-center relative">
-          <div className="relative flex flex-col gap-4 max-w-md mx-auto">
-            <div className="relative">
-              <input
-                type="text"
-                className="w-full pl-4 pr-12 py-3 bg-white border border-gray-300 rounded-md text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="発言内容をざっくり入力"
-                value={searchText}
-                onChange={handleSearchChange}
-              />
-              {isSearching && (
-                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
-                </div>
-              )}
-            </div>
-            <p
-              onClick={() => setIsModalOpen(true)}
-              className="text-sm text-blue-700 cursor-pointer text-right -mt-2 font-semibold"
-            >
-              高度な検索
-            </p>
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'ホーム', item: '/' },
+          { name: '問題発言一覧', item: '/statements' },
+        ]}
+      />
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <section className="text-gray-600 body-font bg-white">
+          <div className="container px-5 py-2 mx-auto max-w-screen-lg">
+            <Header />
           </div>
-        </div>
-
-        {/* 詳細検索モーダル */}
-        {isModalOpen && (
-          <div 
-            className="fixed inset-0 bg-gray-100/10 backdrop-blur-xl flex items-start pt-12 justify-center z-50"
-            onClick={(e) => {
-              if (e.target === e.currentTarget) {
-                setIsModalOpen(false);
-              }
-            }}
-          >
-            <div className="bg-white p-6 rounded-lg w-full max-w-md mx-4">
-              <div className="flex justify-between items-center mb-4">
-                <h3 className="text-lg font-bold">高度な検索</h3>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="text-gray-500 hover:text-gray-700"
-                >
-                  ✕
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-sm text-gray-700 font-semibold">タグ</label>
-                <div className="relative">
-                  <input
-                    type="text"
-                    value={tagSearchText}
-                    onChange={(e) => setTagSearchText(e.target.value)}
-                    placeholder="タグを検索"
-                    className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                  {isTagSearchOpen && filteredTags.length > 0 && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                      {filteredTags.map(tag => (
-                        <div
-                          key={tag.id}
-                          onClick={() => handleAddTag(tag)}
-                          className="px-4 py-3 hover:bg-gray-100 cursor-pointer"
-                        >
-                          {tag.name}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="flex flex-wrap gap-2 mt-2">
-                  {selectedTags.map(tag => (
-                    <div
-                      key={tag.id}
-                      className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm mb-4"
-                    >
-                      <span>{tag.name}</span>
-                      <button
-                        onClick={() => handleRemoveTag(tag.id)}
-                        className="text-gray-500 hover:text-gray-700"
-                      >
-                        ✕
-                      </button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm text-gray-700 font-semibold">発言者</label>
-                  <input
-                    type="text"
-                    value={speakerSearchText}
-                    onChange={handleSpeakerSearchChange}
-                    placeholder="発言者名を入力"
-                    className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  />
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm text-gray-700 font-semibold">発言日</label>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="date"
-                      value={startDate}
-                      onChange={handleStartDateChange}
-                      className="w-1/2 px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                    <span className="text-gray-500">〜</span>
-                    <input
-                      type="date"
-                      value={endDate}
-                      onChange={handleEndDateChange}
-                      className="w-1/2 px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
+        </section>
+        <main className="w-full max-w-full overflow-x-hidden bg-gray-50 flex-grow">
+          <div className="container px-5 pt-8 mx-auto text-center relative">
+            <div className="relative flex flex-col gap-4 max-w-md mx-auto">
+              <div className="relative">
+                <input
+                  type="text"
+                  className="w-full pl-4 pr-12 py-3 bg-white border border-gray-300 rounded-md text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="発言内容をざっくり入力"
+                  value={searchText}
+                  onChange={handleSearchChange}
+                />
+                {isSearching && (
+                  <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
                   </div>
+                )}
+              </div>
+              <p
+                onClick={() => setIsModalOpen(true)}
+                className="text-sm text-blue-700 cursor-pointer text-right -mt-2 font-semibold"
+              >
+                高度な検索
+              </p>
+            </div>
+          </div>
+
+          {/* 詳細検索モーダル */}
+          {isModalOpen && (
+            <div
+              className="fixed inset-0 bg-gray-100/10 backdrop-blur-xl flex items-start pt-12 justify-center z-50"
+              onClick={(e) => {
+                if (e.target === e.currentTarget) {
+                  setIsModalOpen(false);
+                }
+              }}
+            >
+              <div className="bg-white p-6 rounded-lg w-full max-w-md mx-4">
+                <div className="flex justify-between items-center mb-4">
+                  <h3 className="text-lg font-bold">高度な検索</h3>
+                  <button
+                    onClick={() => setIsModalOpen(false)}
+                    className="text-gray-500 hover:text-gray-700"
+                  >
+                    ✕
+                  </button>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm text-gray-700 font-semibold">政党</label>
+                  <label className="text-sm text-gray-700 font-semibold">タグ</label>
                   <div className="relative">
-                    <select
-                      value={selectedParty}
-                      onChange={handlePartyChange}
+                    <input
+                      type="text"
+                      value={tagSearchText}
+                      onChange={(e) => setTagSearchText(e.target.value)}
+                      placeholder="タグを検索"
                       className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    >
-                      <option value={0}>すべて</option>
-                      {parentParties.map(party => (
-                        <option key={party.id} value={party.id}>
-                          {party.name}
-                        </option>
-                      ))}
-                    </select>
+                    />
+                    {isTagSearchOpen && filteredTags.length > 0 && (
+                      <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
+                        {filteredTags.map(tag => (
+                          <div
+                            key={tag.id}
+                            onClick={() => handleAddTag(tag)}
+                            className="px-4 py-3 hover:bg-gray-100 cursor-pointer"
+                          >
+                            {tag.name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
-                  {selectedParty === OTHER_PARTY_ID && childParties.length > 0 && (
-                    <div className="relative mt-2">
+                  <div className="flex flex-wrap gap-2 mt-2">
+                    {selectedTags.map(tag => (
+                      <div
+                        key={tag.id}
+                        className="flex items-center gap-1 px-3 py-1 bg-gray-100 rounded-full text-sm mb-4"
+                      >
+                        <span>{tag.name}</span>
+                        <button
+                          onClick={() => handleRemoveTag(tag.id)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm text-gray-700 font-semibold">発言者</label>
+                    <input
+                      type="text"
+                      value={speakerSearchText}
+                      onChange={handleSpeakerSearchChange}
+                      placeholder="発言者名を入力"
+                      className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm text-gray-700 font-semibold">発言日</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="date"
+                        value={startDate}
+                        onChange={handleStartDateChange}
+                        className="w-1/2 px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <span className="text-gray-500">〜</span>
+                      <input
+                        type="date"
+                        value={endDate}
+                        onChange={handleEndDateChange}
+                        className="w-1/2 px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col gap-2">
+                    <label className="text-sm text-gray-700 font-semibold">政党</label>
+                    <div className="relative">
                       <select
-                        value={selectedChildParty || ''}
-                        onChange={handleChildPartyChange}
+                        value={selectedParty}
+                        onChange={handlePartyChange}
                         className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
-                        <option value="">選択してください</option>
-                        {childParties.map(party => (
+                        <option value={0}>すべて</option>
+                        {parentParties.map(party => (
                           <option key={party.id} value={party.id}>
                             {party.name}
                           </option>
                         ))}
                       </select>
                     </div>
-                  )}
-                </div>
+                    {selectedParty === OTHER_PARTY_ID && childParties.length > 0 && (
+                      <div className="relative mt-2">
+                        <select
+                          value={selectedChildParty || ''}
+                          onChange={handleChildPartyChange}
+                          className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">選択してください</option>
+                          {childParties.map(party => (
+                            <option key={party.id} value={party.id}>
+                              {party.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </div>
 
-                <button
-                  onClick={handleSearch}
-                  className="w-full px-4 py-3 border rounded-md bg-gray-900 text-white hover:bg-gray-800"
-                >
-                  検索
-                </button>
+                  <button
+                    onClick={handleSearch}
+                    className="w-full px-4 py-3 border rounded-md bg-gray-900 text-white hover:bg-gray-800"
+                  >
+                    検索
+                  </button>
+                </div>
               </div>
             </div>
-          </div>
-        )}
+          )}
 
-        <div className="container px-3 pt-8 mx-auto max-w-screen-md">
-          <div className="flex justify-between items-center">
-            <h1 className="text-xl font-bold text-gray-900">
-            問題発言一覧
-          </h1>
-            {statements.length > 0 && (
-              <p className="text-sm text-gray-600">
-                検索結果：{statements.length}件
-              </p>
-            )}
-          </div>
-        </div>
-        <div className="container px-0 pt-6 pb-8 mx-auto max-w-screen-md">
-          {isLoading ? (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">読み込み中...</p>
+          <div className="container px-3 pt-8 mx-auto max-w-screen-md">
+            <div className="flex justify-between items-center">
+              <h1 className="text-xl font-bold text-gray-900">
+                問題発言一覧
+              </h1>
+              {statements.length > 0 && (
+                <p className="text-sm text-gray-600">
+                  検索結果：{statements.length}件
+                </p>
+              )}
             </div>
-          ) : statements.length > 0 ? (
-            <div className="columns-1 md:columns-2 gap-6 px-4">
-              {statements.map((statement) => (
-                <div key={statement.id} className="break-inside-avoid mb-6">
-                  <Link href={`/statements/${statement.id}`} className="block">
-                    <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
-                      {statement.image_path && (
-                        <div className="flex items-center justify-center">
-                          <Image
-                            src={getImagePath(statement.image_path)}
-                            alt={statement.title}
-                            width={600}
-                            height={600}
-                            className="w-full h-full object-cover object-center rounded-t-md"
-                            unoptimized
-                          />
-                        </div>
-                      )}
-                      <div className="p-6">
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="font-bold text-gray-900">
-                            {statement.speaker?.last_name || ''} {statement.speaker?.first_name || ''}
-                          </span>
-                          <span className="text-gray-500 text-sm">
-                            {statement.speaker?.party?.name || '無所属'}
-                          </span>
-                        </div>
-                        {statement.content && (
-                          <p className="text-sm text-gray-600 mb-3 line-clamp-3">
-                            {statement.content}
-                          </p>
+          </div>
+          <div className="container px-0 pt-6 pb-8 mx-auto max-w-screen-md">
+            {isLoading ? (
+              <div className="text-center py-12 bg-gray-50 rounded-lg">
+                <p className="text-gray-500">読み込み中...</p>
+              </div>
+            ) : statements.length > 0 ? (
+              <div className="columns-1 md:columns-2 gap-6 px-4">
+                {statements.map((statement) => (
+                  <div key={statement.id} className="break-inside-avoid mb-6">
+                    <Link href={`/statements/${statement.id}`} className="block">
+                      <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
+                        {statement.image_path && (
+                          <div className="flex items-center justify-center">
+                            <Image
+                              src={getImagePath(statement.image_path)}
+                              alt={statement.title}
+                              width={600}
+                              height={600}
+                              className="w-full h-full object-cover object-center rounded-t-md"
+                              unoptimized
+                            />
+                          </div>
                         )}
-                        <div className="mt-3 flex items-center text-xs text-gray-500">
-                          {statement.statement_date && (
-                            <span className="mr-4">
-                              {new Date(statement.statement_date).toLocaleDateString('ja-JP')}
+                        <div className="p-6">
+                          <div className="flex items-center gap-2 mb-3">
+                            <span className="font-bold text-gray-900">
+                              {statement.speaker?.last_name || ''} {statement.speaker?.first_name || ''}
                             </span>
+                            <span className="text-gray-500 text-sm">
+                              {statement.speaker?.party?.name || '無所属'}
+                            </span>
+                          </div>
+                          {statement.content && (
+                            <p className="text-sm text-gray-600 mb-3 line-clamp-3">
+                              {statement.content}
+                            </p>
                           )}
+                          <div className="mt-3 flex items-center text-xs text-gray-500">
+                            {statement.statement_date && (
+                              <span className="mr-4">
+                                {new Date(statement.statement_date).toLocaleDateString('ja-JP')}
+                              </span>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  </Link>
-                </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 bg-gray-50 rounded-lg">
-              <p className="text-gray-500">登録されている問題発言がありません</p>
-            </div>
-          )}
-        </div>
-      </main>
-      <Footer />
-    </div>
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-gray-50 rounded-lg">
+                <p className="text-gray-500">登録されている問題発言がありません</p>
+              </div>
+            )}
+          </div>
+        </main>
+        <Footer />
+      </div>
+    </>
   )
 }
 

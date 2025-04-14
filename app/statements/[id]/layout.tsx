@@ -1,14 +1,20 @@
 import type { Metadata } from 'next'
 import { statementAPI } from '@/utils/supabase/statements';
+import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
 
 type Props = {
   params: Promise<{ id: string }>;
   children: React.ReactNode;
 }
 
+async function getStatementData(id: string) {
+  const { data: statement } = await statementAPI.getDetail(id);
+  return statement;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
-  const { data: statement } = await statementAPI.getDetail(resolvedParams.id);
+  const statement = await getStatementData(resolvedParams.id);
   
   return {
     title: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name}が「${statement.title}」と発言しました | 問題発言ドットコム` : '問題発言ドットコム',
@@ -16,10 +22,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function Layout({
+export default async function Layout({
+  params,
   children,
-}: {
-  children: React.ReactNode
-}) {
-  return <>{children}</>
+}: Props) {
+  const resolvedParams = await params;
+  const statement = await getStatementData(resolvedParams.id);
+  const statementTitle = statement ? statement.title : '';
+
+  return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'ホーム', item: '/' },
+          { name: '問題発言一覧', item: '/statements' },
+          { name: statementTitle, item: `/statements/${resolvedParams.id}` },
+        ]}
+      />
+      {children}
+    </>
+  );
 }
