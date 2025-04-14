@@ -82,7 +82,7 @@ function AuthContent() {
           </Link>
           <span className="text-gray-600 mx-2">|</span>
           <Link href="/" className="text-blue-600 hover:text-blue-800">
-            トップページに戻る
+            トップに戻る
           </Link>
         </p>
         <p className="mt-4 text-xs text-gray-600 text-center">

@@ -18,13 +18,13 @@ export const metadata: Metadata = {
     template: '%s | 問題発言ドットコム',
     default: '問題発言ドットコム',
   },
-  description: '政治家の問題発言や言行不一致などのスクショを登録して、過去の暴言を検索できるサービスです。',
+  description: '政治家の暴言やデマ、言行不一致などのスクショを登録して、過去の問題発言を検索できるサービスです。',
   alternates: {
     canonical: 'https://www.mondai-hatsugen.com',
   },
   openGraph: {
     title: '問題発言ドットコム',
-    description: '政治家の問題発言や言行不一致などのスクショを登録して、過去の暴言を検索できるサービスです。',
+    description: '政治家の暴言やデマ、言行不一致などのスクショを登録して、過去の問題発言を検索できるサービスです。',
     type: 'website',
     locale: 'ja_JP',
     siteName: '問題発言ドットコム',
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: '問題発言ドットコム',
-    description: '政治家の問題発言や言行不一致などのスクショを登録して、過去の暴言を検索できるサービスです。',
+    description: '政治家の暴言やデマ、言行不一致などのスクショを登録して、過去の問題発言を検索できるサービスです。',
     images: ['https://www.mondai-hatsugen.com/images/ogp-image.png'],
   },
 };
