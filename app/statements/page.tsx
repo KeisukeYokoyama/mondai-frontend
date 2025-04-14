@@ -8,6 +8,7 @@ import Image from 'next/image'
 import path from 'path'
 import { useSearchParams } from 'next/navigation'
 import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
+import ItemListJsonLd from '@/components/ItemListJsonLd';
 
 
 interface Tag {
@@ -408,8 +409,10 @@ function StatementsContent() {
     setEndDate(e.target.value)
   }
 
-  // 画像パスを処理するヘルパー関数
+  // 画像パスを処理するヘルパー関数を修正
   const getImagePath = (path: string) => {
+    if (!path) return `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.mondai-hatsugen.com'}/images/default-statement.png`;
+    
     // SupabaseのストレージURLを構築
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseBucket = 'statements'
@@ -424,6 +427,16 @@ function StatementsContent() {
           { name: '問題発言一覧', item: '/statements' },
         ]}
       />
+      {statements.length > 0 && (
+        <ItemListJsonLd
+          items={statements.map((statement, index) => ({
+            position: index + 1,
+            name: statement.title,
+            url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.mondai-hatsugen.com'}/statements/${statement.id}`,
+            image: getImagePath(statement.image_path),
+          }))}
+        />
+      )}
       <div className="min-h-screen bg-gray-50 flex flex-col">
         <section className="text-gray-600 body-font bg-white">
           <div className="container px-5 py-2 mx-auto max-w-screen-lg">
