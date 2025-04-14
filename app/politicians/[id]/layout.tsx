@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { politicianAPI } from '@/utils/supabase/politicians';
+import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -16,10 +17,25 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function Layout({
+export default async function Layout({
+  params,
   children,
 }: {
-  children: React.ReactNode
+  params: { id: string };
+  children: React.ReactNode;
 }) {
-  return <>{children}</>
+  const { data: politician } = await politicianAPI.getDetail(params.id);
+  
+  return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'ホーム', item: '/' },
+          { name: '政治家一覧', item: '/politicians' },
+          { name: `${politician?.last_name ?? ''}${politician?.first_name ?? ''}`, item: `/politicians/${params.id}` },
+        ]}
+      />
+      {children}
+    </>
+  );
 } 

@@ -9,7 +9,7 @@ import Image from 'next/image'
 import { politicianAPI } from '@/utils/supabase/politicians'
 import type { SpeakerWithRelations } from '@/utils/supabase/types'
 import { MdArrowForwardIos } from "react-icons/md";
-
+import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
 
 interface Region {
   id: number;
@@ -566,6 +566,13 @@ export default function Home() {
   };
 
   return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'ホーム', item: '/' },
+          { name: '政治家一覧', item: '/politicians' },
+        ]}
+      />
     <div className="min-h-screen bg-gray-50">
       <section className="text-gray-600 body-font bg-white">
         <div className="container px-5 py-2 mx-auto max-w-screen-lg">
@@ -905,6 +912,7 @@ export default function Home() {
       </main>
       <Footer />
     </div>
+    </>
   )
 }
 
