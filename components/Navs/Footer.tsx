@@ -38,7 +38,7 @@ export default function Footer() {
               <summary className="py-2 outline-none cursor-pointer text-sm">問題発言ドットコムとは？</summary>
               <div className="px-4 pb-4 text-sm">
                 <p>
-                  政治家の暴言やデマ、言動不一致などのスクショを登録して、過去の暴言などを検索できるサービスです。
+                  政治家の暴言やデマ、言行不一致などのスクショを登録して、過去の暴言などを検索できるサービスです。
                   選挙で投票する政党がない！といった迷える愛国者を救うため、消去法で選挙に参加する時の参考になれば幸いです。
                 </p>
               </div>

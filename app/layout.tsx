@@ -18,7 +18,31 @@ export const metadata: Metadata = {
     template: '%s | 問題発言ドットコム',
     default: '問題発言ドットコム',
   },
-  description: '政治家の問題発言や言動不一致などのスクショを登録して、過去の暴言を検索できるサービスです。',
+  description: '政治家の問題発言や言行不一致などのスクショを登録して、過去の暴言を検索できるサービスです。',
+  alternates: {
+    canonical: 'https://www.mondai-hatsugen.com',
+  },
+  openGraph: {
+    title: '問題発言ドットコム',
+    description: '政治家の問題発言や言行不一致などのスクショを登録して、過去の暴言を検索できるサービスです。',
+    type: 'website',
+    locale: 'ja_JP',
+    siteName: '問題発言ドットコム',
+    images: [
+      {
+        url: 'https://www.mondai-hatsugen.com/images/ogp-image.png',
+        width: 1200,
+        height: 630,
+        alt: '問題発言ドットコム',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '問題発言ドットコム',
+    description: '政治家の問題発言や言行不一致などのスクショを登録して、過去の暴言を検索できるサービスです。',
+    images: ['https://www.mondai-hatsugen.com/images/ogp-image.png'],
+  },
 };
 
 export default function RootLayout({
