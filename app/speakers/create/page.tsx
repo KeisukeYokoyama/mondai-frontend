@@ -11,6 +11,15 @@ import { useAuth } from '@/contexts/AuthContext';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import imageCompression from 'browser-image-compression';
 
+interface Party {
+  id: number;
+  uuid: string;
+  name: string;
+  abbreviation?: string;
+  parent_id: number | null;
+  order?: number;
+}
+
 // 確認ダイアログのコンポーネント
 function ConfirmDialog({
   isOpen,
@@ -28,7 +37,7 @@ function ConfirmDialog({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-[45%]">
+    <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-28">
       <div className="fixed inset-0 bg-gray-600/10 backdrop-blur-xl" onClick={onClose}></div>
       <div className="relative bg-white rounded-lg p-6 max-w-md w-full mx-4 z-10 shadow-xl/30">
         <h3 className="text-lg font-bold text-gray-900 mb-2">{title}</h3>
@@ -67,10 +76,13 @@ function CreateSpeakerContent() {
   const [showToast, setShowToast] = useState(false);
   const [toastType, setToastType] = useState<'success' | 'error'>('success');
   const [isDragging, setIsDragging] = useState(false);
+  const [showOptions, setShowOptions] = useState(false);
+  const [parties, setParties] = useState<Party[]>([]);
+  const [selectedChildParty, setSelectedChildParty] = useState<number | null>(null);
 
   // フォームの状態
   const [formData, setFormData] = useState({
-    speaker_type: 1,
+    speaker_type: '',
     last_name: '',
     first_name: '',
     last_name_kana: '',
@@ -94,6 +106,19 @@ function CreateSpeakerContent() {
     tiktok_url: '',
   });
 
+  // 「その他」政党のIDを定数として定義
+  const OTHER_PARTY_ID = 3925;
+
+  // 親政党のみをフィルタリング（orderでソート済み）
+  const parentParties = parties.filter(party => !party.parent_id);
+  
+  // 選択された親政党の子政党をフィルタリング
+  const childParties = parties.filter(party => {
+    if (!formData.party_id) return false;
+    const parentId = String(formData.party_id);
+    return String(party.parent_id) === parentId;
+  });
+
   // ログインチェック
   useEffect(() => {
     if (!loading && !user) {
@@ -102,6 +127,26 @@ function CreateSpeakerContent() {
       router.push('/auth');
     }
   }, [user, loading, router]);
+
+  // 政党一覧の取得
+  useEffect(() => {
+    const fetchParties = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('parties')
+          .select('*')
+          .order('order', { ascending: true })
+          .order('name', { ascending: true });
+        
+        if (error) throw error;
+        setParties(data);
+      } catch (error) {
+        console.error('Error fetching parties:', error);
+      }
+    };
+
+    fetchParties();
+  }, [supabase]);
 
   // Toastを表示する関数
   const showToastMessage = (message: string, type: 'success' | 'error' = 'error') => {
@@ -136,7 +181,7 @@ function CreateSpeakerContent() {
     try {
       const options = {
         maxSizeMB: 1,
-        maxWidthOrHeight: 1200,
+        maxWidthOrHeight: 500,
         useWebWorker: true,
         fileType: 'image/jpeg',
         initialQuality: 0.8
@@ -190,6 +235,30 @@ function CreateSpeakerContent() {
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       const file = e.dataTransfer.files[0];
       await processFile(file);
+    }
+  };
+
+  // バリデーション関数を追加
+  const validateForm = () => {
+    // 必須項目のチェック
+    if (!formData.last_name || !formData.first_name || !formData.last_name_kana || !formData.first_name_kana || !formData.speaker_type) {
+      showToastMessage('必須項目を入力してください');
+      return false;
+    }
+
+    // 政治家の場合は所属政党も必須
+    if (formData.speaker_type === '1' && !formData.party_id) {
+      showToastMessage('所属政党を選択してください');
+      return false;
+    }
+
+    return true;
+  };
+
+  // 登録ボタンのクリックハンドラ
+  const handleRegisterClick = () => {
+    if (validateForm()) {
+      setShowRegisterConfirm(true);
     }
   };
 
@@ -368,6 +437,7 @@ function CreateSpeakerContent() {
                 <input
                   type="text"
                   name="last_name"
+                  placeholder="例：安倍"
                   value={formData.last_name}
                   onChange={handleChange}
                   required
@@ -381,6 +451,7 @@ function CreateSpeakerContent() {
                 <input
                   type="text"
                   name="first_name"
+                  placeholder="例：晋三"
                   value={formData.first_name}
                   onChange={handleChange}
                   required
@@ -389,11 +460,12 @@ function CreateSpeakerContent() {
               </div>
               <div>
                 <label className="text-gray-700 text-sm font-bold mb-2 block">
-                  せい
+                  せい <span className="bg-red-400 text-white text-xs font-medium me-2 px-1.5 py-0.5 rounded-sm">必須</span>
                 </label>
                 <input
                   type="text"
                   name="last_name_kana"
+                  placeholder="例：あべ"
                   value={formData.last_name_kana}
                   onChange={handleChange}
                   className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
@@ -401,11 +473,12 @@ function CreateSpeakerContent() {
               </div>
               <div>
                 <label className="text-gray-700 text-sm font-bold mb-2 block">
-                  めい
+                  めい <span className="bg-red-400 text-white text-xs font-medium me-2 px-1.5 py-0.5 rounded-sm">必須</span>
                 </label>
                 <input
                   type="text"
                   name="first_name_kana"
+                  placeholder="例：しんぞう"
                   value={formData.first_name_kana}
                   onChange={handleChange}
                   className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
@@ -416,7 +489,7 @@ function CreateSpeakerContent() {
             {/* 発言者タイプ */}
             <div>
               <label className="text-gray-700 text-sm font-bold mb-2 block">
-                発言者タイプ <span className="bg-red-400 text-white text-xs font-medium me-2 px-1.5 py-0.5 rounded-sm">必須</span>
+                人物の属性 <span className="bg-red-400 text-white text-xs font-medium me-2 px-1.5 py-0.5 rounded-sm">必須</span>
               </label>
               <select
                 name="speaker_type"
@@ -425,186 +498,83 @@ function CreateSpeakerContent() {
                 required
                 className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
               >
+                <option value="">選択してください</option>
                 <option value="1">政治家</option>
                 <option value="2">ジャーナリスト</option>
-                <option value="3">学者</option>
-                <option value="4">評論家</option>
+                <option value="3">学者・専門家</option>
+                <option value="4">評論家・言論人</option>
                 <option value="5">その他</option>
               </select>
-            </div>
-
-            {/* 個人情報 */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="text-gray-700 text-sm font-bold mb-2 block">
-                  生年月日
-                </label>
-                <input
-                  type="date"
-                  name="birthday"
-                  value={formData.birthday}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="text-gray-700 text-sm font-bold mb-2 block">
-                  年齢
-                </label>
-                <input
-                  type="number"
-                  name="age"
-                  value={formData.age}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-                />
-              </div>
-              <div>
-                <label className="text-gray-700 text-sm font-bold mb-2 block">
-                  性別
-                </label>
-                <select
-                  name="gender"
-                  value={formData.gender}
-                  onChange={handleChange}
-                  className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-                >
-                  <option value="">選択してください</option>
-                  <option value="男">男</option>
-                  <option value="女">女</option>
-                </select>
-              </div>
-            </div>
-
-            {/* SNSリンク */}
-            <div className="space-y-4">
-              <h3 className="font-bold text-gray-700">SNSリンク</h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="text-gray-700 text-sm font-bold mb-2 block">
-                    公式サイト
-                  </label>
-                  <input
-                    type="url"
-                    name="official_url"
-                    value={formData.official_url}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="https://..."
-                  />
-                </div>
-                <div>
-                  <label className="text-gray-700 text-sm font-bold mb-2 block">
-                    Twitter
-                  </label>
-                  <input
-                    type="url"
-                    name="twitter_url"
-                    value={formData.twitter_url}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="https://twitter.com/..."
-                  />
-                </div>
-                <div>
-                  <label className="text-gray-700 text-sm font-bold mb-2 block">
-                    Facebook
-                  </label>
-                  <input
-                    type="url"
-                    name="facebook_url"
-                    value={formData.facebook_url}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="https://facebook.com/..."
-                  />
-                </div>
-                <div>
-                  <label className="text-gray-700 text-sm font-bold mb-2 block">
-                    Instagram
-                  </label>
-                  <input
-                    type="url"
-                    name="instagram_url"
-                    value={formData.instagram_url}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="https://instagram.com/..."
-                  />
-                </div>
-                <div>
-                  <label className="text-gray-700 text-sm font-bold mb-2 block">
-                    YouTube
-                  </label>
-                  <input
-                    type="url"
-                    name="youtube_url"
-                    value={formData.youtube_url}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="https://youtube.com/..."
-                  />
-                </div>
-                <div>
-                  <label className="text-gray-700 text-sm font-bold mb-2 block">
-                    LINE
-                  </label>
-                  <input
-                    type="url"
-                    name="line_url"
-                    value={formData.line_url}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="https://line.me/..."
-                  />
-                </div>
-                <div>
-                  <label className="text-gray-700 text-sm font-bold mb-2 block">
-                    TikTok
-                  </label>
-                  <input
-                    type="url"
-                    name="tiktok_url"
-                    value={formData.tiktok_url}
-                    onChange={handleChange}
-                    className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-                    placeholder="https://tiktok.com/..."
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* 経歴 */}
-            <div>
-              <label className="text-gray-700 text-sm font-bold mb-2 block">
-                経歴
-              </label>
-              <textarea
-                name="biography"
-                value={formData.biography}
-                onChange={handleChange}
-                rows={5}
-                className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-              />
+              <p className="text-gray-700 text-sm"><small>* 政治家を選択した場合、所属政党の選択が必須になります</small></p>
             </div>
 
             {/* 政治家の場合の追加情報 */}
-            {formData.speaker_type === 1 && (
-              <div className="space-y-4">
+            {formData.speaker_type === '1' && (
+              <div className="space-y-4 pt-4">
                 <h3 className="font-bold text-gray-700">政治家情報</h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
                     <label className="text-gray-700 text-sm font-bold mb-2 block">
-                      所属政党
+                      所属政党 <span className="bg-red-400 text-white text-xs font-medium me-2 px-1.5 py-0.5 rounded-sm">必須</span>
                     </label>
-                    <input
-                      type="number"
-                      name="party_id"
-                      value={formData.party_id}
-                      onChange={handleChange}
-                      className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-                    />
+                    <div className="relative">
+                      <select
+                        name="party_id"
+                        value={formData.party_id}
+                        onChange={handleChange}
+                        required
+                        className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500 appearance-none"
+                      >
+                        <option value="">選択してください</option>
+                        {parentParties.map((party) => (
+                          <option key={party.uuid} value={party.id}>
+                            {party.name}
+                          </option>
+                        ))}
+                      </select>
+                      <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-2 text-gray-700">
+                        <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                          <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                        </svg>
+                      </div>
+                    </div>
                   </div>
+
+                  {/* その他政党が選択された場合の子政党選択 */}
+                  {Number(formData.party_id) === OTHER_PARTY_ID && childParties.length > 0 && (
+                    <div>
+                      <label className="text-gray-700 text-sm font-bold mb-2 block">
+                        その他政党を選択
+                      </label>
+                      <div className="relative">
+                        <select
+                          name="child_party_id"
+                          value={selectedChildParty || ''}
+                          onChange={(e) => {
+                            setSelectedChildParty(Number(e.target.value));
+                            setFormData({
+                              ...formData,
+                              party_id: e.target.value
+                            });
+                          }}
+                          className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500 appearance-none"
+                        >
+                          <option value="">選択してください</option>
+                          {childParties.map((party) => (
+                            <option key={party.uuid} value={party.id}>
+                              {party.name}
+                            </option>
+                          ))}
+                        </select>
+                        <div className="pointer-events-none absolute inset-y-0 right-2 flex items-center px-2 text-gray-700">
+                          <svg className="fill-current h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+                            <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+                          </svg>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div>
                     <label className="text-gray-700 text-sm font-bold mb-2 block">
                       選挙区
@@ -660,6 +630,145 @@ function CreateSpeakerContent() {
               </div>
             )}
 
+            {/* 個人情報 */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="text-gray-700 text-sm font-bold mb-2 block">
+                  生年月日
+                </label>
+                <input
+                  type="date"
+                  name="birthday"
+                  value={formData.birthday}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="text-gray-700 text-sm font-bold mb-2 block">
+                  年齢
+                </label>
+                <input
+                  type="number"
+                  name="age"
+                  value={formData.age}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                />
+              </div>
+              <div>
+                <label className="text-gray-700 text-sm font-bold mb-2 block">
+                  性別
+                </label>
+                <select
+                  name="gender"
+                  value={formData.gender}
+                  onChange={handleChange}
+                  className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                >
+                  <option value="">選択してください</option>
+                  <option value="男">男</option>
+                  <option value="女">女</option>
+                </select>
+              </div>
+            </div>
+
+            <div className="mb-6">
+              <button
+                type="button"
+                onClick={() => setShowOptions(!showOptions)}
+                className="flex items-center justify-center w-full text-sm text-gray-600 hover:text-gray-900"
+              >
+                <span className="mr-2 text-blue-700 font-semibold">プロフィール詳細を登録する</span>
+                <svg
+                  className={`text-blue-700 w-4 h-4 transform transition-transform ${showOptions ? 'rotate-180' : ''}`}
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+            </div>
+
+            {showOptions && (
+              <>
+                {/* 経歴 */}
+                <div>
+                  <label className="text-gray-700 text-sm font-bold mb-2 block">
+                    経歴
+                  </label>
+                  <textarea
+                    name="biography"
+                    value={formData.biography}
+                    onChange={handleChange}
+                    rows={5}
+                    className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                  />
+                </div>
+
+                {/* SNSリンク */}
+                <div className="space-y-4">
+                  <h3 className="font-bold text-gray-700">SNSリンク</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-gray-700 text-sm font-bold mb-2 block">
+                        公式サイト
+                      </label>
+                      <input
+                        type="url"
+                        name="official_url"
+                        value={formData.official_url}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                        placeholder="例：https://example.com"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-gray-700 text-sm font-bold mb-2 block">
+                        X
+                      </label>
+                      <input
+                        type="url"
+                        name="twitter_url"
+                        value={formData.twitter_url}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                        placeholder="例：https://x.com/..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-gray-700 text-sm font-bold mb-2 block">
+                        Facebook
+                      </label>
+                      <input
+                        type="url"
+                        name="facebook_url"
+                        value={formData.facebook_url}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                        placeholder="https://facebook.com/..."
+                      />
+                    </div>
+                    <div>
+                      <label className="text-gray-700 text-sm font-bold mb-2 block">
+                        YouTube
+                      </label>
+                      <input
+                        type="url"
+                        name="youtube_url"
+                        value={formData.youtube_url}
+                        onChange={handleChange}
+                        className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
+                        placeholder="https://youtube.com/..."
+                      />
+                    </div>
+                  </div>
+                </div>
+
+              </>
+            )}
+
             <div className="flex justify-center space-x-4 mt-10">
               <button
                 type="button"
@@ -669,7 +778,8 @@ function CreateSpeakerContent() {
                 キャンセル
               </button>
               <button
-                type="submit"
+                type="button"
+                onClick={handleRegisterClick}
                 className="min-w-28 py-2.5 px-5 me-2 mb-2 text-sm font-medium text-white focus:outline-none bg-indigo-500 rounded-lg border border-gray-200 hover:bg-indigo-600"
               >
                 登録する
@@ -678,6 +788,35 @@ function CreateSpeakerContent() {
           </form>
         </div>
       </div>
+
+      {/* 登録確認モーダル */}
+      {showRegisterConfirm && (
+        <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-28 border-2">
+          <div className="fixed inset-0 bg-gray-600/10 backdrop-blur-xl" onClick={() => setShowRegisterConfirm(false)}></div>
+          <div className="relative bg-white rounded-lg p-6 max-w-screen-md w-full mx-4 z-10 shadow-xl/30">
+            <h3 className="font-semibold mb-4">登録確認</h3>
+            <p className="mb-4 text-sm">人物は重複していませんか？入力内容に問題はないですか？</p>
+            <p className="mb-4 text-sm">内容を確認して登録してください。</p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowRegisterConfirm(false)}
+                className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100"
+              >
+                キャンセル
+              </button>
+              <button
+                onClick={async (e) => {
+                  setShowRegisterConfirm(false);
+                  await handleSubmit(e);
+                }}
+                className="min-w-28 py-2.5 px-5 me-2 mb-2 text-sm font-medium text-white focus:outline-none bg-indigo-500 rounded-lg border border-gray-200 hover:bg-indigo-600"
+              >
+                登録
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <Footer />
     </main>
