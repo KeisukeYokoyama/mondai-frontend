@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { statementAPI } from '@/utils/supabase/statements';
 import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
+import ArticleJsonLd from '@/components/ArticleJsonLd';
 
 type Props = {
   params: Promise<{ id: string }>;
@@ -29,6 +30,11 @@ export default async function Layout({
   const resolvedParams = await params;
   const statement = await getStatementData(resolvedParams.id);
   const statementTitle = statement ? statement.title : '';
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.mondai-hatsugen.com';
+  const currentUrl = `${baseUrl}/statements/${resolvedParams.id}`;
+  const imageUrl = statement?.image_path ? 
+    `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/statements/${statement.image_path}` :
+    `${baseUrl}/images/default-statement.png`;
 
   return (
     <>
@@ -39,6 +45,17 @@ export default async function Layout({
           { name: statementTitle, item: `/statements/${resolvedParams.id}` },
         ]}
       />
+      {statement && (
+        <ArticleJsonLd
+          headline={`${statement.speaker?.last_name}${statement.speaker?.first_name}が「${statement.title}」と発言`}
+          image={imageUrl}
+          datePublished={statement.statement_date || statement.created_at}
+          dateModified={statement.updated_at || statement.created_at}
+          authorName={`${statement.speaker?.last_name}${statement.speaker?.first_name}`}
+          description={statement.content}
+          url={currentUrl}
+        />
+      )}
       {children}
     </>
   );
