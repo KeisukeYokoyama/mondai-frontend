@@ -7,8 +7,13 @@ type Props = {
   children: React.ReactNode;
 }
 
+async function getPoliticianData(id: string) {
+  const { data: politician } = await politicianAPI.getDetail(id);
+  return politician;
+}
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { data: politician } = await politicianAPI.getDetail(params.id);
+  const politician = await getPoliticianData(params.id);
   
   return {
     title: politician ? `${politician.last_name}${politician.first_name}の問題発言スクリーンショット | 問題発言ドットコム` : '問題発言ドットコム',
@@ -20,7 +25,8 @@ export default async function Layout({
   params,
   children,
 }: Props) {
-  const { data: politician } = await politicianAPI.getDetail(params.id);
+  const politician = await getPoliticianData(params.id);
+  const politicianName = politician ? `${politician.last_name}${politician.first_name}` : '';
   
   return (
     <>
@@ -28,7 +34,7 @@ export default async function Layout({
         items={[
           { name: 'ホーム', item: '/' },
           { name: '政治家一覧', item: '/politicians' },
-          { name: `${politician?.last_name ?? ''}${politician?.first_name ?? ''}`, item: `/politicians/${params.id}` },
+          { name: politicianName, item: `/politicians/${params.id}` },
         ]}
       />
       {children}
