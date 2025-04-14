@@ -3,7 +3,7 @@ import { politicianAPI } from '@/utils/supabase/politicians';
 import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
 
 type Props = {
-  params: { id: string };
+  params: Promise<{ id: string }>;
   children: React.ReactNode;
 }
 
@@ -13,7 +13,8 @@ async function getPoliticianData(id: string) {
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const politician = await getPoliticianData(params.id);
+  const resolvedParams = await params;
+  const politician = await getPoliticianData(resolvedParams.id);
   
   return {
     title: politician ? `${politician.last_name}${politician.first_name}の問題発言スクリーンショット | 問題発言ドットコム` : '問題発言ドットコム',
@@ -25,7 +26,8 @@ export default async function Layout({
   params,
   children,
 }: Props) {
-  const politician = await getPoliticianData(params.id);
+  const resolvedParams = await params;
+  const politician = await getPoliticianData(resolvedParams.id);
   const politicianName = politician ? `${politician.last_name}${politician.first_name}` : '';
   
   return (
@@ -34,7 +36,7 @@ export default async function Layout({
         items={[
           { name: 'ホーム', item: '/' },
           { name: '政治家一覧', item: '/politicians' },
-          { name: politicianName, item: `/politicians/${params.id}` },
+          { name: politicianName, item: `/politicians/${resolvedParams.id}` },
         ]}
       />
       {children}
