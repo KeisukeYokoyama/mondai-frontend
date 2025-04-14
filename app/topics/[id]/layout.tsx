@@ -1,18 +1,24 @@
 import { Metadata } from 'next';
 import { supabase } from '@/lib/supabase';
+import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
 
 type Props = {
   params: Promise<{ id: string }>;
   children: React.ReactNode;
 }
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const resolvedParams = await params;
+async function getTopicData(id: string) {
   const { data: topic } = await supabase
     .from('tags')
     .select('*')
-    .eq('id', resolvedParams.id)
+    .eq('id', id)
     .single();
+  return topic;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const resolvedParams = await params;
+  const topic = await getTopicData(resolvedParams.id);
   
   return {
     title: topic ? `${topic.name}に関する問題発言一覧 | 問題発言ドットコム` : 'タグ詳細 | 問題発言ドットコム',
@@ -20,10 +26,24 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 }
 
-export default function TopicLayout({
+export default async function TopicLayout({
+  params,
   children,
-}: {
-  children: React.ReactNode;
-}) {
-  return <>{children}</>;
+}: Props) {
+  const resolvedParams = await params;
+  const topic = await getTopicData(resolvedParams.id);
+  const topicName = topic ? topic.name : '';
+
+  return (
+    <>
+      <BreadcrumbJsonLd
+        items={[
+          { name: 'ホーム', item: '/' },
+          { name: 'トピックス一覧', item: '/topics' },
+          { name: topicName, item: `/topics/${resolvedParams.id}` },
+        ]}
+      />
+      {children}
+    </>
+  );
 } 
