@@ -3,13 +3,12 @@ import { politicianAPI } from '@/utils/supabase/politicians';
 import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
 
 type Props = {
-  params: Promise<{ id: string }>;
+  params: { id: string };
   children: React.ReactNode;
 }
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const resolvedParams = await params;
-  const { data: politician } = await politicianAPI.getDetail(resolvedParams.id);
+  const { data: politician } = await politicianAPI.getDetail(params.id);
   
   return {
     title: politician ? `${politician.last_name}${politician.first_name}の問題発言スクリーンショット | 問題発言ドットコム` : '問題発言ドットコム',
@@ -20,10 +19,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function Layout({
   params,
   children,
-}: {
-  params: { id: string };
-  children: React.ReactNode;
-}) {
+}: Props) {
   const { data: politician } = await politicianAPI.getDetail(params.id);
   
   return (
