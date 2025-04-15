@@ -85,6 +85,7 @@ export interface StatementWithRelations extends Statement {
   speaker: SpeakerWithRelations;
   tags: StatementTag[];
   related_speakers: SpeakerWithRelations[];
+  video_thumbnail_path?: string | null;
 }
 
 export interface Tag {

@@ -284,8 +284,8 @@ export default function StatementDetailClient({ id }: { id: string }) {
     return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
   };
 
-  // 動画パスを処理するヘルパー関数を追加
-  const getVideoPath = (path: string | null) => {
+  // 動画パスを処理するヘルパー関数を修正
+  const getVideoPath = (path: string | null, type: 'video' | 'thumbnail' = 'video') => {
     if (!path) return undefined;
 
     if (path.startsWith('http://') || path.startsWith('https://')) {
@@ -298,8 +298,9 @@ export default function StatementDetailClient({ id }: { id: string }) {
       return undefined;
     }
 
-    // 動画用のバケットを使用
-    return `${supabaseUrl}/storage/v1/object/public/videos/${path}`;
+    // バケットを選択
+    const bucket = type === 'video' ? 'videos' : 'video-thumbnails';
+    return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
   };
 
   // ページネーションのコンポーネント
@@ -445,6 +446,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
                 <div className="flex items-center justify-center px-8">
                   <video
                     src={getVideoPath(statement.video_path)}
+                    poster={statement.video_thumbnail_path ? getVideoPath(statement.video_thumbnail_path, 'thumbnail') : undefined}
                     controls
                     className="w-full rounded-lg"
                     preload="metadata"

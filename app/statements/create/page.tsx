@@ -16,6 +16,11 @@ import type { SpeakerWithRelations } from '@/utils/supabase/types';
 import imageCompression from 'browser-image-compression';
 import Link from 'next/link';
 
+interface UploadProgressEvent {
+  loaded: number;
+  total: number;
+}
+
 // 確認ダイアログのコンポーネント
 function ConfirmDialog({
   isOpen,
@@ -146,6 +151,7 @@ function CreateStatementContent() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [video, setVideo] = useState<File | null>(null);
   const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [videoThumbnail, setVideoThumbnail] = useState<File | null>(null);
   const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [error, setError] = useState('');
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
@@ -161,6 +167,8 @@ function CreateStatementContent() {
   const [searchResults, setSearchResults] = useState<SpeakerWithRelations[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'processing' | 'complete'>('idle');
+  const [uploadStatusText, setUploadStatusText] = useState<string>('');
 
   // ログインチェック
   useEffect(() => {
@@ -481,8 +489,44 @@ function CreateStatementContent() {
           return;
         }
 
+        // サムネイル生成
+        const video = document.createElement('video');
+        video.src = URL.createObjectURL(file);
+        video.preload = 'metadata';
+
+        await new Promise((resolve) => {
+          video.onloadedmetadata = () => {
+            // 動画の長さの1秒後のフレームを使用（より良いサムネイルを得るため）
+            video.currentTime = Math.min(1, video.duration);
+          };
+          video.onseeked = () => {
+            resolve(true);
+          };
+        });
+
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth;
+        canvas.height = video.videoHeight;
+        const ctx = canvas.getContext('2d');
+        ctx?.drawImage(video, 0, 0, canvas.width, canvas.height);
+
+        // メモリリーク防止
+        URL.revokeObjectURL(video.src);
+
+        // サムネイルをBlobに変換
+        const thumbnailBlob = await new Promise<Blob>((resolve) => {
+          canvas.toBlob((blob) => {
+            resolve(blob as Blob);
+          }, 'image/jpeg', 0.7);
+        });
+
+        // サムネイルをFileオブジェクトに変換
+        const thumbnailFile = new File([thumbnailBlob], 'thumbnail.jpg', { type: 'image/jpeg' });
+
         setVideo(file);
         setVideoPreview(URL.createObjectURL(file));
+        // サムネイルをstateに保存
+        setVideoThumbnail(thumbnailFile);
       } catch (error) {
         console.error('動画処理エラー:', error);
         showToastMessage('動画の処理中にエラーが発生しました');
@@ -492,6 +536,7 @@ function CreateStatementContent() {
     } else {
       setVideo(null);
       setVideoPreview(null);
+      setVideoThumbnail(null);
     }
   };
 
@@ -530,10 +575,13 @@ function CreateStatementContent() {
 
     try {
       const supabase = createClientComponentClient();
+      setUploadState('uploading');
+      setUploadStatusText('アップロードの準備中...');
 
       // 画像のアップロード処理
       let image_path = null;
       if (image) {
+        setUploadStatusText('画像をアップロード中...');
         const fileExt = image.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
@@ -543,16 +591,15 @@ function CreateStatementContent() {
           .from('statements')
           .upload(filePath, image);
 
-        if (uploadError) {
-          throw uploadError;
-        }
-
+        if (uploadError) throw uploadError;
         image_path = filePath;
       }
 
       // 動画のアップロード処理
       let video_path = null;
+      let video_thumbnail_path = null;
       if (video) {
+        setUploadStatusText('動画をアップロード中...');
         const fileExt = video.name.split('.').pop();
         const fileName = `${Math.random()}.${fileExt}`;
         const filePath = `${user.id}/${fileName}`;
@@ -562,12 +609,27 @@ function CreateStatementContent() {
           .from('videos')
           .upload(filePath, video);
 
-        if (uploadError) {
-          throw uploadError;
-        }
-
+        if (uploadError) throw uploadError;
         video_path = filePath;
+
+        // サムネイルのアップロード
+        if (videoThumbnail) {
+          setUploadStatusText('サムネイルを生成中...');
+          const thumbnailFileName = `${Math.random()}.jpg`;
+          const thumbnailPath = `${user.id}/${thumbnailFileName}`;
+
+          const { data: thumbnailData, error: thumbnailError } = await supabase
+            .storage
+            .from('video-thumbnails')
+            .upload(thumbnailPath, videoThumbnail);
+
+          if (thumbnailError) throw thumbnailError;
+          video_thumbnail_path = thumbnailPath;
+        }
       }
+
+      setUploadState('processing');
+      setUploadStatusText('データを保存中...');
 
       // statementの登録
       const statementData = {
@@ -578,7 +640,8 @@ function CreateStatementContent() {
         evidence_url: formData.evidence_url || '',
         user_id: user.id as string,
         image_path: image_path,
-        video_path: video_path
+        video_path: video_path,
+        video_thumbnail_path: video_thumbnail_path
       };
 
       console.log('送信するデータ:', statementData);
@@ -626,8 +689,10 @@ function CreateStatementContent() {
         }
       }
 
+      setUploadState('complete');
       router.push(`/politicians/${speaker_id}`);
     } catch (error) {
+      setUploadState('idle');
       console.error('発言の登録に失敗しました:', error);
       showToastMessage('発言の登録に失敗しました');
     }
@@ -1126,21 +1191,56 @@ function CreateStatementContent() {
               </div>
             )}
 
+            {/* プログレスバーの修正版 */}
+            {uploadState !== 'idle' && (
+              <div className="mb-6">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-sm font-medium text-gray-700">{uploadStatusText}</span>
+                </div>
+                <div className="w-full bg-gray-200 rounded-full h-2.5">
+                  <div
+                    className={`h-2.5 rounded-full transition-all duration-300 ${
+                      uploadState === 'complete' 
+                        ? 'bg-green-500 w-full' 
+                        : uploadState === 'processing'
+                        ? 'bg-yellow-500 w-3/4'
+                        : 'bg-indigo-500 w-1/2 animate-pulse'
+                    }`}
+                  ></div>
+                </div>
+              </div>
+            )}
+
+            {/* 登録ボタン */}
             <div className="flex justify-center space-x-4 mt-10">
               <button
                 type="button"
                 onClick={() => router.back()}
                 className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100"
+                disabled={uploadState !== 'idle'}
               >
                 キャンセル
               </button>
-                <button
-                  type="button"
-                  onClick={handleRegisterClick}
-                  className="min-w-28 py-2.5 px-5 me-2 mb-2 text-sm font-medium text-white focus:outline-none bg-indigo-500 rounded-lg border border-gray-200 hover:bg-indigo-600"
-                >
-                  登録する
-                </button>
+              <button
+                type="button"
+                onClick={handleRegisterClick}
+                disabled={uploadState !== 'idle'}
+                className={`min-w-28 py-2.5 px-5 me-2 mb-2 text-sm font-medium text-white focus:outline-none bg-indigo-500 rounded-lg border border-gray-200 hover:bg-indigo-600 ${
+                  uploadState !== 'idle' ? 'opacity-50 cursor-not-allowed' : ''
+                }`}
+              >
+                {uploadState !== 'idle' ? (
+                  <div className="flex items-center">
+                    <svg className="animate-spin h-5 w-5 mr-3" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    </svg>
+                    処理中...
+                  </div>
+                ) : (
+                  '登録する'
+                )}
+              </button>
             </div>
           </form>
         </div>
