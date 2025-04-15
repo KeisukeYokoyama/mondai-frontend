@@ -53,12 +53,12 @@ export default function Home() {
   const commentatorsPerPage = 20;
 
   // 発言者種別の定義
-  // const speakerTypes = {
-  //   2: 'ジャーナリスト',
-  //   3: '学者・専門家',
-  //   4: '評論家・言論人',
-  //   5: 'その他'
-  // } as const;
+  const speakerTypes = {
+    2: 'ジャーナリスト',
+    3: '学者・専門家',
+    4: '評論家・言論人',
+    5: 'その他'
+  } as const;
 
   // 検索機能の実装
   const handleSearch = useCallback(async () => {
@@ -287,7 +287,7 @@ export default function Home() {
                             </span>
                           </h2>
                           <p className="text-gray-600 text-sm mt-1">
-                            {/* {speakerTypes[commentator.speaker_type as keyof typeof speakerTypes] || '種別不明'} */}
+                            {speakerTypes[commentator.speaker_type as keyof typeof speakerTypes] || '種別不明'}
                           </p>
                         </div>
                       </div>
