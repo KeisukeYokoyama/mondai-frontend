@@ -333,7 +333,7 @@ function CreateSpeakerContent() {
 
       showToastMessage('発言者を登録しました', 'success');
       setTimeout(() => {
-        router.push('/speakers');
+        router.push('/commentators');
       }, 2000);
 
     } catch (error) {
