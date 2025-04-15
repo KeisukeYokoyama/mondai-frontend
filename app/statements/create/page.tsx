@@ -139,6 +139,9 @@ function CreateStatementContent() {
   const [tagToAdd, setTagToAdd] = useState('');
   const [showRegisterConfirm, setShowRegisterConfirm] = useState(false);
   const [showSampleModal, setShowSampleModal] = useState(false);
+  const [searchTagQuery, setSearchTagQuery] = useState('');
+  const [showTagResults, setShowTagResults] = useState(false);
+  const [frequentTags, setFrequentTags] = useState<{ id: number; name: string; count: number }[]>([]);
 
   // すべてのuseStateをトップレベルに移動
   const [formData, setFormData] = useState({
@@ -220,8 +223,60 @@ function CreateStatementContent() {
     fetchPolitician();
   }, [speaker_id]);
 
-  // デバッグ用のログを追加
-  console.log('speaker_type:', speaker_type, typeof speaker_type);
+  // 頻繁に使用されるタグを取得
+  useEffect(() => {
+    const fetchFrequentTags = async () => {
+      if (!user) return;
+
+      try {
+        const { data, error } = await supabase
+          .from('statement_tag')
+          .select(`
+            tag_id,
+            tags (
+              id,
+              name
+            )
+          `)
+          .limit(100);
+
+        if (error) throw error;
+
+        // タグの使用回数をカウント
+        const tagCounts = data.reduce((acc: { [key: string]: number }, curr) => {
+          const tagId = curr.tag_id;
+          acc[tagId] = (acc[tagId] || 0) + 1;
+          return acc;
+        }, {});
+
+        // 頻繁に使用されるタグを抽出
+        const frequentTagsData = Object.entries(tagCounts)
+          .map(([tagId, count]) => {
+            const tagData = data.find(d => d.tag_id === parseInt(tagId))?.tags as { id: number; name: string } | undefined;
+            if (!tagData) return null;
+            return {
+              id: tagData.id,
+              name: tagData.name,
+              count: count
+            };
+          })
+          .filter((tag): tag is { id: number; name: string; count: number } => tag !== null)
+          .sort((a, b) => b.count - a.count)
+          .slice(0, 5);
+
+        setFrequentTags(frequentTagsData);
+      } catch (error) {
+        console.error('頻出タグの取得に失敗しました:', error);
+      }
+    };
+
+    fetchFrequentTags();
+  }, [user]);
+
+  // タグ検索結果をフィルタリング
+  const filteredTags = availableTags.filter(tag =>
+    tag.name.toLowerCase().includes(searchTagQuery.toLowerCase())
+  );
 
   // ローディング中または未ログインの場合のレンダリング
   if (loading || !user) {
@@ -1031,48 +1086,108 @@ function CreateStatementContent() {
               <label className="text-gray-700 text-sm font-bold mb-2 block">
                 タグ <span className="bg-red-400 text-white text-xs font-medium me-2 px-1.5 py-0.5 rounded-sm">必須</span>
               </label>
-              <div className="flex flex-wrap gap-2 mb-2">
-                {availableTags.map(tag => (
-                  <label key={tag.id} className="inline-flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={selectedTags.includes(tag.id)}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          setSelectedTags([...selectedTags, tag.id]);
-                        } else {
-                          setSelectedTags(selectedTags.filter(id => id !== tag.id));
-                        }
-                      }}
-                      className="rounded border-gray-300 text-indigo-600 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
-                    />
-                    <span className="ml-2">{tag.name}</span>
-                  </label>
-                ))}
+
+              {/* 選択されたタグの表示 */}
+              <div className="flex flex-wrap gap-2 mb-4">
+                {selectedTags.map(tagId => {
+                  const tag = availableTags.find(t => t.id === tagId);
+                  return tag ? (
+                    <div
+                      key={tag.id}
+                      className="flex items-center bg-gray-100 rounded-full px-3 py-1"
+                    >
+                      <span className="text-sm">{tag.name}</span>
+                      <button
+                        type="button"
+                        onClick={() => setSelectedTags(selectedTags.filter(id => id !== tag.id))}
+                        className="ml-2 text-gray-500 hover:text-gray-700"
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ) : null;
+                })}
               </div>
-              <div className="flex gap-2">
+
+              {/* よく使用されるタグ */}
+              {frequentTags.length > 0 && (
+                <div className="mb-4">
+                  <p className="text-sm text-gray-600 mb-2">よく使用されるタグ:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {frequentTags.map(tag => (
+                      <button
+                        key={tag.id}
+                        type="button"
+                        onClick={() => {
+                          if (!selectedTags.includes(tag.id)) {
+                            setSelectedTags([...selectedTags, tag.id]);
+                          }
+                        }}
+                        className={`text-sm px-3 py-1 rounded-full ${
+                          selectedTags.includes(tag.id)
+                            ? 'bg-indigo-100 text-indigo-700'
+                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                        }`}
+                      >
+                        {tag.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* タグ検索フォーム */}
+              <div className="relative">
                 <input
                   type="text"
-                  value={newTag}
-                  onChange={(e) => setNewTag(e.target.value)}
-                  placeholder="タグを追加"
-                  className="w-2/3 px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-                  onKeyPress={(e) => {
-                    if (e.key === 'Enter') {
-                      e.preventDefault();
-                      handleAddTag();
-                    }
+                  value={searchTagQuery}
+                  onChange={(e) => {
+                    setSearchTagQuery(e.target.value);
+                    setShowTagResults(true);
                   }}
+                  onFocus={() => setShowTagResults(true)}
+                  placeholder="タグを検索または入力"
+                  className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
                 />
-                <button
-                  type="button"
-                  onClick={handleAddTag}
-                  className="px-4 py-2 bg-gray-200 rounded-md hover:bg-gray-300"
-                >
-                  追加
-                </button>
+                
+                {/* 検索結果のドロップダウン */}
+                {showTagResults && (searchTagQuery || filteredTags.length > 0) && (
+                  <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                    {filteredTags.length > 0 ? (
+                      filteredTags.map(tag => (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => {
+                            if (!selectedTags.includes(tag.id)) {
+                              setSelectedTags([...selectedTags, tag.id]);
+                            }
+                            setSearchTagQuery('');
+                            setShowTagResults(false);
+                          }}
+                          className="w-full text-left px-4 py-2 hover:bg-gray-100"
+                        >
+                          {tag.name}
+                        </button>
+                      ))
+                    ) : searchTagQuery ? (
+                      <div className="px-4 py-2 text-sm text-gray-500">
+                        「{searchTagQuery}」を新しいタグとして追加
+                        <button
+                          type="button"
+                          onClick={() => handleAddTag()}
+                          className="ml-2 text-indigo-600 hover:text-indigo-800"
+                        >
+                          追加する
+                        </button>
+                      </div>
+                    ) : null}
+                  </div>
+                )}
               </div>
-              <small className="text-gray-500 block -mt-1">類似するタグがない場合に追加してください</small>
+              <small className="text-gray-500 block">
+                タグを検索するか、新しいタグを入力してください
+              </small>
             </div>
 
             <div className="mb-6">

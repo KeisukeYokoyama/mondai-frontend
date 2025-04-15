@@ -7,7 +7,7 @@ import Link from 'next/link'
 import debounce from 'lodash/debounce'
 import Image from 'next/image'
 import { commentatorAPI } from '@/utils/supabase/commentators'
-import type { Commentator } from '@/utils/supabase/commentators'
+import type { Commentator } from '@/utils/supabase/types'
 import { MdArrowForwardIos } from "react-icons/md";
 import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
 
@@ -275,6 +275,7 @@ export default function Home() {
                           className="w-20 h-20 object-cover rounded-full mr-4 shadow-md" 
                           width={64}
                           height={64}
+                          priority={true}
                         />
                         <div className="flex-1 min-w-0">
                           <h2 className="text-gray-900">

@@ -656,6 +656,7 @@ function StatementsContent() {
                             width={400}
                             height={300}
                             className="w-full h-48 object-cover object-center rounded-t-md"
+                            priority={true}
                           />
                           {statement.video_thumbnail_path && (
                             <div className="absolute inset-0 flex items-center justify-center">

@@ -1,34 +1,23 @@
-import { supabase } from '@/lib/supabase'
-import type { Party, PartyDetail } from '@/utils/supabase/types'
+import supabase from './client';
+import type { Party, PartyDetail } from './types';
 import type { SupabaseResponse } from '@/utils/supabase/index'
 
 export const partiesAPI = {
   // 政党一覧取得
   getParties: async (): Promise<SupabaseResponse<Party[]>> => {
-    const { data, error } = await supabase
-      .from('parties')
-      .select(`
-        id,
-        uuid,
-        name,
-        abbreviation,
-        order,
-        parent_id,
-        leader_name,
-        description,
-        founded_date,
-        dissolved_date,
-        official_website,
-        twitter_url,
-        facebook_url,
-        instagram_url,
-        youtube_url,
-        created_at,
-        updated_at
-      `)
-      .order('order')
+    try {
+      const { data, error } = await supabase
+        .from('parties')
+        .select('*')
+        .order('order', { ascending: true });
 
-    return { data, error }
+      if (error) throw error;
+
+      return { data: data as Party[], error: null };
+    } catch (error) {
+      console.error('Error in getParties:', error);
+      return { data: null, error };
+    }
   },
 
   /**
@@ -36,35 +25,19 @@ export const partiesAPI = {
    * @param id 政党ID
    */
   getPartyDetail: async (id: number): Promise<SupabaseResponse<PartyDetail>> => {
-    const { data, error } = await supabase
-      .from('parties')
-      .select(`
-        id,
-        uuid,
-        name,
-        abbreviation,
-        order,
-        parent_id,
-        leader_name,
-        description,
-        founded_date,
-        dissolved_date,
-        official_website,
-        twitter_url,
-        facebook_url,
-        instagram_url,
-        youtube_url,
-        created_at,
-        updated_at
-      `)
-      .eq('id', id)
-      .single();
+    try {
+      const { data, error } = await supabase
+        .from('parties')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-    if (error) {
-      console.error('Error fetching party detail:', error);
+      if (error) throw error;
+
+      return { data: data as PartyDetail, error: null };
+    } catch (error) {
+      console.error('Error in getPartyDetail:', error);
       return { data: null, error };
     }
-
-    return { data, error: null };
   }
 }

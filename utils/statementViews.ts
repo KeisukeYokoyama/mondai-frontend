@@ -94,11 +94,31 @@ const processBatch = async () => {
     const ip = await getIpAddress();
     const userAgent = navigator.userAgent;
 
+    // まず、有効なstatement_idのリストを取得
+    const { data: validStatements } = await supabase
+      .from('statements')
+      .select('id')
+      .in('id', history.map((item: ViewHistory) => item.statementId));
+
+    // 有効なstatement_idのセットを作成
+    const validStatementIds = new Set(validStatements?.map(s => s.id) || []);
+
+    // 有効なstatement_idのみをフィルタリング
+    const validHistory = history.filter((item: ViewHistory) => 
+      validStatementIds.has(item.statementId)
+    );
+
+    if (validHistory.length === 0) {
+      localStorage.removeItem(VIEW_HISTORY_KEY);
+      localStorage.setItem(LAST_BATCH_TIME_KEY, Date.now().toString());
+      return;
+    }
+
     // UPSERTを使用して重複を回避
     const { error } = await supabase
       .from('statement_views')
       .upsert(
-        history.map((item: ViewHistory) => ({
+        validHistory.map((item: ViewHistory) => ({
           statement_id: item.statementId,
           ip_address: ip,
           user_agent: userAgent,

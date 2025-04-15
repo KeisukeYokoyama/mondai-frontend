@@ -71,7 +71,6 @@ export default function TopUpdate({ title }: TopUpdateProps) {
           .limit(4);
 
         if (error) throw error;
-        console.log('Supabase response:', JSON.stringify(data, null, 2));
         setStatements(data as unknown as Statement[]);
       } catch (error) {
         console.error('Error fetching statements:', error);
@@ -127,6 +126,7 @@ export default function TopUpdate({ title }: TopUpdateProps) {
                           height={300}
                           className="w-full h-48 object-cover object-center rounded-t-md"
                           unoptimized
+                          priority={true}
                         />
                       </div>
                     )}

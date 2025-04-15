@@ -6,8 +6,8 @@ import Footer from '@/components/Navs/Footer';
 import Image from 'next/image';
 import Link from 'next/link';
 import { commentatorAPI } from '@/utils/supabase/commentators';
-import type { CommentatorWithStatements, Statement as BaseStatement, StatementTag, Tag } from '@/utils/supabase/commentators';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import type { CommentatorWithStatements, Statement, StatementTag } from '@/utils/supabase/types';
+import supabase from '@/utils/supabase/client';
 import { 
   FaSquareXTwitter,
   FaHouse,
@@ -18,10 +18,7 @@ import {
 } from "react-icons/fa6";
 import { IoLogoYoutube } from "react-icons/io5";
 
-type Statement = BaseStatement;
-
 export default function CommentatorDetailClient({ id }: { id: string }) {
-  const supabase = createClientComponentClient();
   const [commentator, setCommentator] = useState<CommentatorWithStatements | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -113,6 +110,7 @@ export default function CommentatorDetailClient({ id }: { id: string }) {
             width={128}
             height={128}
             className="inline-flex object-cover border-4 border-indigo-400 rounded-full bg-gray-50 h-32 w-32 mb-4 md:mb-0 ml-0 md:mr-5"
+            priority={true}
           />
           
           <div className="flex flex-col">
@@ -229,17 +227,19 @@ export default function CommentatorDetailClient({ id }: { id: string }) {
                       </p>
                       {statement.tags && statement.tags.length > 0 && (
                         <div className="flex flex-wrap gap-1" onClick={(e) => e.stopPropagation()}>
-                          {statement.tags.map((tag: Tag) => (
-                            <span 
-                              key={tag.id} 
-                              className="bg-gray-100 text-gray-500 text-xs px-2.5 py-0.5 rounded-md hover:bg-gray-200 cursor-pointer"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                window.location.href = `/statements?tag=${tag.id}`;
-                              }}
-                            >
-                              {tag.name}
-                            </span>
+                          {statement.tags.map((tag: StatementTag) => (
+                            tag.tags && (
+                              <span 
+                                key={tag.tags.id} 
+                                className="bg-gray-100 text-gray-500 text-xs px-2.5 py-0.5 rounded-md hover:bg-gray-200 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  window.location.href = `/statements?tag=${tag.tags.id}`;
+                                }}
+                              >
+                                {tag.tags.name}
+                              </span>
+                            )
                           ))}
                         </div>
                       )}

@@ -1,4 +1,4 @@
-import { supabase } from '@/lib/supabase'
+import supabase from './client';
 import type { 
   Speaker, 
   SpeakerWithRelations, 
@@ -224,28 +224,14 @@ export const politicianAPI = {
   /**
    * 政治家の詳細情報を取得
    */
-  getDetail: async (id: string): Promise<SupabaseResponse<SpeakerWithRelations>> => {
+  getDetail: async (id: string) => {
     try {
       const { data, error } = await supabase
         .from('speakers')
         .select(`
           *,
           parties (
-            id,
-            uuid,
-            name,
-            abbreviation,
-            order,
-            parent_id
-          ),
-          prefectures (
-            id,
             name
-          ),
-          cities (
-            id,
-            name,
-            prefecture_id
           ),
           statements (
             id,
@@ -255,13 +241,8 @@ export const politicianAPI = {
             image_path,
             video_path,
             video_thumbnail_path,
-            evidence_url,
-            created_at,
-            statement_tag (
-              tags (
-                id,
-                name
-              )
+            tags:statement_tag (
+              tags (*)
             )
           )
         `)
@@ -269,38 +250,10 @@ export const politicianAPI = {
         .single();
 
       if (error) throw error;
-
-      const transformedData = {
-        ...data,
-        statements: data.statements?.map((statement: {
-          id: string;
-          title: string;
-          content: string;
-          statement_date: string;
-          image_path: string;
-          video_path: string;
-          video_thumbnail_path: string;
-          evidence_url: string;
-          created_at: string;
-          statement_tag: Array<{
-            tags: {
-              id: number;
-              name: string;
-            };
-          }>;
-        }) => ({
-          ...statement,
-          tags: statement.statement_tag?.map(st => st.tags) || []
-        }))
-      };
-
-      return { data: transformedData as SpeakerWithRelations, error: null };
-    } catch (err) {
-      console.error('Error in getDetail:', err);
-      return {
-        data: null,
-        error: err instanceof Error ? err.message : '予期せぬエラーが発生しました'
-      };
+      return { data, error: null };
+    } catch (error) {
+      console.error('Error fetching politician:', error);
+      return { data: null, error: '政治家データの取得に失敗しました' };
     }
   }
 };

@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import supabase from '@/utils/supabase/client';
 import { FaArrowRightLong } from 'react-icons/fa6';
+
 interface TopTagCloudProps {
   title: string;
 }

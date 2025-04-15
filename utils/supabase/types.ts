@@ -65,21 +65,21 @@ export interface PartyDetail extends Party {
 }
 
 export interface Statement {
-  id: string
-  title: string
-  content: string
-  speaker_id: string
-  party_id?: number
-  statement_date: string | null
-  image_path?: string | null
-  video_path?: string | null
-  video_thumbnail_path?: string | null
-  evidence_url?: string
-  user_id: string
-  created_at: string
-  updated_at: string
-  statement_tag?: StatementTag[]
-  tags?: StatementTag[]
+  id: string;
+  title: string;
+  content: string;
+  speaker_id: string;
+  party_id?: number;
+  statement_date: string | null;
+  image_path: string | null;
+  video_path: string | null;
+  video_thumbnail_path?: string | null;
+  evidence_url?: string | null;
+  user_id: string;
+  created_at: string;
+  updated_at: string;
+  statement_tag?: StatementTag[];
+  tags: StatementTag[];
 }
 
 export interface StatementWithRelations extends Statement {
@@ -153,7 +153,41 @@ export interface City {
 }
 
 // 検索レスポンスの型を追加
-export interface SearchResponse {
-  data: SpeakerWithRelations[];
+export interface SearchResponse<T = any> {
+  data: T[];
   total: number;
+}
+
+export interface Commentator {
+  id: string;
+  speaker_type: number;
+  last_name: string;
+  first_name: string;
+  last_name_kana: string | null;
+  first_name_kana: string | null;
+  age: string | null;
+  gender: string | null;
+  biography: string | null;
+  image_path: string | null;
+  official_url: string | null;
+  facebook_url: string | null;
+  twitter_url: string | null;
+  youtube_url: string | null;
+  line_url: string | null;
+  instagram_url: string | null;
+  tiktok_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CommentatorWithStatements extends Commentator {
+  statements?: Statement[];
+}
+
+export interface SearchCommentatorParams {
+  s?: string;
+  gender?: string;
+  speaker_type?: string;
+  page?: number;
+  per_page?: number;
 }

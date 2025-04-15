@@ -408,7 +408,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
         <div className="flex flex-row items-center justify-center">
           {statement.tags && statement.tags.length > 0 && (
             <div className="flex flex-wrap gap-1">
-              {statement.tags.map((item: StatementTag, index: number) => {
+              {(statement.tags as StatementTag[]).map((item: StatementTag, index: number) => {
                 const tag = item.tags;
                 return (
                   <div key={index}>
@@ -439,6 +439,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
                     width={400}
                     height={300}
                     className="w-full h-full px-8"
+                    priority={true}
                   />
                 </div>
               )}
