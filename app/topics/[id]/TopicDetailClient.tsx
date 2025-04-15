@@ -170,7 +170,7 @@ export default function TopicDetailClient({ tagId }: TopicDetailClientProps) {
           {hasMoreTags && (
             <button
               onClick={() => setShowAllTags(!showAllTags)}
-              className="mt-4 text-sm text-blue-600 font-semibold hover:text-gray-900 flex items-center"
+              className="mt-4 text-sm text-blue-700 font-semibold hover:text-blue-600 flex items-center"
             >
               {showAllTags ? (
                 <>

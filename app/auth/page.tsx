@@ -73,15 +73,15 @@ function AuthContent() {
           <span className="text-sm">X(Twitter)でログイン</span>
         </button>
         <p className="mt-8 text-xs text-gray-600 text-center">
-          <Link href="/privacy" className="text-blue-600 hover:text-blue-800">
+          <Link href="/privacy" className="text-blue-700 hover:text-blue-800">
             プライバシーポリシー
           </Link>
           <span className="text-gray-600 mx-2">|</span>
-          <Link href="/terms" className="text-blue-600 hover:text-blue-800">
+          <Link href="/terms" className="text-blue-700 hover:text-blue-800">
             利用規約
           </Link>
           <span className="text-gray-600 mx-2">|</span>
-          <Link href="/" className="text-blue-600 hover:text-blue-800">
+          <Link href="/" className="text-blue-700 hover:text-blue-800">
             トップに戻る
           </Link>
         </p>

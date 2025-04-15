@@ -174,7 +174,7 @@ export default function PartyDetailClient({ id }: { id: string }) {
               {party.official_website && (
                 <tr className="border-b border-gray-200">
                   <td className="py-2 px-4 text-sm font-medium text-gray-500">公式サイト</td>
-                  <td className="py-2 px-4 text-sm text-blue-600">
+                  <td className="py-2 px-4 text-sm text-blue-700">
                     <Link href={party.official_website} target="_blank" rel="noopener noreferrer" aria-label="公式サイト">
                       {party.official_website}
                     </Link>
@@ -233,7 +233,7 @@ export default function PartyDetailClient({ id }: { id: string }) {
                     </div>
                   </div>
                   <div className="min-w-[40px] text-right">
-                    <span className="text-blue-600 text-sm font-bold">
+                    <span className="text-blue-700 text-sm font-bold">
                       詳細
                     </span>
                   </div>

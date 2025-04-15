@@ -38,7 +38,7 @@ const TopicsPage = async () => {
             <div className="bg-white p-6 rounded-lg shadow">
               <div className="flex flex-wrap gap-3">
                 {tags.map((tag) => (
-                  <span key={tag.id} className="text-blue-600 font-bold">
+                  <span key={tag.id} className="text-blue-700 font-bold">
                     <Link href={`/topics/${tag.id}`}>
                       #{tag.name}
                     </Link>

@@ -61,7 +61,7 @@ export default function TopTagCloud({ title }: TopTagCloudProps) {
       </div>
       <div className="container px-5 py-8 mt-4 mx-auto bg-white">
         {tags.map((tag) => (
-          <span key={tag.id} className="text-blue-600 font-bold mx-2">
+          <span key={tag.id} className="text-blue-700 font-bold mx-2">
             <Link href={`/topics/${tag.id}`}>
               #{tag.name}
             </Link>

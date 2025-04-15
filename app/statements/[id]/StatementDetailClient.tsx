@@ -476,7 +476,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
         <div id="comments-section" className="w-full max-w-screen-md mx-auto">
           <h2 className="text-2xl font-bold mb-4">みんなのコメント</h2>
           <div className="flex justify-between items-center mb-4">
-            <Link href="#comment-form" className="text-sm text-blue-600 hover:text-blue-500">
+            <Link href="#comment-form" className="text-sm text-blue-700 hover:text-blue-600">
               コメントを書く
             </Link>
             <span className="text-sm text-gray-600">
@@ -491,10 +491,10 @@ export default function StatementDetailClient({ id }: { id: string }) {
                 <div key={comment.id} className="bg-white py-4 px-4 rounded-sm shadow-sm">
                   <p className="text-xs text-gray-500">
                     #{commentNumber} {new Date(comment.created_at).toLocaleString('ja-JP')}
-                    {/* <button className="text-xs ml-2 text-blue-600">
+                    {/* <button className="text-xs ml-2 text-blue-700">
                       [通報]
                     </button>
-                    <button className="text-xs ml-2 text-blue-600">
+                    <button className="text-xs ml-2 text-blue-700">
                       [返信]
                     </button> */}
                   </p>

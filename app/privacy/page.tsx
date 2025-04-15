@@ -89,7 +89,7 @@ export default function PrivacyPolicy() {
                 本ポリシーに関するお問い合わせは、以下の窓口までご連絡ください：
               </p>
               <p className="text-gray-700">
-                <Link href="https://x.com/staatmobrau" target="_blank" className="text-blue-600 hover:text-blue-500">
+                <Link href="https://x.com/staatmobrau" target="_blank" className="text-blue-700 hover:text-blue-600">
                   STAT[@staatmobrau]
                 </Link>
               </p>

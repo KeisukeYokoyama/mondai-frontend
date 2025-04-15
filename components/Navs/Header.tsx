@@ -137,7 +137,7 @@ export default function Header({ title }: HeaderProps) {
                   >
                     問題発言を探す
                   </Link>
-                </li>
+                </li>                
                 <li className="mb-2">
                   <Link
                     href="/politicians"
