@@ -91,21 +91,21 @@ const processBatch = async () => {
   if (history.length === 0) return;
 
   try {
-    // IPアドレスを取得（キャッシュから）
     const ip = await getIpAddress();
     const userAgent = navigator.userAgent;
 
-    // バッチで一括挿入
+    // UPSERTを使用して重複を回避
     const { error } = await supabase
       .from('statement_views')
-      .insert(
+      .upsert(
         history.map((item: ViewHistory) => ({
           statement_id: item.statementId,
           ip_address: ip,
           user_agent: userAgent,
           viewed_at: isValidDate(item.date) ? new Date(item.date).toISOString() : new Date().toISOString(),
           view_date: item.date
-        }))
+        })),
+        { onConflict: 'statement_id,ip_address,user_agent,view_date' }
       );
 
     if (error) {
