@@ -42,6 +42,8 @@ interface Statement {
   content: string | null;
   statement_date: string | null;
   image_path: string;
+  video_path: string | null;
+  video_thumbnail_path: string | null;
   evidence_url: string | null;
   created_at: string;
   speaker: {
@@ -64,6 +66,8 @@ interface SupabaseStatement {
   content: string
   statement_date: string
   image_path: string | null
+  video_path: string | null
+  video_thumbnail_path: string | null
   evidence_url: string | null
   created_at: string
   speaker: {
@@ -247,6 +251,8 @@ function StatementsContent() {
             content,
             statement_date,
             image_path,
+            video_path,
+            video_thumbnail_path,
             evidence_url,
             created_at,
           speaker:speakers!inner (
@@ -409,14 +415,26 @@ function StatementsContent() {
     setEndDate(e.target.value)
   }
 
-  // 画像パスを処理するヘルパー関数を修正
-  const getImagePath = (path: string) => {
-    if (!path) return `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.mondai-hatsugen.com'}/images/default-statement.png`;
+  // getImagePath関数を修正
+  const getMediaPath = (statement: Statement) => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
+      return '/images/default-avatar.png';
+    }
+
+    // 画像パスがある場合は画像を表示
+    if (statement.image_path) {
+      return `${supabaseUrl}/storage/v1/object/public/statements/${statement.image_path}`;
+    }
     
-    // SupabaseのストレージURLを構築
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-    const supabaseBucket = 'statements'
-    return `${supabaseUrl}/storage/v1/object/public/${supabaseBucket}/${path}`
+    // 動画サムネイルがある場合はサムネイルを表示
+    if (statement.video_thumbnail_path) {
+      return `${supabaseUrl}/storage/v1/object/public/video-thumbnails/${statement.video_thumbnail_path}`;
+    }
+
+    // どちらもない場合はデフォルト画像
+    return '/images/default-avatar.png';
   };
 
   return (
@@ -433,7 +451,7 @@ function StatementsContent() {
             position: index + 1,
             name: statement.title,
             url: `${process.env.NEXT_PUBLIC_BASE_URL || 'https://www.mondai-hatsugen.com'}/statements/${statement.id}`,
-            image: getImagePath(statement.image_path),
+            image: getMediaPath(statement),
           }))}
         />
       )}
@@ -631,18 +649,22 @@ function StatementsContent() {
                   <div key={statement.id} className="break-inside-avoid mb-6">
                     <Link href={`/statements/${statement.id}`} className="block">
                       <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
-                        {statement.image_path && (
-                          <div className="flex items-center justify-center">
-                            <Image
-                              src={getImagePath(statement.image_path)}
-                              alt={statement.title}
-                              width={600}
-                              height={600}
-                              className="w-full h-full object-cover object-center rounded-t-md"
-                              unoptimized
-                            />
-                          </div>
-                        )}
+                        <div className="flex items-center justify-center relative">
+                          <Image
+                            src={getMediaPath(statement)}
+                            alt={statement.title}
+                            width={400}
+                            height={300}
+                            className="w-full h-48 object-cover object-center rounded-t-md"
+                          />
+                          {statement.video_thumbnail_path && (
+                            <div className="absolute inset-0 flex items-center justify-center">
+                              <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center">
+                                <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-white border-b-[12px] border-b-transparent ml-1"></div>
+                              </div>
+                            </div>
+                          )}
+                        </div>
                         <div className="p-6">
                           <div className="flex items-center gap-2 mb-3">
                             <span className="font-bold text-gray-900">
