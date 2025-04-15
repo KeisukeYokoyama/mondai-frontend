@@ -40,8 +40,8 @@ export default function UpdateInfo() {
                         ログインユーザーが政治家や言論人の登録機能を追加する機能。
                       </td>
                       <td className="px-6 py-4 font-medium text-gray-900 whitespace-normal dark:text-white w-1/6">
-                        <span className="bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-blue-900 dark:text-blue-300">
-                          開発中
+                        <span className="bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded dark:bg-green-900 dark:text-green-300">
+                          完了
                         </span>
                       </td>
                     </tr>

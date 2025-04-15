@@ -1,5 +1,4 @@
 'use client';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import React, { useState, useEffect, useCallback, useMemo } from 'react'
 import Header from '@/components/Navs/Header'
 import Footer from '@/components/Navs/Footer'
@@ -41,8 +40,6 @@ const getImagePath = (path: string | null | undefined) => {
 };
 
 export default function Home() {
-  const supabase = createClientComponentClient()
-  
   // 状態管理
   const [searchText, setSearchText] = useState('');
   const [searchResults, setSearchResults] = useState<Commentator[]>([]);

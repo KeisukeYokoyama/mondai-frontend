@@ -148,7 +148,7 @@ export default function Hero() {
                   <li>発言内容などの情報を追加してスクショをアップロードしてください</li>
                 </ul>
               </div>
-              <Image src="/images/how_to_use_01.jpg" alt="X" width={480} height={270} />
+              <Image src="/images/how_to_use_01.jpg" alt="X" width={480} height={270} priority={true} />
 
               <Link 
                 href="/politicians"

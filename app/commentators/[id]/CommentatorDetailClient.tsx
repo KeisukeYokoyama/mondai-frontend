@@ -7,7 +7,6 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { commentatorAPI } from '@/utils/supabase/commentators';
 import type { CommentatorWithStatements, Statement, StatementTag } from '@/utils/supabase/types';
-import supabase from '@/utils/supabase/client';
 import { 
   FaSquareXTwitter,
   FaHouse,
