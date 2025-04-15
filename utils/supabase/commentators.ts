@@ -42,6 +42,8 @@ export interface Statement {
   content: string;
   statement_date: string;
   image_path: string;
+  video_path: string | null;
+  video_thumbnail_path: string | null;
   created_at: string;
   statement_tag?: StatementTag[];
   tags?: Tag[];
@@ -232,6 +234,8 @@ export const commentatorAPI = {
             content,
             statement_date,
             image_path,
+            video_path,
+            video_thumbnail_path,
             created_at,
             statement_tag (
               tags (
@@ -257,6 +261,8 @@ export const commentatorAPI = {
             content: rawStatement.content,
             statement_date: rawStatement.statement_date,
             image_path: rawStatement.image_path,
+            video_path: rawStatement.video_path,
+            video_thumbnail_path: rawStatement.video_thumbnail_path,
             created_at: rawStatement.created_at,
             statement_tag: rawStatement.statement_tag,
             tags: rawStatement.statement_tag?.map((st: StatementTag) => st.tags) || []

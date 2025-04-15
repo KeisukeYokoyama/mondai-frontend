@@ -253,6 +253,9 @@ export const politicianAPI = {
             content,
             statement_date,
             image_path,
+            video_path,
+            video_thumbnail_path,
+            evidence_url,
             created_at,
             statement_tag (
               tags (
@@ -263,7 +266,6 @@ export const politicianAPI = {
           )
         `)
         .eq('id', id)
-        .eq('speaker_type', 1)
         .single();
 
       if (error) throw error;
@@ -276,8 +278,11 @@ export const politicianAPI = {
           content: string;
           statement_date: string;
           image_path: string;
+          video_path: string;
+          video_thumbnail_path: string;
+          evidence_url: string;
           created_at: string;
-          statement_tag?: Array<{
+          statement_tag: Array<{
             tags: {
               id: number;
               name: string;
@@ -291,10 +296,10 @@ export const politicianAPI = {
 
       return { data: transformedData as SpeakerWithRelations, error: null };
     } catch (err) {
-      console.error('Error fetching politician detail:', err);
-      return { 
-        data: null, 
-        error: err instanceof Error ? err.message : '政治家データの取得に失敗しました'
+      console.error('Error in getDetail:', err);
+      return {
+        data: null,
+        error: err instanceof Error ? err.message : '予期せぬエラーが発生しました'
       };
     }
   }

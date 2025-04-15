@@ -420,7 +420,7 @@ function StatementsContent() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!supabaseUrl) {
       console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
-      return '/images/default-avatar.png';
+      return '/images/video-thumbnail-no-image.jpg';
     }
 
     // 画像パスがある場合は画像を表示
@@ -434,7 +434,7 @@ function StatementsContent() {
     }
 
     // どちらもない場合はデフォルト画像
-    return '/images/default-avatar.png';
+    return '/images/video-thumbnail-no-image.jpg';
   };
 
   return (

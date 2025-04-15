@@ -6,7 +6,7 @@ import Footer from '@/components/Navs/Footer';
 import Image from 'next/image';
 import Link from 'next/link';
 import { politicianAPI } from '@/utils/supabase/politicians';
-import type { SpeakerWithRelations } from '@/utils/supabase/types';
+import type { SpeakerWithRelations, Statement } from '@/utils/supabase/types';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { 
   FaSquareXTwitter,
@@ -39,28 +39,46 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
   }, [id]);
 
   // 画像パスを処理するヘルパー関数
-  const getImagePath = (path: string | File | null, type: 'politician' | 'statement' = 'politician') => {
-    if (!path) return type === 'politician' ? '/images/default-profile.jpg' : '/images/default-statement.jpg';
-    
-    if (path instanceof File) return URL.createObjectURL(path);
-    
-    if (path.startsWith('http://') || path.startsWith('https://')) {
-      return path;
-    }
-
+  const getMediaPath = (statement: Statement) => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!supabaseUrl) {
       console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
-      return type === 'politician' ? '/images/default-profile.jpg' : '/images/default-statement.jpg';
+      return statement.video_path ? '/images/video-thumbnail-no-image.jpg' : '/images/default-avatar.png';
     }
 
-    const bucket = type === 'politician' ? 'politicians' : 'statements';
-    return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
+    // 画像パスがある場合は画像を表示
+    if (statement.image_path) {
+      return `${supabaseUrl}/storage/v1/object/public/statements/${statement.image_path}`;
+    }
+    
+    // 動画サムネイルがある場合はサムネイルを表示
+    if (statement.video_thumbnail_path) {
+      return `${supabaseUrl}/storage/v1/object/public/video-thumbnails/${statement.video_thumbnail_path}`;
+    }
+
+    // 動画はあるがサムネイルがない場合は動画用のデフォルト画像を表示
+    if (statement.video_path) {
+      return '/images/video-thumbnail-no-image.jpg';
+    }
+
+    // どちらもない場合はデフォルト画像を表示
+    return '/images/default-avatar.png';
   };
 
   // URLが有効かどうかをチェックするヘルパー関数
   const isValidUrl = (url: string | null): boolean => {
     return url !== null && url !== "NULL" && url.trim() !== '';
+  };
+
+  // プロフィール画像用のヘルパー関数
+  const getProfileImagePath = (path: string) => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
+      return '/images/default-profile.jpg';
+    }
+
+    return `${supabaseUrl}/storage/v1/object/public/politicians/${path}`;
   };
 
   if (loading) return <div>読み込み中...</div>;
@@ -77,15 +95,13 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
       
       <section className="mt-5 pt-2 px-4">
         <div className="w-full md:w-1/2 md:mx-auto flex flex-col md:flex-row items-center justify-center text-center">
-          {politician.image_path && (
-            <Image 
-              src={getImagePath(politician.image_path, 'politician')}
-              alt={`${politician.last_name}${politician.first_name}`}
-              width={128}
-              height={128}
-              className="inline-flex object-cover border-4 border-indigo-400 rounded-full bg-gray-50 h-32 w-32 mb-4 md:mb-0 ml-0 md:mr-5"
-            />
-          )}
+          <Image 
+            src={politician.image_path ? getProfileImagePath(politician.image_path) : '/images/default-profile.jpg'}
+            alt={`${politician.last_name}${politician.first_name}`}
+            width={128}
+            height={128}
+            className="inline-flex object-cover border-4 border-indigo-400 rounded-full bg-gray-50 h-32 w-32 mb-4 md:mb-0 ml-0 md:mr-5"
+          />
           
           <div className="flex flex-col">
             <div className="md:text-justify mb-3">
@@ -170,17 +186,23 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
               <div key={statement.id} className="break-inside-avoid mb-4">
                 <Link href={`/statements/${statement.id}`} className="block">
                   <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
-                    {statement.image_path && (
-                      <div className="flex items-center justify-center">
-                        <Image 
-                          src={getImagePath(statement.image_path, 'statement')}
-                          alt={`「${statement.title}」に関するスクショ`}
-                          width={400}
-                          height={300}
-                          className="w-full h-full object-cover object-center rounded-t-md"
-                        />
-                      </div>
-                    )}
+                    <div className="flex items-center justify-center relative">
+                      <Image 
+                        src={getMediaPath(statement)}
+                        alt={`「${statement.title}」に関するスクショ`}
+                        width={600}
+                        height={600}
+                        className="w-full h-full object-cover object-center rounded-t-md"
+                        unoptimized
+                      />
+                      {statement.video_thumbnail_path && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center">
+                            <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-white border-b-[12px] border-b-transparent ml-1"></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     <div className="p-4">
                       <h3 className="font-bold mb-2 text-gray-900">{statement.title}</h3>
                       <p className="text-sm text-gray-600 mb-2 line-clamp-3">

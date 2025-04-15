@@ -131,6 +131,7 @@ function CreateStatementContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const speaker_id = searchParams.get('speaker_id');
+  const speaker_type = searchParams.get('speaker_type');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user, loading } = useAuth();
   const [politician, setPolitician] = useState<SpeakerWithRelations | null>(null);
@@ -218,6 +219,9 @@ function CreateStatementContent() {
 
     fetchPolitician();
   }, [speaker_id]);
+
+  // デバッグ用のログを追加
+  console.log('speaker_type:', speaker_type, typeof speaker_type);
 
   // ローディング中または未ログインの場合のレンダリング
   if (loading || !user) {
@@ -690,7 +694,36 @@ function CreateStatementContent() {
       }
 
       setUploadState('complete');
-      router.push(`/politicians/${speaker_id}`);
+      console.log('取得したstatement:', statement);
+
+      try {
+        // speaker_typeを取得
+        const { data: speakerData, error: speakerError } = await supabase
+          .from('speakers')
+          .select('speaker_type')
+          .eq('id', speaker_id)
+          .single();
+
+        if (speakerError) {
+          console.error('発言者の情報取得に失敗しました:', speakerError);
+          showToastMessage('リダイレクトに失敗しました');
+          return;
+        }
+
+        console.log('取得したspeaker_type:', speakerData.speaker_type);
+
+        // speaker_typeに基づいてリダイレクト
+        if (speakerData.speaker_type === 1) {
+          console.log('政治家ページにリダイレクト');
+          router.push(`/politicians/${speaker_id}`);
+        } else {
+          console.log('コメンテーターページにリダイレクト');
+          router.push(`/commentators/${speaker_id}`);
+        }
+      } catch (error) {
+        console.error('リダイレクト処理でエラーが発生しました:', error);
+        showToastMessage('リダイレクトに失敗しました');
+      }
     } catch (error) {
       setUploadState('idle');
       console.error('発言の登録に失敗しました:', error);

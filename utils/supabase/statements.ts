@@ -54,7 +54,12 @@ export const statementAPI = {
         evidence_url,
         user_id
       }])
-      .select()
+      .select(`
+        *,
+        speaker:speakers(
+          speaker_type
+        )
+      `)
       .single();
 
     if (error) throw error;
