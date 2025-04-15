@@ -413,7 +413,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
                 return (
                   <div key={index}>
                     <Link
-                      href={`/statements?tag=${tag.id}`}
+                      href={`/topics/${tag.id}`}
                       className="bg-white border border-gray-200 text-gray-900 text-sm px-3 py-1.5 rounded-full"
                     >
                       {tag.name}
