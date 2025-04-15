@@ -7,6 +7,7 @@ import Link from 'next/link'
 import debounce from 'lodash/debounce'
 import Image from 'next/image'
 import { commentatorAPI } from '@/utils/supabase/commentators'
+import type { Commentator } from '@/utils/supabase/commentators'
 import { MdArrowForwardIos } from "react-icons/md";
 import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
 
@@ -18,7 +19,7 @@ const SearchingIndicator = () => (
 );
 
 // 画像パスを処理するヘルパー関数
-const getImagePath = (path: string | null) => {
+const getImagePath = (path: string | null | undefined) => {
   if (!path) return '/images/default-avatar.png';
   
   if (path.startsWith('http://') || path.startsWith('https://')) {
@@ -44,7 +45,7 @@ export default function Home() {
   
   // 状態管理
   const [searchText, setSearchText] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<Commentator[]>([]);
   const [totalResults, setTotalResults] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
