@@ -5,7 +5,7 @@ import type {
 } from '@/utils/supabase/types'
 import type { SupabaseResponse } from '@/utils/supabase/index'
 
-interface Commentator {
+export interface Commentator {
   id: string;
   speaker_type: number;
   last_name: string;
@@ -27,16 +27,16 @@ interface Commentator {
   updated_at?: string;
 }
 
-interface Tag {
+export interface Tag {
   id: number;
   name: string;
 }
 
-interface StatementTag {
+export interface StatementTag {
   tags: Tag;
 }
 
-interface Statement {
+export interface Statement {
   id: string;
   title: string;
   content: string;
@@ -47,7 +47,7 @@ interface Statement {
   tags?: Tag[];
 }
 
-interface CommentatorWithStatements extends Commentator {
+export interface CommentatorWithStatements extends Commentator {
   statements?: Statement[];
 }
 

@@ -12,7 +12,8 @@ import {
   FaSquareXTwitter,
   FaHouse,
   FaSquareInstagram,
-  FaYoutube
+  FaYoutube,
+  FaFacebook
 } from "react-icons/fa6";
 
 export default function PartyDetailClient({ id }: { id: string }) {
@@ -118,6 +119,13 @@ export default function PartyDetailClient({ id }: { id: string }) {
                     <li className="mr-5">
                       <a href={party.youtube_url!} target="_blank" rel="noopener noreferrer" aria-label="YouTube">
                         <FaYoutube className="h-6 text-gray-700 hover:text-gray-300" />
+                      </a>
+                    </li>
+                  )}
+                  {isValidUrl(party.facebook_url) && (
+                    <li className="mr-5">
+                      <a href={party.facebook_url!} target="_blank" rel="noopener noreferrer" aria-label="Facebook">
+                        <FaFacebook className="h-6 text-gray-700 hover:text-gray-300" />
                       </a>
                     </li>
                   )}
