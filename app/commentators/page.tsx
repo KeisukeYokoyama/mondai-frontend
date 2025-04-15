@@ -10,6 +10,30 @@ import { commentatorAPI } from '@/utils/supabase/commentators'
 import { MdArrowForwardIos } from "react-icons/md";
 import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
 
+// 検索結果の型定義
+type SearchResult = {
+  id: string;
+  speaker_type: number;
+  last_name?: string | null;
+  first_name?: string | null;
+  last_name_kana?: string | null;
+  first_name_kana?: string | null;
+  age?: string | null;
+  gender?: string | null;
+  biography?: string | null;
+  image_path?: string | null;
+  created_at?: string;
+  updated_at?: string;
+  birthday?: string | null;
+  official_url?: string | null;
+  facebook_url?: string | null;
+  twitter_url?: string | null;
+  youtube_url?: string | null;
+  line_url?: string | null;
+  instagram_url?: string | null;
+  tiktok_url?: string | null;
+};
+
 // 検索中のインジケータコンポーネント
 const SearchingIndicator = () => (
   <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
@@ -18,7 +42,7 @@ const SearchingIndicator = () => (
 );
 
 // 画像パスを処理するヘルパー関数
-const getImagePath = (path: string | null) => {
+const getImagePath = (path?: string | null) => {
   if (!path) return '/images/default-avatar.png';
   
   if (path.startsWith('http://') || path.startsWith('https://')) {
@@ -44,7 +68,7 @@ export default function Home() {
   
   // 状態管理
   const [searchText, setSearchText] = useState('');
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
   const [totalResults, setTotalResults] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
