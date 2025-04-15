@@ -144,6 +144,9 @@ function CreateStatementContent() {
   });
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [video, setVideo] = useState<File | null>(null);
+  const [videoPreview, setVideoPreview] = useState<string | null>(null);
+  const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [error, setError] = useState('');
   const [selectedTags, setSelectedTags] = useState<number[]>([]);
   const [availableTags, setAvailableTags] = useState<{ id: number, name: string }[]>([]);
@@ -157,6 +160,7 @@ function CreateStatementContent() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<SpeakerWithRelations[]>([]);
   const [isSearching, setIsSearching] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
   // ログインチェック
   useEffect(() => {
@@ -237,6 +241,27 @@ function CreateStatementContent() {
     });
   };
 
+  // ファイルサイズをチェックする関数
+  const checkFileSize = (file: File, maxSize: number) => {
+    const fileSize = file.size / (1024 * 1024); // MBに変換
+    return fileSize <= maxSize;
+  };
+
+  // 動画の再生時間をチェックする関数
+  const checkVideoDuration = (file: File): Promise<boolean> => {
+    return new Promise((resolve) => {
+      const video = document.createElement('video');
+      video.preload = 'metadata';
+
+      video.onloadedmetadata = () => {
+        window.URL.revokeObjectURL(video.src);
+        resolve(video.duration <= 60); // 60秒以下かチェック
+      };
+
+      video.src = URL.createObjectURL(file);
+    });
+  };
+
   // 画像処理の共通関数
   const processFile = async (file: File) => {
     // ファイルタイプの検証
@@ -280,10 +305,47 @@ function CreateStatementContent() {
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
-      await processFile(file);
+
+      try {
+        // ファイルタイプのチェック
+        if (!file.type.match('image/(jpeg|png|webp)')) {
+          showToastMessage('PNG、JPG、またはWebP形式の画像のみアップロード可能です');
+          return;
+        }
+
+        // ファイルサイズのチェック (5MB制限)
+        if (!checkFileSize(file, 6)) {
+          showToastMessage('ファイルサイズは5MB以下にしてください');
+          return;
+        }
+
+        // 画像の圧縮とリサイズ
+        const options = {
+          maxSizeMB: 1.5,
+          maxWidth: 1200,
+          maxHeight: 1800,
+          useWebWorker: true,
+          fileType: 'image/jpeg',
+          initialQuality: 0.8
+        };
+
+        const compressedFile = await imageCompression(file, options);
+        setImage(compressedFile);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(compressedFile);
+      } catch (error) {
+        console.error('画像処理エラー:', error);
+        showToastMessage('画像の処理中にエラーが発生しました');
+      }
     } else {
       setImage(null);
       setImagePreview(null);
+      if (fileInputRef.current) {
+        fileInputRef.current.value = '';
+      }
     }
   };
 
@@ -393,6 +455,59 @@ function CreateStatementContent() {
     setRelatedSpeakers(relatedSpeakers.filter(s => s.id !== speakerId));
   };
 
+  // 動画ファイル処理の関数を修正
+  const handleVideoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      setIsProcessing(true);
+
+      try {
+        // ファイルタイプのチェック
+        if (!file.type.startsWith('video/')) {
+          showToastMessage('動画ファイルのみアップロード可能です');
+          return;
+        }
+
+        // ファイルサイズのチェック (5MB制限)
+        if (!checkFileSize(file, 5)) {
+          showToastMessage('ファイルサイズは5MB以下にしてください');
+          return;
+        }
+
+        // 動画の再生時間をチェック
+        const isValidDuration = await checkVideoDuration(file);
+        if (!isValidDuration) {
+          showToastMessage('動画の長さは60秒以下にしてください');
+          return;
+        }
+
+        setVideo(file);
+        setVideoPreview(URL.createObjectURL(file));
+      } catch (error) {
+        console.error('動画処理エラー:', error);
+        showToastMessage('動画の処理中にエラーが発生しました');
+      } finally {
+        setIsProcessing(false);
+      }
+    } else {
+      setVideo(null);
+      setVideoPreview(null);
+    }
+  };
+
+  // メディアタイプを切り替えた時の処理を追加
+  const handleMediaTypeChange = (type: 'image' | 'video') => {
+    // 現在のメディアをクリア
+    if (type === 'image') {
+      setVideo(null);
+      setVideoPreview(null);
+    } else {
+      setImage(null);
+      setImagePreview(null);
+    }
+    setMediaType(type);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     console.log('送信ボタンがクリックされました');
@@ -404,6 +519,12 @@ function CreateStatementContent() {
 
     if (!speaker_id) {
       console.log('政治家IDが指定されていません');
+      return;
+    }
+
+    // メディアのいずれかが必要
+    if (!image && !video) {
+      showToastMessage('スクショまたは動画を登録してください');
       return;
     }
 
@@ -426,8 +547,26 @@ function CreateStatementContent() {
           throw uploadError;
         }
 
-        // 画像のパスを設定
         image_path = filePath;
+      }
+
+      // 動画のアップロード処理
+      let video_path = null;
+      if (video) {
+        const fileExt = video.name.split('.').pop();
+        const fileName = `${Math.random()}.${fileExt}`;
+        const filePath = `${user.id}/${fileName}`;
+
+        const { data: uploadData, error: uploadError } = await supabase
+          .storage
+          .from('videos')
+          .upload(filePath, video);
+
+        if (uploadError) {
+          throw uploadError;
+        }
+
+        video_path = filePath;
       }
 
       // statementの登録
@@ -438,7 +577,8 @@ function CreateStatementContent() {
         speaker_id: speaker_id as string,
         evidence_url: formData.evidence_url || '',
         user_id: user.id as string,
-        image_path: image_path
+        image_path: image_path,
+        video_path: video_path
       };
 
       console.log('送信するデータ:', statementData);
@@ -448,8 +588,10 @@ function CreateStatementContent() {
         .select()
         .single();
 
-      if (statementError) throw statementError;
-      console.log('登録結果:', statement);
+      if (statementError) {
+        console.error('Statement登録エラー:', statementError);
+        throw statementError;
+      }
 
       // タグの関連付け
       if (selectedTags.length > 0) {
@@ -579,67 +721,181 @@ function CreateStatementContent() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
+            {/* メディアアップロードセクション */}
             <div className="mb-6">
-              {!imagePreview && (
-                <div
-                  className="flex items-center justify-center w-full"
-                  onDragEnter={handleDragEnter}
-                  onDragLeave={handleDragLeave}
-                  onDragOver={handleDragOver}
-                  onDrop={handleDrop}
+              <div className="flex mb-4">
+                <button
+                  type="button"
+                  onClick={() => handleMediaTypeChange('image')}
+                  className={`flex-1 py-2 px-4 text-sm font-medium rounded-l-lg border ${
+                    mediaType === 'image'
+                      ? 'bg-indigo-50 text-indigo-700 border-indigo-700'
+                      : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
+                  }`}
                 >
-                  <label
-                    htmlFor="dropzone-file"
-                    className={`flex flex-col items-center justify-center w-full h-52 border-2 ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'} border-dashed rounded-lg cursor-pointer`}
-                    onDragEnter={handleDragEnter}
-                    onDragLeave={handleDragLeave}
-                    onDragOver={handleDragOver}
-                    onDrop={handleDrop}
-                  >
-                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
-                      <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">スクリーンショットを登録</span></p>
-                      <svg className="w-8 h-8 mb-3 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
-                        <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
-                      </svg>
-                      <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">クリックしてアップロード</span><br />またはドラッグ＆ドロップ</p>
-                      <p className="text-xs text-gray-500">PNG, JPG (最大 1200x1200px)</p>
-                    </div>
-                    <input
-                      id="dropzone-file"
-                      type="file"
-                      ref={fileInputRef}
-                      onChange={handleImageChange}
-                      accept="image/png,image/jpeg"
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-              )}
-              {imagePreview && (
-                <div className="mt-4">
-                  <div className="relative w-full h-full">
-                    <Image
-                      src={imagePreview}
-                      alt="プレビュー"
-                      width={400}
-                      height={300}
-                      className="rounded-lg object-contain w-full h-full"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setImage(null);
-                        setImagePreview(null);
-                        if (fileInputRef.current) {
-                          fileInputRef.current.value = '';
-                        }
-                      }}
-                      className="absolute -top-3 -right-3 bg-gray-800 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-700"
-                    >
-                      ✕
-                    </button>
+                  <div className="flex items-center justify-center">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    スクショ
                   </div>
-                </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleMediaTypeChange('video')}
+                  className={`flex-1 py-2 px-4 text-sm font-medium rounded-r-lg border ${
+                    mediaType === 'video'
+                      ? 'bg-indigo-50 text-indigo-700 border-indigo-700'
+                      : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
+                  }`}
+                >
+                  <div className="flex items-center justify-center">
+                    <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    動画
+                  </div>
+                </button>
+              </div>
+
+              {/* 画像アップロード */}
+              {mediaType === 'image' && (
+                <>
+                  {!imagePreview && (
+                    <div
+                      className="flex items-center justify-center w-full"
+                      onDragEnter={handleDragEnter}
+                      onDragLeave={handleDragLeave}
+                      onDragOver={handleDragOver}
+                      onDrop={handleDrop}
+                    >
+                      <label
+                        htmlFor="dropzone-file"
+                        className={`flex flex-col items-center justify-center w-full h-52 border-2 ${
+                          isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+                        } border-dashed rounded-lg cursor-pointer`}
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">スクショをアップロード</span>
+                          </p>
+                          <svg className="w-8 h-8 mb-3 text-gray-500" aria-hidden="true" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 20 16">
+                            <path stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 13h3a3 3 0 0 0 0-6h-.025A5.56 5.56 0 0 0 16 6.5 5.5 5.5 0 0 0 5.207 5.021C5.137 5.017 5.071 5 5 5a4 4 0 0 0 0 8h2.167M10 15V6m0 0L8 8m2-2 2 2" />
+                          </svg>
+                          <p className="mb-2 text-sm text-gray-500">
+                            <span className="font-semibold">クリックしてアップロード</span>
+                            <br />またはドラッグ＆ドロップ
+                          </p>
+                          <p className="text-xs text-gray-500">PNG, JPG (最大 1200x1200px)</p>
+                        </div>
+                        <input
+                          id="dropzone-file"
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleImageChange}
+                          accept="image/png,image/jpeg"
+                          className="hidden"
+                        />
+                      </label>
+                    </div>
+                  )}
+                  {imagePreview && (
+                    <div className="mt-4">
+                      <div className="relative w-full h-full">
+                        <Image
+                          src={imagePreview}
+                          alt="プレビュー"
+                          width={400}
+                          height={300}
+                          className="rounded-lg object-contain w-full h-full"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setImage(null);
+                            setImagePreview(null);
+                            if (fileInputRef.current) {
+                              fileInputRef.current.value = '';
+                            }
+                          }}
+                          className="absolute -top-3 -right-3 bg-gray-800 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-700"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
+              )}
+
+              {/* 動画アップロード */}
+              {mediaType === 'video' && (
+                <>
+                  {!videoPreview && (
+                    <div className="flex items-center justify-center w-full">
+                      <label
+                        htmlFor="video-upload"
+                        className={`flex flex-col items-center justify-center w-full h-52 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 ${isProcessing ? 'opacity-50 cursor-not-allowed' : ''}`}
+                      >
+                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                          {isProcessing ? (
+                            <>
+                              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900 mb-3"></div>
+                              <p className="text-sm text-gray-500">処理中...</p>
+                            </>
+                          ) : (
+                            <>
+                              <p className="mb-2 text-sm text-gray-500">
+                                <span className="font-semibold">動画をアップロード</span>
+                              </p>
+                              <svg className="w-8 h-8 mb-3 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                              </svg>
+                              <p className="mb-2 text-sm text-gray-500">
+                                <span className="font-semibold">クリックして選択</span>
+                              </p>
+                              <p className="text-xs">
+                                <span className="text-red-500">5MB以下</span>, 
+                                <span className="text-red-500"> 60秒以内</span>
+                                <span className="text-gray-500">の動画</span>
+                              </p>
+                              <p className="text-xs text-gray-500 mt-1">MP4, WebM (推奨)</p>
+                            </>
+                          )}
+                        </div>
+                        <input
+                          id="video-upload"
+                          type="file"
+                          accept="video/*"
+                          onChange={handleVideoChange}
+                          className="hidden"
+                          disabled={isProcessing}
+                        />
+                      </label>
+                    </div>
+                  )}
+                  {videoPreview && (
+                    <div className="mt-4">
+                      <div className="relative w-full">
+                        <video
+                          src={videoPreview}
+                          controls
+                          className="w-full rounded-lg"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setVideo(null);
+                            setVideoPreview(null);
+                          }}
+                          className="absolute -top-3 -right-3 bg-gray-800 text-white w-8 h-8 rounded-full flex items-center justify-center hover:bg-gray-700"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </>
               )}
             </div>
 

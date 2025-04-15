@@ -72,6 +72,7 @@ export interface Statement {
   party_id?: number
   statement_date: string | null
   image_path?: string | null
+  video_path?: string | null
   evidence_url?: string
   user_id: string
   created_at: string

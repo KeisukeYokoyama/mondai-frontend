@@ -284,6 +284,24 @@ export default function StatementDetailClient({ id }: { id: string }) {
     return `${supabaseUrl}/storage/v1/object/public/${bucket}/${path}`;
   };
 
+  // 動画パスを処理するヘルパー関数を追加
+  const getVideoPath = (path: string | null) => {
+    if (!path) return undefined;
+
+    if (path.startsWith('http://') || path.startsWith('https://')) {
+      return path;
+    }
+
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+    if (!supabaseUrl) {
+      console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
+      return undefined;
+    }
+
+    // 動画用のバケットを使用
+    return `${supabaseUrl}/storage/v1/object/public/videos/${path}`;
+  };
+
   // ページネーションのコンポーネント
   const Pagination = () => {
     const pages = Array.from({ length: totalPages }, (_, i) => i + 1);
@@ -411,6 +429,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
         <div className="flex flex-wrap -m-4 justify-center">
           <div className="w-full">
             <div className="bg-white max-w-screen-md mx-auto">
+              {/* 画像または動画の表示 */}
               {statement.image_path && (
                 <div className="flex items-center justify-center">
                   <Image
@@ -420,6 +439,20 @@ export default function StatementDetailClient({ id }: { id: string }) {
                     height={300}
                     className="w-full h-full px-8"
                   />
+                </div>
+              )}
+              {statement.video_path && (
+                <div className="flex items-center justify-center px-8">
+                  <video
+                    src={getVideoPath(statement.video_path)}
+                    controls
+                    className="w-full rounded-lg"
+                    preload="metadata"
+                    controlsList="nodownload"
+                    playsInline
+                  >
+                    <p>お使いのブラウザは動画の再生に対応していません。</p>
+                  </video>
                 </div>
               )}
               <div className="px-8 my-4">
