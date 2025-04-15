@@ -1,13 +1,23 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/types/supabase';
 
-let supabase: ReturnType<typeof createClientComponentClient<Database>> | null = null;
+// グローバルオブジェクトに型を定義
+declare global {
+  var supabase: ReturnType<typeof createClientComponentClient<Database>> | undefined;
+}
 
 export const getSupabaseClient = () => {
-  if (!supabase) {
-    supabase = createClientComponentClient<Database>();
+  if (typeof window === 'undefined') {
+    return createClientComponentClient<Database>();
   }
-  return supabase;
+
+  if (!global.supabase) {
+    global.supabase = createClientComponentClient<Database>();
+  }
+
+  return global.supabase;
 };
 
-export default getSupabaseClient(); 
+// シングルトンインスタンスをエクスポート
+const supabase = getSupabaseClient();
+export default supabase; 
