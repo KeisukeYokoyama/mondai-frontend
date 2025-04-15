@@ -67,6 +67,12 @@ export default function Header({ title }: HeaderProps) {
               政治家を探す
             </Link>
             <Link
+              href="/commentators"
+              className="text-gray-900 hover:text-blue-700"
+            >
+              言論人を探す
+            </Link>
+            <Link
               href="/parties"
               className="text-gray-900 hover:text-blue-700"
             >
@@ -139,6 +145,15 @@ export default function Header({ title }: HeaderProps) {
                     onClick={() => setIsOpen(false)}
                   >
                     政治家を探す
+                  </Link>
+                </li>
+                <li className="mb-2">
+                  <Link
+                    href="/commentators"
+                    className="block py-2 px-3 text-gray-900 rounded hover:bg-gray-100"
+                    onClick={() => setIsOpen(false)}
+                  >
+                    言論人を探す
                   </Link>
                 </li>
                 <li className="mb-2">

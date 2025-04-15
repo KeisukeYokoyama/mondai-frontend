@@ -223,6 +223,11 @@ export default function Home() {
                 />
                 {isLoading && <SearchingIndicator />}
               </div>
+              <p className="text-sm text-blue-700 -mt-2 font-bold text-right">
+                <Link href="/commentators/create">
+                  発言者を登録
+                </Link>
+              </p>
               {/* <select
                 className="w-full px-4 py-3 bg-white border border-gray-300 rounded-md text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                 value={selectedType}
