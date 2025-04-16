@@ -182,7 +182,9 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
         
         {politician.statements && politician.statements.length > 0 ? (
           <div className="columns-1 md:columns-2 gap-4">
-            {politician.statements.map((statement) => (
+            {[...politician.statements]
+              .sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
+              .map((statement) => (
               <div key={statement.id} className="break-inside-avoid mb-4">
                 <Link href={`/statements/${statement.id}`} className="block">
                   <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">

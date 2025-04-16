@@ -235,6 +235,7 @@ export const politicianAPI = {
           )
         `)
         .eq('id', id)
+        .order('statement_date', { foreignTable: 'statements', ascending: false })
         .single();
 
       if (error) throw error;
