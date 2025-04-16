@@ -15,7 +15,9 @@ interface Statement {
   title: string;
   content: string | null;
   statement_date: string | null;
-  image_path: string;
+  image_path: string | null;
+  video_path: string | null;
+  video_thumbnail_path: string | null;
   speaker: {
     id: string;
     last_name: string;
@@ -58,6 +60,8 @@ export default function TopUpdate({ title }: TopUpdateProps) {
             content,
             statement_date,
             image_path,
+            video_path,
+            video_thumbnail_path,
             speaker:speakers!inner (
               id,
               last_name,
@@ -83,10 +87,30 @@ export default function TopUpdate({ title }: TopUpdateProps) {
   }, [supabase]);
 
   // 画像パスを処理するヘルパー関数
-  const getImagePath = (path: string) => {
+  const getMediaPath = (statement: Statement) => {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    const supabaseBucket = 'statements';
-    return `${supabaseUrl}/storage/v1/object/public/${supabaseBucket}/${path}`;
+    if (!supabaseUrl) {
+      console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
+      return statement.video_path ? '/images/video-thumbnail-no-image.jpg' : '/images/default-avatar.png';
+    }
+
+    // 画像パスがある場合は画像を表示
+    if (statement.image_path) {
+      return `${supabaseUrl}/storage/v1/object/public/statements/${statement.image_path}`;
+    }
+    
+    // 動画サムネイルがある場合はサムネイルを表示
+    if (statement.video_thumbnail_path) {
+      return `${supabaseUrl}/storage/v1/object/public/video-thumbnails/${statement.video_thumbnail_path}`;
+    }
+
+    // 動画はあるがサムネイルがない場合は動画用のデフォルト画像を表示
+    if (statement.video_path) {
+      return '/images/video-thumbnail-no-image.jpg';
+    }
+
+    // どちらもない場合はデフォルト画像を表示
+    return '/images/default-avatar.png';
   };
 
   return (
@@ -117,19 +141,24 @@ export default function TopUpdate({ title }: TopUpdateProps) {
               <div key={statement.id} className="p-2 md:w-1/2 w-full">
                 <Link href={`/statements/${statement.id}`}>
                   <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
-                    {statement.image_path && (
-                      <div className="flex items-center justify-center">
-                        <Image
-                          src={getImagePath(statement.image_path)}
-                          alt={statement.title || ''}
-                          width={300}
-                          height={300}
-                          className="w-full h-48 object-cover object-center rounded-t-md"
-                          unoptimized
-                          priority={true}
-                        />
-                      </div>
-                    )}
+                    <div className="flex items-center justify-center relative">
+                      <Image
+                        src={getMediaPath(statement)}
+                        alt={statement.title || ''}
+                        width={300}
+                        height={300}
+                        className="w-full h-auto object-cover object-center rounded-t-md"
+                        unoptimized
+                        priority={true}
+                      />
+                      {statement.video_thumbnail_path && (
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center">
+                            <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-white border-b-[12px] border-b-transparent ml-1"></div>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                     <div className="p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="font-bold text-sm text-gray-900">

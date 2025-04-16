@@ -608,9 +608,9 @@ function StatementsContent() {
                 <p className="text-gray-500">読み込み中...</p>
               </div>
             ) : statements.length > 0 ? (
-              <div className="columns-1 md:columns-2 gap-6 px-4">
+              <div className="columns-1 md:columns-2 gap-4">
                 {statements.map((statement) => (
-                  <div key={statement.id} className="break-inside-avoid mb-6">
+                  <div key={statement.id} className="break-inside-avoid mb-4">
                     <Link href={`/statements/${statement.id}`} className="block">
                       <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-center relative">
@@ -619,7 +619,7 @@ function StatementsContent() {
                             alt={statement.title}
                             width={400}
                             height={300}
-                            className="w-full h-48 object-cover object-center rounded-t-md"
+                            className="w-full h-full object-cover object-center rounded-t-md"
                             priority={true}
                           />
                           {statement.video_thumbnail_path && (
@@ -630,8 +630,8 @@ function StatementsContent() {
                             </div>
                           )}
                         </div>
-                        <div className="p-6">
-                          <div className="flex items-center gap-2 mb-3">
+                        <div className="p-4">
+                          <div className="flex items-center gap-2 mb-2">
                             <span className="font-bold text-gray-900">
                               {statement.speaker?.last_name || ''} {statement.speaker?.first_name || ''}
                             </span>
@@ -640,11 +640,11 @@ function StatementsContent() {
                             </span>
                           </div>
                           {statement.content && (
-                            <p className="text-sm text-gray-600 mb-3 line-clamp-3">
+                            <p className="text-sm text-gray-600 mb-2 line-clamp-3">
                               {statement.content}
                             </p>
                           )}
-                          <div className="mt-3 flex items-center text-xs text-gray-500">
+                          <div className="mt-2 flex items-center text-xs text-gray-500">
                             {statement.statement_date && (
                               <span className="mr-4">
                                 {new Date(statement.statement_date).toLocaleDateString('ja-JP')}
