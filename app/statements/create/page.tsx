@@ -835,7 +835,7 @@ function CreateStatementContent() {
         </div>
       </section>
 
-      <div className="container mx-auto px-4 pt-4">
+      <div className="container mx-auto px-4 py-4">
         {politician && (
           <div className="max-w-screen-md mx-auto bg-gray-700 rounded-t-md">
             <div className="p-4 flex items-center">
