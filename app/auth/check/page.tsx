@@ -1,10 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
-export default function CheckAuth() {
+function AuthCheckContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { user, loading } = useAuth();
@@ -33,7 +33,7 @@ export default function CheckAuth() {
         }
       }, 1000); // 1秒の遅延を設定
     }
-  }, [user, loading, router, isChecked]);
+  }, [user, loading, router, isChecked, redirectPath]);
 
   return (
     <div className="flex items-center justify-center min-h-screen">
@@ -42,5 +42,20 @@ export default function CheckAuth() {
         <p className="mt-4 text-gray-600">認証を確認中...</p>
       </div>
     </div>
+  );
+}
+
+export default function CheckAuth() {
+  return (
+    <Suspense fallback={
+      <div className="flex items-center justify-center min-h-screen">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gray-900 mx-auto"></div>
+          <p className="mt-4 text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    }>
+      <AuthCheckContent />
+    </Suspense>
   );
 } 
