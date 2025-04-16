@@ -2,10 +2,10 @@ import React from 'react';
 import Link from 'next/link';
 export default function Footer() {
   return (
-    <div className="bg-gray-800 mt-auto">
+    <div className="bg-gray-800 mt-auto min-h-[400px]">
     <footer className="text-white body-font bg-gray-800 max-w-screen-lg mx-auto">
       <section className="text-white pt-10">
-        <div className="container flex flex-col justify-center px-6 pt-2 mx-auto md:pt-8 md:px-8 md:pb-4">
+        <div className="container flex flex-col justify-center px-6 pt-2 mx-auto md:pt-8 md:px-8 md:pb-4 min-h-[300px]">
           <h2 className="mb-8 text-xl font-bold sm:text-base">よくある質問</h2>
           <div className="flex flex-col divide-y sm:px-8 lg:px-12 xl:px-32 divide-gray-700">
             <details>

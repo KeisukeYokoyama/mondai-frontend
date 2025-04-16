@@ -32,24 +32,29 @@ export default function Header({ title }: HeaderProps) {
     <>
       <nav className="bg-white border-gray-200 relative z-50">
         <div className="max-w-screen-xl flex items-center mx-auto p-2">
-          <Link href="/" className="flex items-center space-x-3">
-            <Image
-              src='/images/Logo.svg'
-              alt='問題発言ドットコム ロゴ'
-              width={192}
-              height={26}
-              className='h-8 w-auto'
-              priority
-            />
-            {isHomePage ? (
-              <h1 className="self-center text-xl font-semibold whitespace-nowrap">
-                {title || '問題発言ドットコム'}
-              </h1>
-            ) : (
-              <span className="self-center text-xl font-semibold whitespace-nowrap">
-                {title || '問題発言ドットコム'}
-              </span>
-            )}
+          <Link href="/" className="flex items-center">
+            <div className="flex items-center">
+              <Image
+                src='/images/Logo.svg'
+                alt='問題発言ドットコム ロゴ'
+                width={192}
+                height={26}
+                className='h-8 w-auto mr-2'
+                priority
+                style={{
+                  objectFit: 'contain',
+                }}
+              />
+              {isHomePage ? (
+                <h1 className="text-xl font-semibold whitespace-nowrap">
+                  {title || '問題発言ドットコム'}
+                </h1>
+              ) : (
+                <span className="text-xl font-semibold whitespace-nowrap">
+                  {title || '問題発言ドットコム'}
+                </span>
+              )}
+            </div>
           </Link>
 
           {/* デスクトップ用メニュー */}
