@@ -3,7 +3,7 @@
 import { useAuth } from '@/contexts/AuthContext'
 import Image from 'next/image'
 import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase'
+import { getSupabaseClient } from '@/utils/supabase/client'
 
 interface AuthStatusProps {
   className?: string;
@@ -23,7 +23,7 @@ export default function AuthStatus({ className = '' }: AuthStatusProps) {
   const [userState, setUser] = useState<typeof user | null>(null)
 
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = getSupabaseClient().auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         setUser(session.user)
       } else {

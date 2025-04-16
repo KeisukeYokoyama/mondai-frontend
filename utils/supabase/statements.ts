@@ -1,4 +1,4 @@
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
+import { getSupabaseClient } from './client'
 import { Statement, StatementWithRelations } from './types'
 
 // Fileライクなオブジェクトの型定義
@@ -11,14 +11,14 @@ type FileObject = {
 export const statementAPI = {
   // バケットの存在確認
   checkBucket: async () => {
-    const supabase = createClientComponentClient()
+    const supabase = getSupabaseClient()
     const { data: buckets } = await supabase.storage.listBuckets();
     return buckets?.find(b => b.name === 'statements') !== undefined;
   },
 
   // 一覧取得
   getAll: async () => {
-    const supabase = createClientComponentClient()
+    const supabase = getSupabaseClient()
     return await supabase
       .from('statements')
       .select('*')
@@ -26,7 +26,7 @@ export const statementAPI = {
 
   // 新規発言登録
   create: async (data: Omit<Statement, 'id' | 'created_at' | 'updated_at'>) => {
-    const supabase = createClientComponentClient()
+    const supabase = getSupabaseClient()
     const { title, content, speaker_id, party_id, statement_date, image_path, evidence_url, user_id } = data;
     
     // 画像アップロード処理
@@ -68,7 +68,7 @@ export const statementAPI = {
 
   // タグの関連付け
   attachTags: async (statementId: string, tagIds: number[]) => {
-    const supabase = createClientComponentClient()
+    const supabase = getSupabaseClient()
     const { error } = await supabase
       .from('statement_tags')
       .insert(
@@ -83,7 +83,7 @@ export const statementAPI = {
 
   // 詳細取得
   getDetail: async (id: string) => {
-    const supabase = createClientComponentClient()
+    const supabase = getSupabaseClient()
     try {
       const { data, error } = await supabase
         .from('statements')

@@ -6,11 +6,10 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import { statementAPI } from '@/utils/supabase/statements';
 import Header from '@/components/Navs/Header';
 import Footer from '@/components/Navs/Footer';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseClient } from '@/utils/supabase/client';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { Statement } from '@/utils/supabase/types';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
 import { politicianAPI } from '@/utils/supabase/politicians';
 import type { SpeakerWithRelations } from '@/utils/supabase/types';
 import imageCompression from 'browser-image-compression';
@@ -188,8 +187,7 @@ function CreateStatementContent() {
   useEffect(() => {
     const fetchTags = async () => {
       try {
-        const { data, error } = await supabase
-          .from('tags')
+        const { data, error } = await getSupabaseClient().from('tags')
           .select('*')
           .order('name');
 
@@ -230,8 +228,7 @@ function CreateStatementContent() {
       if (!user) return;
 
       try {
-        const { data, error } = await supabase
-          .from('statement_tag')
+        const { data, error } = await getSupabaseClient().from('statement_tag')
           .select(`
             tag_id,
             tags (
@@ -458,7 +455,7 @@ function CreateStatementContent() {
   // タグ追加の確認後の処理
   const confirmAddTag = async () => {
     try {
-      const supabase = createClientComponentClient()
+      const supabase = getSupabaseClient();
       const { data, error } = await supabase
         .from('tags')
         .insert({ name: tagToAdd })
@@ -487,8 +484,7 @@ function CreateStatementContent() {
 
     setIsSearching(true);
     try {
-      const { data, error } = await supabase
-        .from('speakers')
+      const { data, error } = await getSupabaseClient().from('speakers')
         .select(`
           *,
           parties (
@@ -636,7 +632,7 @@ function CreateStatementContent() {
     }
 
     try {
-      const supabase = createClientComponentClient();
+      const supabase = getSupabaseClient();
       setUploadState('uploading');
       setUploadStatusText('アップロードの準備中...');
 
@@ -756,8 +752,7 @@ function CreateStatementContent() {
 
       try {
         // speaker_typeを取得
-        const { data: speakerData, error: speakerError } = await supabase
-          .from('speakers')
+        const { data: speakerData, error: speakerError } = await getSupabaseClient().from('speakers')
           .select('speaker_type')
           .eq('id', speaker_id)
           .single();
