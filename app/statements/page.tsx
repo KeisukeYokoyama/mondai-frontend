@@ -134,6 +134,10 @@ function StatementsContent() {
   const [selectedChildParty, setSelectedChildParty] = useState<number | null>(null)
   const [parties, setParties] = useState<Party[]>([])
   const [speakerSearchText, setSpeakerSearchText] = useState(searchParams.get('speaker') || '')
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalResults, setTotalResults] = useState(0)
+  const statementsPerPage = 20
 
   // タグ一覧の取得
   useEffect(() => {
@@ -225,7 +229,7 @@ function StatementsContent() {
     setSelectedChildParty(Number(e.target.value))
   }
 
-  // 検索関数
+  // 検索関数を修正
   const fetchStatements = async () => {
     try {
       setIsLoading(true)
@@ -243,14 +247,14 @@ function StatementsContent() {
           video_thumbnail_path,
           evidence_url,
           created_at,
-        speaker:speakers!inner (
+          speaker:speakers!inner (
             id,
             last_name,
             first_name,
-          last_name_kana,
-          first_name_kana,
-          party:parties!inner (
-            id,
+            last_name_kana,
+            first_name_kana,
+            party:parties!inner (
+              id,
               name
             ),
             chamber,
@@ -258,7 +262,7 @@ function StatementsContent() {
               name
             )
           )
-        `)
+        `, { count: 'exact' })
 
       // 検索テキストがある場合は、検索条件を追加
       if (searchText) {
@@ -329,14 +333,23 @@ function StatementsContent() {
         }
       }
 
+      // ページネーションの適用
+      query = query
+        .order('created_at', { ascending: false })
+        .range((currentPage - 1) * statementsPerPage, currentPage * statementsPerPage - 1)
+
       // クエリの実行
-      const { data, error } = await query
+      const { data, error, count } = await query
 
       if (error) {
         throw error
       }
 
       setStatements(data as unknown as Statement[])
+      if (count !== null) {
+        setTotalResults(count)
+        setTotalPages(Math.ceil(count / statementsPerPage))
+      }
     } catch (error) {
       // エラーハンドリング
     } finally {
@@ -347,7 +360,7 @@ function StatementsContent() {
 
   useEffect(() => {
     fetchStatements()
-  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty, speakerSearchText])
+  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty, speakerSearchText, currentPage])
 
   // 検索ボタンのハンドラー
   const handleSearch = async () => {
@@ -400,6 +413,70 @@ function StatementsContent() {
     // どちらもない場合はデフォルト画像
     return '/images/video-thumbnail-no-image.jpg';
   };
+
+  // ページネーションのコンポーネント
+  const Pagination = () => {
+    const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
+    const maxVisiblePages = 4
+    let visiblePages = pages
+
+    if (totalPages > maxVisiblePages) {
+      const start = Math.max(0, Math.min(currentPage - 3, totalPages - maxVisiblePages))
+      visiblePages = pages.slice(start, start + maxVisiblePages)
+    }
+
+    const handlePageClick = (page: number) => {
+      setCurrentPage(page)
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      })
+    }
+
+    if (totalPages <= 1) return null
+
+    return (
+      <div className="flex justify-center items-center space-x-2 my-4">
+        {visiblePages[0] > 1 && (
+          <>
+            <button
+              onClick={() => handlePageClick(1)}
+              className="w-8 h-8 text-sm flex items-center justify-center border border-gray-200 bg-white"
+            >
+              1
+            </button>
+            {visiblePages[0] > 2 && <span className="px-2">...</span>}
+          </>
+        )}
+
+        {visiblePages.map((page) => (
+          <button
+            key={page}
+            onClick={() => handlePageClick(page)}
+            className={`w-8 h-8 text-sm flex items-center justify-center border border-gray-200 ${
+              currentPage === page ? 'bg-indigo-500 text-white' : 'bg-white'
+            }`}
+          >
+            {page}
+          </button>
+        ))}
+
+        {visiblePages[visiblePages.length - 1] < totalPages && (
+          <>
+            {visiblePages[visiblePages.length - 1] < totalPages - 1 && (
+              <span className="px-2">...</span>
+            )}
+            <button
+              onClick={() => handlePageClick(totalPages)}
+              className="w-8 h-8 text-sm flex items-center justify-center border border-gray-200 bg-white"
+            >
+              {totalPages}
+            </button>
+          </>
+        )}
+      </div>
+    )
+  }
 
   return (
     <>
@@ -608,55 +685,58 @@ function StatementsContent() {
                 <p className="text-gray-500">読み込み中...</p>
               </div>
             ) : statements.length > 0 ? (
-              <div className="columns-1 md:columns-2 gap-4">
-                {statements.map((statement) => (
-                  <div key={statement.id} className="break-inside-avoid mb-4">
-                    <Link href={`/statements/${statement.id}`} className="block">
-                      <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
-                        <div className="flex items-center justify-center relative">
-                          <Image
-                            src={getMediaPath(statement)}
-                            alt={statement.title}
-                            width={400}
-                            height={300}
-                            className="w-full h-full object-cover object-center rounded-t-md"
-                            priority={true}
-                          />
-                          {statement.video_thumbnail_path && (
-                            <div className="absolute inset-0 flex items-center justify-center">
-                              <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center">
-                                <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-white border-b-[12px] border-b-transparent ml-1"></div>
+              <>
+                <div className="columns-1 md:columns-2 gap-4">
+                  {statements.map((statement) => (
+                    <div key={statement.id} className="break-inside-avoid mb-4">
+                      <Link href={`/statements/${statement.id}`} className="block">
+                        <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
+                          <div className="flex items-center justify-center relative">
+                            <Image
+                              src={getMediaPath(statement)}
+                              alt={statement.title}
+                              width={400}
+                              height={300}
+                              className="w-full h-full object-cover object-center rounded-t-md"
+                              priority={true}
+                            />
+                            {statement.video_thumbnail_path && (
+                              <div className="absolute inset-0 flex items-center justify-center">
+                                <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center">
+                                  <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-white border-b-[12px] border-b-transparent ml-1"></div>
+                                </div>
                               </div>
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-4">
-                          <div className="flex items-center gap-2 mb-2">
-                            <span className="font-bold text-gray-900">
-                              {statement.speaker?.last_name || ''} {statement.speaker?.first_name || ''}
-                            </span>
-                            <span className="text-gray-500 text-sm">
-                              {statement.speaker?.party?.name || '無所属'}
-                            </span>
-                          </div>
-                          {statement.content && (
-                            <p className="text-sm text-gray-600 mb-2 line-clamp-3">
-                              {statement.content}
-                            </p>
-                          )}
-                          <div className="mt-2 flex items-center text-xs text-gray-500">
-                            {statement.statement_date && (
-                              <span className="mr-4">
-                                {new Date(statement.statement_date).toLocaleDateString('ja-JP')}
-                              </span>
                             )}
                           </div>
+                          <div className="p-4">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="font-bold text-gray-900">
+                                {statement.speaker?.last_name || ''} {statement.speaker?.first_name || ''}
+                              </span>
+                              <span className="text-gray-500 text-sm">
+                                {statement.speaker?.party?.name || '無所属'}
+                              </span>
+                            </div>
+                            {statement.content && (
+                              <p className="text-sm text-gray-600 mb-2 line-clamp-3">
+                                {statement.content}
+                              </p>
+                            )}
+                            <div className="mt-2 flex items-center text-xs text-gray-500">
+                              {statement.statement_date && (
+                                <span className="mr-4">
+                                  {new Date(statement.statement_date).toLocaleDateString('ja-JP')}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                      </div>
-                    </Link>
-                  </div>
-                ))}
-              </div>
+                      </Link>
+                    </div>
+                  ))}
+                </div>
+                <Pagination />
+              </>
             ) : (
               <div className="text-center py-12 bg-gray-50 rounded-lg">
                 <p className="text-gray-500">登録されている問題発言がありません</p>

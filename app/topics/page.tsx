@@ -36,9 +36,9 @@ const TopicsPage = async () => {
               トピックス一覧
             </h1>
             <div className="bg-white p-6 rounded-lg shadow">
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-3 mx-auto items-center justify-center">
                 {tags.map((tag) => (
-                  <span key={tag.id} className="text-blue-700 font-bold">
+                  <span key={tag.id} className="bg-white border border-gray-200 text-gray-900 text-sm px-3 py-1.5 rounded-full">
                     <Link href={`/topics/${tag.id}`}>
                       #{tag.name}
                     </Link>
