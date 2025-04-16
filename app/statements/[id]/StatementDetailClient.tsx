@@ -370,7 +370,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
     }
     
     return (
-      <div className="flex flex-wrap gap-2 mt-4">
+      <div className="flex flex-wrap gap-2 mt-4 mx-auto items-center justify-center">
         {(statement.tags as StatementTag[]).map((item: StatementTag) => {
           const tag = item.tags;
           return (
