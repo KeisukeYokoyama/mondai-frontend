@@ -1105,7 +1105,7 @@ function CreateStatementContent() {
               </div>
 
               {/* タグ検索フォーム */}
-              <div className="relative -mt-4">
+              <div className="relative -mt-2">
                 <input
                   type="text"
                   value={searchTagQuery}
