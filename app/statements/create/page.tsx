@@ -92,11 +92,11 @@ function SampleImageModal({
           <p className="text-gray-900 text-sm mb-4">ピンク色の文字箇所に「発言内容」が表示されます。</p>
           <div className="relative w-full h-[80vh] max-h-[72vh]">
             <Image
-            src="/images/form_sample.jpg"
-            alt="サンプル画像"
-            fill
-            className="object-contain"
-          />
+              src="/images/form_sample.jpg"
+              alt="サンプル画像"
+              fill
+              className="object-contain"
+            />
           </div>
         </div>
       </div>
@@ -107,7 +107,7 @@ function SampleImageModal({
 // 画像パスを処理するヘルパー関数を追加
 const getImagePath = (path: string | null) => {
   if (!path) return '/images/default-avatar.png';
-  
+
   if (path.startsWith('http://') || path.startsWith('https://')) {
     return path;
   }
@@ -262,7 +262,7 @@ function CreateStatementContent() {
           })
           .filter((tag): tag is { id: number; name: string; count: number } => tag !== null)
           .sort((a, b) => b.count - a.count)
-          .slice(0, 5);
+          .slice(0, 10);
 
         setFrequentTags(frequentTagsData);
       } catch (error) {
@@ -356,7 +356,7 @@ function CreateStatementContent() {
 
       // 画像の圧縮とリサイズ
       const compressedFile = await imageCompression(file, options);
-      
+
       setImage(compressedFile);
       const reader = new FileReader();
       reader.onloadend = () => {
@@ -448,11 +448,9 @@ function CreateStatementContent() {
     }
   };
 
-  const handleAddTag = async () => {
-    if (!newTag.trim()) return;
-
-    // 確認ダイアログを表示するために状態を設定
-    setTagToAdd(newTag.trim());
+  const handleAddTag = () => {
+    if (!searchTagQuery.trim()) return;
+    setTagToAdd(searchTagQuery.trim());
     setShowConfirmDialog(true);
   };
 
@@ -470,7 +468,8 @@ function CreateStatementContent() {
 
       setAvailableTags([...availableTags, data]);
       setSelectedTags([...selectedTags, data.id]);
-      setNewTag('');
+      setSearchTagQuery('');
+      setShowTagResults(false);
       showToastMessage('タグを追加しました', 'success');
     } catch (error: unknown) {
       showToastMessage('タグの追加に失敗しました');
@@ -810,14 +809,13 @@ function CreateStatementContent() {
         onClose={() => setShowConfirmDialog(false)}
         onConfirm={confirmAddTag}
         title={`「${tagToAdd}」というタグを追加しますか？`}
-        message={`追加する前に「${tagToAdd}」という名前の類似タグがないか確認してください。`}
+        message="追加する前に類似タグがないか確認してください。"
       />
 
       {showToast && (
         <div className="fixed inset-0 flex items-center justify-center z-[9999]">
-          <div className={`${
-            toastType === 'success' 
-              ? 'bg-green-50 border-green-400 text-green-700' 
+          <div className={`${toastType === 'success'
+              ? 'bg-green-50 border-green-400 text-green-700'
               : 'bg-red-50 border-red-400 text-red-700'
             } px-6 py-3 min-w-72 rounded-md shadow-lg max-w-md animate-fade-in border`}>
             {toastMessage}
@@ -880,11 +878,10 @@ function CreateStatementContent() {
                 <button
                   type="button"
                   onClick={() => handleMediaTypeChange('image')}
-                  className={`flex-1 py-2 px-4 text-sm font-medium rounded-l-lg border ${
-                    mediaType === 'image'
+                  className={`flex-1 py-2 px-4 text-sm font-medium rounded-l-lg border ${mediaType === 'image'
                       ? 'bg-indigo-50 text-indigo-700 border-indigo-700'
                       : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-center">
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -896,11 +893,10 @@ function CreateStatementContent() {
                 <button
                   type="button"
                   onClick={() => handleMediaTypeChange('video')}
-                  className={`flex-1 py-2 px-4 text-sm font-medium rounded-r-lg border ${
-                    mediaType === 'video'
+                  className={`flex-1 py-2 px-4 text-sm font-medium rounded-r-lg border ${mediaType === 'video'
                       ? 'bg-indigo-50 text-indigo-700 border-indigo-700'
                       : 'bg-white text-gray-500 border-gray-300 hover:bg-gray-50'
-                  }`}
+                    }`}
                 >
                   <div className="flex items-center justify-center">
                     <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -924,9 +920,8 @@ function CreateStatementContent() {
                     >
                       <label
                         htmlFor="dropzone-file"
-                        className={`flex flex-col items-center justify-center w-full h-52 border-2 ${
-                          isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
-                        } border-dashed rounded-lg cursor-pointer`}
+                        className={`flex flex-col items-center justify-center w-full h-52 border-2 ${isDragging ? 'border-indigo-500 bg-indigo-50' : 'border-gray-300 bg-gray-50 hover:bg-gray-100'
+                          } border-dashed rounded-lg cursor-pointer`}
                       >
                         <div className="flex flex-col items-center justify-center pt-5 pb-6">
                           <p className="mb-2 text-sm text-gray-500">
@@ -1008,7 +1003,7 @@ function CreateStatementContent() {
                                 <span className="font-semibold">クリックして選択</span>
                               </p>
                               <p className="text-xs">
-                                <span className="text-red-500">5MB以下</span>, 
+                                <span className="text-red-500">5MB以下</span>,
                                 <span className="text-red-500"> 60秒以内</span>
                                 <span className="text-gray-500">の動画</span>
                               </p>
@@ -1058,12 +1053,12 @@ function CreateStatementContent() {
                   <div>
                     発言内容 <span className="bg-red-400 text-white text-xs font-medium me-2 px-1.5 py-0.5 rounded-sm">必須</span>
                   </div>
-                  <Link 
-                    href="#" 
+                  <Link
+                    href="#"
                     onClick={(e) => {
                       e.preventDefault();
                       setShowSampleModal(true);
-                    }} 
+                    }}
                     className="text-blue-500 hover:text-blue-700"
                   >
                     <small>表示例を見る</small>
@@ -1088,19 +1083,19 @@ function CreateStatementContent() {
               </label>
 
               {/* 選択されたタグの表示 */}
-              <div className="flex flex-wrap gap-2 mb-4">
+              <div className="flex flex-wrap gap-2 mt-4">
                 {selectedTags.map(tagId => {
                   const tag = availableTags.find(t => t.id === tagId);
                   return tag ? (
                     <div
                       key={tag.id}
-                      className="flex items-center bg-gray-100 rounded-full px-3 py-1"
+                      className="flex items-center bg-indigo-100 rounded-full px-3 py-1 mb-6"
                     >
-                      <span className="text-sm">{tag.name}</span>
+                      <span className="text-sm text-indigo-700">{tag.name}</span>
                       <button
                         type="button"
                         onClick={() => setSelectedTags(selectedTags.filter(id => id !== tag.id))}
-                        className="ml-2 text-gray-500 hover:text-gray-700"
+                        className="ml-2 text-indigo-500 hover:text-indigo-700"
                       >
                         ✕
                       </button>
@@ -1109,35 +1104,8 @@ function CreateStatementContent() {
                 })}
               </div>
 
-              {/* よく使用されるタグ */}
-              {frequentTags.length > 0 && (
-                <div className="mb-4">
-                  <p className="text-sm text-gray-600 mb-2">よく使用されるタグ:</p>
-                  <div className="flex flex-wrap gap-2">
-                    {frequentTags.map(tag => (
-                      <button
-                        key={tag.id}
-                        type="button"
-                        onClick={() => {
-                          if (!selectedTags.includes(tag.id)) {
-                            setSelectedTags([...selectedTags, tag.id]);
-                          }
-                        }}
-                        className={`text-sm px-3 py-1 rounded-full ${
-                          selectedTags.includes(tag.id)
-                            ? 'bg-indigo-100 text-indigo-700'
-                            : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
-                        }`}
-                      >
-                        {tag.name}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
               {/* タグ検索フォーム */}
-              <div className="relative">
+              <div className="relative -mt-4">
                 <input
                   type="text"
                   value={searchTagQuery}
@@ -1146,10 +1114,10 @@ function CreateStatementContent() {
                     setShowTagResults(true);
                   }}
                   onFocus={() => setShowTagResults(true)}
-                  placeholder="タグを検索または入力"
+                  placeholder="タグを検索 or 追加"
                   className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
                 />
-                
+
                 {/* 検索結果のドロップダウン */}
                 {showTagResults && (searchTagQuery || filteredTags.length > 0) && (
                   <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
@@ -1171,24 +1139,53 @@ function CreateStatementContent() {
                         </button>
                       ))
                     ) : searchTagQuery ? (
-                      <div className="px-4 py-2 text-sm text-gray-500">
-                        「{searchTagQuery}」を新しいタグとして追加
+                      <div className="px-4 py-2 text-sm text-gray-500 flex items-center justify-between">
+                        <span>「{searchTagQuery}」を新しいタグとして追加</span>
                         <button
                           type="button"
-                          onClick={() => handleAddTag()}
-                          className="ml-2 text-indigo-600 hover:text-indigo-800"
+                          onClick={handleAddTag}
+                          className="ml-2 text-white bg-indigo-500 hover:bg-indigo-600 px-3 py-1 rounded-md text-sm"
                         >
-                          追加する
+                          追加
                         </button>
                       </div>
                     ) : null}
                   </div>
                 )}
               </div>
-              <small className="text-gray-500 block">
-                タグを検索するか、新しいタグを入力してください
-              </small>
             </div>
+
+            {/* よく使用されるタグ */}
+            {frequentTags.length > 0 && (
+              <div className="mb-4 -mt-2">
+                <div className="flex items-center">
+                  <span className="text-sm pb-2 text-gray-900 mr-2 flex-shrink-0">
+                    人気のタグ:
+                  </span>
+                  <div className="flex-1 overflow-x-auto pb-2 hide-scrollbar">
+                    <div className="flex gap-2">
+                      {frequentTags.map(tag => (
+                        <button
+                          key={tag.id}
+                          type="button"
+                          onClick={() => {
+                            if (!selectedTags.includes(tag.id)) {
+                              setSelectedTags([...selectedTags, tag.id]);
+                            }
+                          }}
+                          className={`text-sm px-3 py-1 rounded-full flex-shrink-0 ${selectedTags.includes(tag.id)
+                              ? 'bg-indigo-100 text-indigo-700'
+                              : 'bg-gray-100 hover:bg-gray-200 text-gray-700'
+                            }`}
+                        >
+                          {tag.name}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
 
             <div className="mb-6">
               <button
@@ -1257,7 +1254,7 @@ function CreateStatementContent() {
                   <label className="text-gray-700 text-sm font-bold mb-2 block">
                     関連人物 <span className="bg-gray-400 text-white text-xs font-medium me-2 px-1.5 py-0.5 rounded-sm">任意</span>
                   </label>
-                  
+
                   {/* 選択された関連人物の表示 */}
                   {relatedSpeakers.length > 0 && (
                     <div className="flex flex-wrap gap-2 mb-4">
@@ -1294,7 +1291,7 @@ function CreateStatementContent() {
                       placeholder="名前を入力して検索"
                       className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
                     />
-                    
+
                     {/* 検索結果のドロップダウン */}
                     {searchResults.length > 0 && (
                       <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
@@ -1347,13 +1344,12 @@ function CreateStatementContent() {
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2.5">
                   <div
-                    className={`h-2.5 rounded-full transition-all duration-300 ${
-                      uploadState === 'complete' 
-                        ? 'bg-green-500 w-full' 
+                    className={`h-2.5 rounded-full transition-all duration-300 ${uploadState === 'complete'
+                        ? 'bg-green-500 w-full'
                         : uploadState === 'processing'
-                        ? 'bg-yellow-500 w-3/4'
-                        : 'bg-indigo-500 w-1/2 animate-pulse'
-                    }`}
+                          ? 'bg-yellow-500 w-3/4'
+                          : 'bg-indigo-500 w-1/2 animate-pulse'
+                      }`}
                   ></div>
                 </div>
               </div>
@@ -1373,9 +1369,8 @@ function CreateStatementContent() {
                 type="button"
                 onClick={handleRegisterClick}
                 disabled={uploadState !== 'idle'}
-                className={`min-w-28 py-2.5 px-5 me-2 mb-2 text-sm font-medium text-white focus:outline-none bg-indigo-500 rounded-lg border border-gray-200 hover:bg-indigo-600 ${
-                  uploadState !== 'idle' ? 'opacity-50 cursor-not-allowed' : ''
-                }`}
+                className={`min-w-28 py-2.5 px-5 me-2 mb-2 text-sm font-medium text-white focus:outline-none bg-indigo-500 rounded-lg border border-gray-200 hover:bg-indigo-600 ${uploadState !== 'idle' ? 'opacity-50 cursor-not-allowed' : ''
+                  }`}
               >
                 {uploadState !== 'idle' ? (
                   <div className="flex items-center">
@@ -1420,6 +1415,17 @@ function CreateStatementContent() {
       )}
 
       <Footer />
+
+      {/* スタイルを追加 */}
+      <style jsx global>{`
+        .hide-scrollbar {
+          -ms-overflow-style: none;
+          scrollbar-width: none;
+        }
+        .hide-scrollbar::-webkit-scrollbar {
+          display: none;
+        }
+      `}</style>
     </main>
   );
 }
