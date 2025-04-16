@@ -153,6 +153,7 @@ export default function Home() {
       if (result.data) {
         setSearchResults(result.data.data);
         setTotalResults(result.data.total);
+        setTotalPages(Math.ceil(result.data.total / politiciansPerPage));
       }
 
       // 検索条件をsessionStorageに保存
@@ -169,41 +170,50 @@ export default function Home() {
     }
   };
 
-  // 検索条件の変更時に検索を実行
+  // 検索条件変更時の検索実行
   useEffect(() => {
-    // デバウンス処理を追加
-    const timer = setTimeout(() => {
-      const fetchData = async () => {
-        try {
-          setIsLoading(true);
-          const searchParams: SearchParams = {
-            s: searchText,
-            chamber: selectedType === 0 ? undefined : 
-                    selectedType === 1 ? '衆議院' : 
-                    selectedType === 2 ? '参議院' : 
-                    selectedType === 3 ? '地方選挙' : undefined,
-            gender: selectedGender === 0 ? undefined : 
-                   selectedGender === 1 ? '男' : 
-                   selectedGender === 2 ? '女' : undefined,
-            party_id: selectedParty ? String(selectedParty) : undefined,
-            prefecture_id: selectedPrefecture || undefined,
-            page: currentPage,
-            per_page: politiciansPerPage
-          };
+    if (currentPage === 1) {
+      const timer = setTimeout(() => {
+        const searchParams: SearchParams = {
+          s: searchText,
+          chamber: selectedType === 0 ? undefined : 
+                  selectedType === 1 ? '衆議院' : 
+                  selectedType === 2 ? '参議院' : 
+                  selectedType === 3 ? '地方選挙' : undefined,
+          gender: selectedGender === 0 ? undefined : 
+                 selectedGender === 1 ? '男' : 
+                 selectedGender === 2 ? '女' : undefined,
+          party_id: selectedParty ? String(selectedParty) : undefined,
+          prefecture_id: selectedPrefecture || undefined,
+          page: currentPage,
+          per_page: politiciansPerPage
+        };
+        search(searchParams);
+      }, 300);
+      return () => clearTimeout(timer);
+    } else {
+      setCurrentPage(1);
+    }
+  }, [searchText, selectedType, selectedGender, selectedParty, selectedPrefecture]);
 
-          await search(searchParams);
-        } catch (error) {
-          setError('データの取得に失敗しました');
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
-      fetchData();
-    }, 300); // 300ms待機
-
-    return () => clearTimeout(timer);
-  }, [searchText, selectedType, selectedGender, selectedParty, selectedPrefecture, currentPage]);
+  // ページ変更時の検索実行
+  useEffect(() => {
+    const searchParams: SearchParams = {
+      s: searchText,
+      chamber: selectedType === 0 ? undefined : 
+              selectedType === 1 ? '衆議院' : 
+              selectedType === 2 ? '参議院' : 
+              selectedType === 3 ? '地方選挙' : undefined,
+      gender: selectedGender === 0 ? undefined : 
+             selectedGender === 1 ? '男' : 
+             selectedGender === 2 ? '女' : undefined,
+      party_id: selectedParty ? String(selectedParty) : undefined,
+      prefecture_id: selectedPrefecture || undefined,
+      page: currentPage,
+      per_page: politiciansPerPage
+    };
+    search(searchParams);
+  }, [currentPage]);
 
   // 検索ハンドラー
   const handleSearch = () => {
