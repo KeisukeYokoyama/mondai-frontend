@@ -1,5 +1,5 @@
 import { getCookie, setCookie } from './cookie';
-import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
+import { getSupabaseClient } from './supabase/client';
 
 const VIEW_COOKIE_PREFIX = 'statement_view_';
 const COOKIE_EXPIRY_DAYS = 1;
@@ -14,6 +14,9 @@ interface ViewHistory {
   statementId: string;
   date: string; // YYYY-MM-DD形式
 }
+
+// バッチ処理の実行状態を管理
+let isBatchProcessing = false;
 
 // IPアドレスを取得する関数（キャッシュ付き）
 const getIpAddress = async (): Promise<string> => {
@@ -63,7 +66,7 @@ export const recordStatementView = async (statementId: string) => {
       // 最後のバッチ処理から1時間以上経過している場合は即時実行
       const lastBatchTime = parseInt(localStorage.getItem(LAST_BATCH_TIME_KEY) || '0', 10);
       const now = Date.now();
-      if (now - lastBatchTime >= BATCH_INTERVAL) {
+      if (now - lastBatchTime >= BATCH_INTERVAL && !isBatchProcessing) {
         await processBatch();
       } else {
         startBatchProcessing();
@@ -80,15 +83,23 @@ const startBatchProcessing = () => {
   }
 
   batchTimeout = setTimeout(async () => {
-    await processBatch();
+    if (!isBatchProcessing) {
+      await processBatch();
+    }
   }, BATCH_INTERVAL);
 };
 
 const processBatch = async () => {
-  const supabase = createClientComponentClient();
+  if (isBatchProcessing) return;
+  
+  isBatchProcessing = true;
+  const supabase = getSupabaseClient();
   const history = JSON.parse(localStorage.getItem(VIEW_HISTORY_KEY) || '[]');
   
-  if (history.length === 0) return;
+  if (history.length === 0) {
+    isBatchProcessing = false;
+    return;
+  }
 
   try {
     const ip = await getIpAddress();
@@ -111,6 +122,7 @@ const processBatch = async () => {
     if (validHistory.length === 0) {
       localStorage.removeItem(VIEW_HISTORY_KEY);
       localStorage.setItem(LAST_BATCH_TIME_KEY, Date.now().toString());
+      isBatchProcessing = false;
       return;
     }
 
@@ -130,6 +142,7 @@ const processBatch = async () => {
 
     if (error) {
       console.error('バッチ処理のエラー:', error);
+      isBatchProcessing = false;
       return;
     }
 
@@ -138,6 +151,8 @@ const processBatch = async () => {
     localStorage.setItem(LAST_BATCH_TIME_KEY, Date.now().toString());
   } catch (err) {
     console.error('バッチ処理のエラー:', err);
+  } finally {
+    isBatchProcessing = false;
   }
 };
 

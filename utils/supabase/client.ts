@@ -1,26 +1,27 @@
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { Database } from '@/types/supabase';
 
-// クライアントインスタンスの型定義
-declare global {
-  var supabase: ReturnType<typeof createClientComponentClient<Database>> | undefined;
+class SupabaseClientManager {
+  private static instance: ReturnType<typeof createClientComponentClient<Database>>;
+  private static isInitializing = false;
+
+  static getInstance(): ReturnType<typeof createClientComponentClient<Database>> {
+    if (typeof window === 'undefined') {
+      return createClientComponentClient<Database>();
+    }
+
+    if (!this.instance && !this.isInitializing) {
+      this.isInitializing = true;
+      this.instance = createClientComponentClient<Database>();
+      this.isInitializing = false;
+    }
+
+    return this.instance;
+  }
 }
 
-let browserInstance: ReturnType<typeof createClientComponentClient<Database>> | undefined;
+// シングルトンインスタンスを取得
+const supabase = SupabaseClientManager.getInstance();
 
-export const getSupabaseClient = () => {
-  if (typeof window === 'undefined') {
-    return createClientComponentClient<Database>();
-  }
-
-  if (!browserInstance) {
-    browserInstance = global.supabase || createClientComponentClient<Database>();
-    global.supabase = browserInstance;
-  }
-
-  return browserInstance;
-};
-
-// シングルトンインスタンスをエクスポート
-const supabase = getSupabaseClient();
+export const getSupabaseClient = () => SupabaseClientManager.getInstance();
 export default supabase; 
