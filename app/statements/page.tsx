@@ -602,7 +602,7 @@ function StatementsContent() {
               )}
             </div>
           </div>
-          <div className="container px-0 pt-6 pb-8 mx-auto max-w-screen-md">
+          <div className="container pt-6 pb-8 px-3 mx-auto max-w-screen-md">
             {isLoading ? (
               <div className="text-center py-12 bg-gray-50 rounded-lg">
                 <p className="text-gray-500">読み込み中...</p>
