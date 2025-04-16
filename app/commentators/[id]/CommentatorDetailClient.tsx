@@ -7,6 +7,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { commentatorAPI } from '@/utils/supabase/commentators';
 import type { CommentatorWithStatements, Statement, StatementTag } from '@/utils/supabase/types';
+import CommentatorSkeleton from '@/components/Loading/CommentatorSkeleton';
 import { 
   FaSquareXTwitter,
   FaHouse,
@@ -89,7 +90,7 @@ export default function CommentatorDetailClient({ id }: { id: string }) {
     return url !== null && url !== undefined && url !== "NULL" && url.trim() !== '';
   };
 
-  if (loading) return <div>読み込み中...</div>;
+  if (loading) return <CommentatorSkeleton />;
   if (error) return <div>エラー: {error}</div>;
   if (!commentator) return <div>データが見つかりませんでした</div>;
 
