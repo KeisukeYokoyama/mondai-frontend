@@ -15,9 +15,9 @@ export async function middleware(req: NextRequest) {
     return res
   }
 
-  // 認証ページへのアクセスで、すでにログインしている場合はダッシュボードへ
+  // 認証ページへのアクセスで、すでにログインしている場合はトップページへ
   if (session && req.nextUrl.pathname === '/auth') {
-    return NextResponse.redirect(new URL('/dashboard', req.url))
+    return NextResponse.redirect(new URL('/', req.url))
   }
 
   // 未認証ユーザーをログインページにリダイレクト

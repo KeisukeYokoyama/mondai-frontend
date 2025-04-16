@@ -16,7 +16,7 @@ function AuthContent() {
 
   useEffect(() => {
     if (user && !loading) {
-      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/dashboard';
+      const redirectPath = sessionStorage.getItem('redirectAfterLogin') || '/';
       sessionStorage.removeItem('redirectAfterLogin');
       router.push(redirectPath);
     }

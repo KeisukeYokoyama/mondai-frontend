@@ -10,7 +10,7 @@ function AuthCheckContent() {
   const { user, loading } = useAuth();
   const [isChecked, setIsChecked] = useState(false);
 
-  const redirectPath = searchParams.get('redirect') || '/dashboard'
+  const redirectPath = searchParams.get('redirect') || '/'
   
   useEffect(() => {
     // ユーザー情報のロードが完了したときのみ処理を実行
@@ -26,7 +26,7 @@ function AuthCheckContent() {
             router.push(redirectPath);
             localStorage.removeItem('redirectAfterLogin'); // リダイレクト後に削除
           } else {
-            router.push('/dashboard');
+            router.push('/');
           }
         } else {
           router.push('/auth');
