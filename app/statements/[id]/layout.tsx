@@ -16,10 +16,37 @@ async function getStatementData(id: string) {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const statement = await getStatementData(resolvedParams.id);
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.mondai-hatsugen.com';
+  
+  // 画像URLの生成
+  let imageUrl = `${baseUrl}/images/default-statement.png`;
+  if (statement?.image_path) {
+    imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/statements/${statement.image_path}`;
+  } else if (statement?.video_thumbnail_path) {
+    imageUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/video-thumbnails/${statement.video_thumbnail_path}`;
+  }
   
   return {
-    title: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name}が「${statement.title}」と発言しました | 問題発言ドットコム` : '問題発言ドットコム',
-    description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name}による問題発言「${statement.title}」の証拠スクリーンショットです。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
+    title: statement ? statement.title : '問題発言ドットコム',
+    description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} は ${statement.title} という問題発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
+    openGraph: {
+      title: statement ? statement.title : '問題発言ドットコム',
+      description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} は ${statement.title} という問題発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
+      images: [
+        {
+          url: imageUrl,
+          width: 1200,
+          height: 630,
+          alt: statement ? statement.title : '問題発言ドットコム',
+        }
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: statement ? statement.title : '問題発言ドットコム',
+      description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} は ${statement.title} という問題発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
+      images: [imageUrl],
+    }
   }
 }
 
