@@ -1,5 +1,5 @@
 import { Metadata } from 'next';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseClient } from '@/utils/supabase/client';
 import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
 
 type Props = {
@@ -8,7 +8,7 @@ type Props = {
 }
 
 async function getTopicData(id: string) {
-  const { data: topic } = await supabase
+  const { data: topic } = await getSupabaseClient()
     .from('tags')
     .select('*')
     .eq('id', id)

@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Header from '@/components/Navs/Header';
 import Footer from '@/components/Navs/Footer';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseClient } from '@/utils/supabase/client';
 import Image from 'next/image';
 import { useAuth } from '@/contexts/AuthContext';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
@@ -132,7 +132,7 @@ function CreateSpeakerContent() {
   useEffect(() => {
     const fetchParties = async () => {
       try {
-        const { data, error } = await supabase
+        const { data, error } = await getSupabaseClient()
           .from('parties')
           .select('*')
           .order('order', { ascending: true })
@@ -146,7 +146,7 @@ function CreateSpeakerContent() {
     };
 
     fetchParties();
-  }, [supabase]);
+  }, [getSupabaseClient]);
 
   // Toastを表示する関数
   const showToastMessage = (message: string, type: 'success' | 'error' = 'error') => {

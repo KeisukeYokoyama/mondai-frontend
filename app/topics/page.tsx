@@ -1,12 +1,12 @@
 import React from 'react';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseClient } from '@/utils/supabase/client';
 import Link from 'next/link';
 import Header from '@/components/Navs/Header';
 import Footer from '@/components/Navs/Footer';
 import BreadcrumbJsonLd from '@/components/BreadcrumbJsonLd';
 
 const TopicsPage = async () => {
-  const { data: tags, error } = await supabase
+  const { data: tags, error } = await getSupabaseClient()
     .from('tags')
     .select('*')
     .order('name');

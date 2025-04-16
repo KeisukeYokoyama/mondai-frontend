@@ -1,12 +1,12 @@
 // utils/supabase/location.ts
-import { supabase } from '@/lib/supabase'
+import { getSupabaseClient } from './client'
 import type { Region, Prefecture, City } from '@/utils/supabase/types'
 import type { SupabaseResponse } from '@/utils/supabase/index'
 
 export const locationAPI = {
   // 地域一覧取得
   getRegions: async (): Promise<SupabaseResponse<Region[]>> => {
-    return await supabase
+    return await getSupabaseClient()
       .from('regions')
       .select('id, name, slug, created_at, updated_at')
       .order('id')
@@ -14,7 +14,7 @@ export const locationAPI = {
 
   // 都道府県一覧取得
   getPrefectures: async (): Promise<SupabaseResponse<(Prefecture & { regions: Region[] })[]>> => {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('prefectures')
       .select(`
         id,
@@ -37,7 +37,7 @@ export const locationAPI = {
   },
 
   getCities: async (prefectureId: number): Promise<SupabaseResponse<City[]>> => {
-    const { data, error } = await supabase
+    const { data, error } = await getSupabaseClient()
       .from('cities')
       .select(`
         id,
