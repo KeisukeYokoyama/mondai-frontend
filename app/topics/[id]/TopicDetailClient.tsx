@@ -233,6 +233,7 @@ export default function TopicDetailClient({ tagId }: TopicDetailClientProps) {
                         alt={statement.title}
                         width={600}
                         height={600}
+                        priority={true}
                         className="w-full h-full object-cover object-center rounded-t-md"
                         unoptimized
                       />

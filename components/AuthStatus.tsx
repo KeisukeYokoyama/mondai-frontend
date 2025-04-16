@@ -2,6 +2,8 @@
 
 import { useAuth } from '@/contexts/AuthContext'
 import Image from 'next/image'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase'
 
 interface AuthStatusProps {
   className?: string;
@@ -18,12 +20,19 @@ interface ExtendedUserMetadata {
 
 export default function AuthStatus({ className = '' }: AuthStatusProps) {
   const { user, loading } = useAuth()
+  const [userState, setUser] = useState<typeof user | null>(null)
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session?.user) {
+        setUser(session.user)
+      } else {
+        setUser(null)
+      }
+    })
+  }, [])
 
   if (loading) return null
-
-  // デバッグ用：ユーザー情報とメタデータの内容を確認
-  console.log('User:', user)
-  console.log('User metadata:', user?.user_metadata)
 
   // user_metadataの型をキャスト
   const metadata = user?.user_metadata as ExtendedUserMetadata

@@ -173,6 +173,7 @@ function CreateStatementContent() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'processing' | 'complete'>('idle');
   const [uploadStatusText, setUploadStatusText] = useState<string>('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // ログインチェック
   useEffect(() => {
@@ -613,21 +614,24 @@ function CreateStatementContent() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('送信ボタンがクリックされました');
+    setIsSubmitting(true);
 
     if (!user) {
-      console.log('ユーザーが認証されていません');
+      setError('ユーザーが認証されていません');
+      setIsSubmitting(false);
       return;
     }
 
     if (!speaker_id) {
-      console.log('政治家IDが指定されていません');
+      setError('政治家IDが指定されていません');
+      setIsSubmitting(false);
       return;
     }
 
     // メディアのいずれかが必要
     if (!image && !video) {
       showToastMessage('スクショまたは動画を登録してください');
+      setIsSubmitting(false);
       return;
     }
 
@@ -782,6 +786,8 @@ function CreateStatementContent() {
       setUploadState('idle');
       console.error('発言の登録に失敗しました:', error);
       showToastMessage('発言の登録に失敗しました');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 

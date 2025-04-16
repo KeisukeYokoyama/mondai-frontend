@@ -111,7 +111,6 @@ const kanjiToHiragana = async (str: string) => {
     const data = await response.json()
     return data.hiragana
   } catch (error) {
-    console.error('漢字変換エラー:', error)
     return str
   }
 };
@@ -215,11 +214,9 @@ function StatementsContent() {
   }
 
   // 政党選択のハンドラー
-  const handlePartyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    const value = Number(e.target.value)
-    console.log('政党選択変更:', value)
-    setSelectedParty(value)
-    if (value !== OTHER_PARTY_ID) {
+  const handlePartyChange = (value: string) => {
+    setSelectedParty(Number(value));
+    if (value !== OTHER_PARTY_ID.toString()) {
       setSelectedChildParty(null)
     }
   }
@@ -233,56 +230,43 @@ function StatementsContent() {
     try {
       setIsLoading(true)
       setIsSearching(true)
-      console.log('検索開始:', {
-        searchText,
-        startDate,
-        endDate,
-        selectedTags: selectedTags.map(tag => tag.name),
-        selectedParty,
-        selectedChildParty,
-        speakerSearchText
-      })
 
       let query = supabase
         .from('statements')
         .select(`
+          id,
+          title,
+          content,
+          statement_date,
+          image_path,
+          video_path,
+          video_thumbnail_path,
+          evidence_url,
+          created_at,
+        speaker:speakers!inner (
             id,
-            title,
-            content,
-            statement_date,
-            image_path,
-            video_path,
-            video_thumbnail_path,
-            evidence_url,
-            created_at,
-          speaker:speakers!inner (
-              id,
-              last_name,
-              first_name,
-            last_name_kana,
-            first_name_kana,
-            party:parties!inner (
-              id,
-                name
-              ),
-              chamber,
-              prefectures (
-                name
-              )
+            last_name,
+            first_name,
+          last_name_kana,
+          first_name_kana,
+          party:parties!inner (
+            id,
+              name
+            ),
+            chamber,
+            prefectures (
+              name
             )
-          `)
+          )
+        `)
 
       // 検索テキストがある場合は、検索条件を追加
       if (searchText) {
-        console.log('フリーワード検索:', searchText)
         query = query.or(`title.ilike.%${searchText}%,content.ilike.%${searchText}%`)
       }
 
       // 発言者検索
       if (speakerSearchText) {
-        console.log('発言者検索:', speakerSearchText)
-
-        // 検索条件を1つずつ追加
         query = query
           .or(`last_name.ilike.%${speakerSearchText}%,first_name.ilike.%${speakerSearchText}%`, { foreignTable: 'speaker' })
       }
@@ -290,11 +274,9 @@ function StatementsContent() {
       // 日付範囲検索
       if (startDate || endDate) {
         if (startDate) {
-          console.log('開始日:', startDate)
           query = query.gte('statement_date', startDate)
         }
         if (endDate) {
-          console.log('終了日:', endDate)
           query = query.lte('statement_date', endDate)
         }
       }
@@ -302,8 +284,6 @@ function StatementsContent() {
       // タグ検索
       if (selectedTags.length > 0) {
         const tagIds = selectedTags.map(tag => tag.id)
-        console.log('選択タグ:', selectedTags.map(tag => tag.name))
-        console.log('タグID:', tagIds)
 
         // 1つのクエリで全てのタグに紐づくstatement_idを取得
         const { data: statementTags, error: tagError } = await supabase
@@ -350,22 +330,15 @@ function StatementsContent() {
       }
 
       // クエリの実行
-      console.log('実行するクエリ:', query)
       const { data, error } = await query
-      console.log('検索結果:', {
-        data,
-        error,
-        count: data?.length
-      })
 
       if (error) {
-        console.error('クエリエラー:', error)
         throw error
       }
 
       setStatements(data as unknown as Statement[])
     } catch (error) {
-      console.error('Error fetching statements:', error)
+      // エラーハンドリング
     } finally {
       setIsLoading(false)
       setIsSearching(false)
@@ -377,16 +350,7 @@ function StatementsContent() {
   }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty, speakerSearchText])
 
   // 検索ボタンのハンドラー
-  const handleSearch = () => {
-    console.log('検索条件:', {
-      searchText,
-      startDate,
-      endDate,
-      selectedTags: selectedTags.map(tag => tag.name),
-      selectedParty,
-      selectedChildParty,
-      speakerSearchText
-    })
+  const handleSearch = async () => {
     setIsModalOpen(false)
     // 検索を実行
     fetchStatements()
@@ -585,8 +549,8 @@ function StatementsContent() {
                     <label className="text-sm text-gray-700 font-semibold">政党</label>
                     <div className="relative">
                       <select
-                        value={selectedParty}
-                        onChange={handlePartyChange}
+                        value={selectedParty.toString()}
+                        onChange={(e) => handlePartyChange(e.target.value)}
                         className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value={0}>すべて</option>
@@ -600,7 +564,7 @@ function StatementsContent() {
                     {selectedParty === OTHER_PARTY_ID && childParties.length > 0 && (
                       <div className="relative mt-2">
                         <select
-                          value={selectedChildParty || ''}
+                          value={selectedChildParty?.toString() || ''}
                           onChange={handleChildPartyChange}
                           className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                         >

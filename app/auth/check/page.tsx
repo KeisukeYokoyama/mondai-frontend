@@ -1,14 +1,17 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { useAuth } from '@/contexts/AuthContext';
 
 export default function CheckAuth() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, loading } = useAuth();
   const [isChecked, setIsChecked] = useState(false);
 
+  const redirectPath = searchParams.get('redirect') || '/dashboard'
+  
   useEffect(() => {
     // ユーザー情報のロードが完了したときのみ処理を実行
     if (!loading && !isChecked) {
@@ -17,7 +20,6 @@ export default function CheckAuth() {
       // 少し遅延を入れて、確実にユーザー情報を取得してから処理を実行
       setTimeout(() => {
         if (user) {
-          const redirectPath = localStorage.getItem('redirectAfterLogin');
           console.log('Redirect path:', redirectPath); // デバッグ用
 
           if (redirectPath) {

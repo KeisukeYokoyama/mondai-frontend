@@ -31,8 +31,6 @@ export const commentatorAPI = {
    */
   search: async (params: SearchCommentatorParams): Promise<{ data: SearchResponse<Commentator> | null; error: string | null }> => {
     try {
-      console.log('検索開始 - 受け取ったパラメータ:', params);
-      
       let query = supabase
         .from('speakers')
         .select('*', { count: 'exact' })

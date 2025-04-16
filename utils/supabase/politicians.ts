@@ -28,8 +28,6 @@ export const politicianAPI = {
    */
   search: async (params: SearchSpeakerParams): Promise<SupabaseResponse<SearchResponse>> => {
     try {
-      console.log('検索開始 - 受け取ったパラメータ:', params);
-      
       let query = supabase
         .from('speakers')
         .select(`
@@ -53,8 +51,6 @@ export const politicianAPI = {
           )
         `, { count: 'exact' })
         .eq('speaker_type', 1);
-
-      console.log('基本クエリを構築');
 
       // 検索条件の適用
       if (params.s) {
@@ -87,7 +83,6 @@ export const politicianAPI = {
 
       if (params.party_id && params.party_id !== '0') {
         const partyId = Number(params.party_id);
-        console.log('政党ID処理開始:', partyId);
         
         if (partyId === 3925) {
           const { data: childParties } = await supabase
@@ -122,7 +117,6 @@ export const politicianAPI = {
         error: null
       };
     } catch (err) {
-      console.error('Unexpected error in search:', err);
       return { 
         data: null, 
         error: err instanceof Error ? err.message : '予期せぬエラーが発生しました'
@@ -206,17 +200,11 @@ export const politicianAPI = {
         .range(offset, offset + per_page - 1)
 
       if (error) {
-        console.error('Error fetching politicians:', {
-          message: error.message,
-          details: error.details,
-          hint: error.hint,
-        })
         return { data: null, error }
       }
 
       return { data: data as unknown as SpeakerWithRelations[], error: null }
     } catch (error) {
-      console.error('Error in getAll:', error)
       return { data: null, error }
     }
   },
@@ -252,7 +240,6 @@ export const politicianAPI = {
       if (error) throw error;
       return { data, error: null };
     } catch (error) {
-      console.error('Error fetching politician:', error);
       return { data: null, error: '政治家データの取得に失敗しました' };
     }
   }

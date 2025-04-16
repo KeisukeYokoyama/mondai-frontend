@@ -129,7 +129,6 @@ export default function StatementDetailClient({ id }: { id: string }) {
           .single();
 
         if (error) {
-          console.error('問題発言データの取得エラー:', error);
           throw new Error(typeof error === 'object' && error !== null && 'message' in error
             ? error.message as string
             : '問題発言データの取得に失敗しました');
@@ -150,7 +149,6 @@ export default function StatementDetailClient({ id }: { id: string }) {
         // 表示回数を記録
         await recordStatementView(id);
       } catch (err) {
-        console.error('エラー詳細:', err);
         setError(err instanceof Error ? err.message : '問題発言データの取得に失敗しました');
       } finally {
         setLoading(false);
@@ -182,15 +180,12 @@ export default function StatementDetailClient({ id }: { id: string }) {
           .order('created_at', { ascending: false })
           .range((currentPage - 1) * commentsPerPage, currentPage * commentsPerPage - 1);
 
-        if (error) {
-          console.error('コメントの取得エラー:', error);
-          console.error('エラー詳細:', JSON.stringify(error, null, 2));
-          return;
-        }
+        if (error) throw error;
 
         setComments(data || []);
       } catch (err) {
-        console.error('コメント取得中の予期せぬエラー:', err);
+        // エラーは無視して空の配列を設定
+        setComments([]);
       }
     }
 
@@ -258,7 +253,6 @@ export default function StatementDetailClient({ id }: { id: string }) {
         });
       }
     } catch (err) {
-      console.error('コメント投稿エラー:', err);
       setCommentError('コメントの投稿に失敗しました。時間をおいて再度お試しください。');
     } finally {
       setIsSubmitting(false);
@@ -275,7 +269,6 @@ export default function StatementDetailClient({ id }: { id: string }) {
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!supabaseUrl) {
-      console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
       return '/images/default-avatar.png';
     }
 
@@ -294,7 +287,6 @@ export default function StatementDetailClient({ id }: { id: string }) {
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!supabaseUrl) {
-      console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
       return undefined;
     }
 
@@ -372,9 +364,29 @@ export default function StatementDetailClient({ id }: { id: string }) {
   if (error) return <div>エラー: {error}</div>;
   if (!statement) return <div>データが見つかりませんでした</div>;
 
-  console.log('Statement tags:', statement.tags);
-  console.log('Statement tags type:', typeof statement.tags);
-  console.log('Is Array?', Array.isArray(statement.tags));
+  const renderTags = () => {
+    if (!statement.tags || statement.tags.length === 0) {
+      return null;
+    }
+    
+    return (
+      <div className="flex flex-wrap gap-2 mt-4">
+        {(statement.tags as StatementTag[]).map((item: StatementTag) => {
+          const tag = item.tags;
+          return (
+            <div key={tag.id}>
+              <Link
+                href={`/topics/${tag.id}`}
+                className="bg-white border border-gray-200 text-gray-900 text-sm px-3 py-1.5 rounded-full"
+              >
+                {tag.name}
+              </Link>
+            </div>
+          );
+        })}
+      </div>
+    );
+  };
 
   return (
     <main className="w-full max-w-full overflow-x-hidden bg-gray-100 scroll-smooth">
@@ -405,25 +417,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
             </h1>
           </div>
         </div>
-        <div className="flex flex-row items-center justify-center">
-          {statement.tags && statement.tags.length > 0 && (
-            <div className="flex flex-wrap gap-1">
-              {(statement.tags as StatementTag[]).map((item: StatementTag, index: number) => {
-                const tag = item.tags;
-                return (
-                  <div key={index}>
-                    <Link
-                      href={`/topics/${tag.id}`}
-                      className="bg-white border border-gray-200 text-gray-900 text-sm px-3 py-1.5 rounded-full"
-                    >
-                      {tag.name}
-                    </Link>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </div>
+        {renderTags()}
       </section>
 
       <section className="my-8 py-8 mx-auto bg-white">

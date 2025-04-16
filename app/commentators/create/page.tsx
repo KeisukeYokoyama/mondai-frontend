@@ -265,7 +265,7 @@ function CreateSpeakerContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) {
-      console.log('ユーザーが認証されていません');
+      setError('ユーザーが認証されていません');
       return;
     }
 
