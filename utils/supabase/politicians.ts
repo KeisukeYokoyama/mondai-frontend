@@ -84,7 +84,9 @@ export const politicianAPI = {
       if (params.party_id && params.party_id !== '0') {
         const partyId = Number(params.party_id);
         
+        // 親政党「その他」が選択された場合
         if (partyId === 3925) {
+          // その他政党とその子政党のIDを取得
           const { data: childParties } = await supabase
             .from('parties')
             .select('id')
@@ -93,7 +95,20 @@ export const politicianAPI = {
           const partyIds = [partyId, ...(childParties?.map(p => p.id) || [])];
           query = query.in('party_id', partyIds);
         } else {
-          query = query.eq('party_id', partyId);
+          // その他以外の親政党、または子政党が選択された場合
+          const { data: party } = await supabase
+            .from('parties')
+            .select('parent_id')
+            .eq('id', partyId)
+            .single();
+
+          // 選択された政党がその他の子政党の場合
+          if (party?.parent_id === 3925) {
+            query = query.eq('party_id', partyId);
+          } else {
+            // その他以外の政党の場合
+            query = query.eq('party_id', partyId);
+          }
         }
       }
 

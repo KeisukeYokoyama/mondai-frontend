@@ -183,7 +183,8 @@ export default function Home() {
           gender: selectedGender === 0 ? undefined : 
                  selectedGender === 1 ? '男' : 
                  selectedGender === 2 ? '女' : undefined,
-          party_id: selectedParty ? String(selectedParty) : undefined,
+          party_id: selectedChildParty ? String(selectedChildParty) : 
+                   selectedParty ? String(selectedParty) : undefined,
           prefecture_id: selectedPrefecture || undefined,
           page: currentPage,
           per_page: politiciansPerPage
@@ -194,7 +195,7 @@ export default function Home() {
     } else {
       setCurrentPage(1);
     }
-  }, [searchText, selectedType, selectedGender, selectedParty, selectedPrefecture]);
+  }, [searchText, selectedType, selectedGender, selectedParty, selectedPrefecture, selectedChildParty]);
 
   // ページ変更時の検索実行
   useEffect(() => {
@@ -207,7 +208,8 @@ export default function Home() {
       gender: selectedGender === 0 ? undefined : 
              selectedGender === 1 ? '男' : 
              selectedGender === 2 ? '女' : undefined,
-      party_id: selectedParty ? String(selectedParty) : undefined,
+      party_id: selectedChildParty ? String(selectedChildParty) : 
+               selectedParty ? String(selectedParty) : undefined,
       prefecture_id: selectedPrefecture || undefined,
       page: currentPage,
       per_page: politiciansPerPage
@@ -227,7 +229,8 @@ export default function Home() {
       gender: selectedGender === 0 ? undefined : 
              selectedGender === 1 ? '男' : 
              selectedGender === 2 ? '女' : undefined,
-      party_id: selectedParty ? String(selectedParty) : undefined,
+      party_id: selectedChildParty ? String(selectedChildParty) : 
+               selectedParty ? String(selectedParty) : undefined,
       prefecture_id: selectedPrefecture || undefined,
       page: 1,
       per_page: politiciansPerPage
