@@ -132,6 +132,8 @@ function CreateStatementContent() {
   const speaker_id = searchParams.get('speaker_id');
   const speaker_type = searchParams.get('speaker_type');
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const tagSearchRef = useRef<HTMLDivElement>(null);
+  const relatedSearchRef = useRef<HTMLDivElement>(null);
   const { user, loading } = useAuth();
   const [politician, setPolitician] = useState<SpeakerWithRelations | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
@@ -275,6 +277,25 @@ function CreateStatementContent() {
   const filteredTags = availableTags.filter(tag =>
     tag.name.toLowerCase().includes(searchTagQuery.toLowerCase())
   );
+
+  // 外部クリックを検知するためのuseEffectを追加
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      // タグ検索プルダウンの外部クリック処理
+      if (tagSearchRef.current && !tagSearchRef.current.contains(event.target as Node)) {
+        setShowTagResults(false);
+      }
+      // 関連人物検索プルダウンの外部クリック処理
+      if (relatedSearchRef.current && !relatedSearchRef.current.contains(event.target as Node)) {
+        setSearchResults([]);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   // ローディング中または未ログインの場合のレンダリング
   if (loading || !user) {
@@ -1106,7 +1127,7 @@ function CreateStatementContent() {
               </div>
 
               {/* タグ検索フォーム */}
-              <div className="relative -mt-2">
+              <div className="relative -mt-2" ref={tagSearchRef}>
                 <input
                   type="text"
                   value={searchTagQuery}
@@ -1281,7 +1302,7 @@ function CreateStatementContent() {
                   )}
 
                   {/* 検索フォーム */}
-                  <div className="relative">
+                  <div className="relative" ref={relatedSearchRef}>
                     <input
                       type="text"
                       value={searchQuery}
