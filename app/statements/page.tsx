@@ -1,6 +1,6 @@
 'use client';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs'
-import React, { useState, useEffect, Suspense } from 'react'
+import React, { useState, useEffect, Suspense, useMemo, useCallback } from 'react'
 import Header from '@/components/Navs/Header'
 import Footer from '@/components/Navs/Footer'
 import Link from 'next/link'
@@ -116,7 +116,7 @@ const kanjiToHiragana = async (str: string) => {
 };
 
 function StatementsContent() {
-  const supabase = createClientComponentClient()
+  const supabase = useMemo(() => createClientComponentClient(), [])
   const searchParams = useSearchParams()
   const [statements, setStatements] = useState<Statement[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -129,7 +129,7 @@ function StatementsContent() {
   const [selectedTags, setSelectedTags] = useState<Tag[]>([])
   const [tagSearchText, setTagSearchText] = useState('')
   const [isTagSearchOpen, setIsTagSearchOpen] = useState(false)
-  const [filteredTags, setFilteredTags] = useState<Tag[]>([])
+  const [filteredTagsList, setFilteredTagsList] = useState<Tag[]>([])
   const [selectedParty, setSelectedParty] = useState<number>(0)
   const [selectedChildParty, setSelectedChildParty] = useState<number | null>(null)
   const [parties, setParties] = useState<Party[]>([])
@@ -178,14 +178,20 @@ function StatementsContent() {
     fetchParties()
   }, [supabase])
 
-  // 親政党のみをフィルタリング（orderでソート済み）
-  const parentParties = parties.filter(party => !party.parent_id).sort((a, b) => a.order - b.order)
+  // メモ化された親政党フィルタリング
+  const parentParties = useMemo(() => 
+    parties.filter(party => !party.parent_id).sort((a, b) => a.order - b.order),
+    [parties]
+  )
 
-  // 選択された親政党の子政党をフィルタリング
-  const childParties = parties.filter(party => {
-    if (!selectedParty) return false
-    return party.parent_id === selectedParty
-  }).sort((a, b) => a.order - b.order)
+  // メモ化された子政党フィルタリング
+  const childParties = useMemo(() => 
+    parties.filter(party => {
+      if (!selectedParty) return false
+      return party.parent_id === selectedParty
+    }).sort((a, b) => a.order - b.order),
+    [parties, selectedParty]
+  )
 
   // 「その他」政党のIDを定数として定義
   const OTHER_PARTY_ID = 3925
@@ -193,14 +199,14 @@ function StatementsContent() {
   // タグ検索のフィルタリング
   useEffect(() => {
     if (tagSearchText) {
-      const filtered = tags.filter(tag =>
+      const filtered = tags.filter((tag: Tag) =>
         tag.name.toLowerCase().includes(tagSearchText.toLowerCase()) &&
         !selectedTags.some(selected => selected.id === tag.id)
       )
-      setFilteredTags(filtered)
+      setFilteredTagsList(filtered)
       setIsTagSearchOpen(true)
     } else {
-      setFilteredTags([])
+      setFilteredTagsList([])
       setIsTagSearchOpen(false)
     }
   }, [tagSearchText, tags, selectedTags])
@@ -217,20 +223,8 @@ function StatementsContent() {
     setSelectedTags(selectedTags.filter(tag => tag.id !== tagId))
   }
 
-  // 政党選択のハンドラー
-  const handlePartyChange = (value: string) => {
-    setSelectedParty(Number(value));
-    if (value !== OTHER_PARTY_ID.toString()) {
-      setSelectedChildParty(null)
-    }
-  }
-
-  const handleChildPartyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    setSelectedChildParty(Number(e.target.value))
-  }
-
-  // 検索関数を修正
-  const fetchStatements = async () => {
+  // 検索関数をuseCallbackでメモ化
+  const fetchStatements = useCallback(async () => {
     try {
       setIsLoading(true)
       setIsSearching(true)
@@ -251,8 +245,6 @@ function StatementsContent() {
             id,
             last_name,
             first_name,
-            last_name_kana,
-            first_name_kana,
             party:parties (
               id,
               name
@@ -264,71 +256,50 @@ function StatementsContent() {
           )
         `, { count: 'exact' })
 
-      // 検索テキストがある場合は、検索条件を追加
+      // 検索条件を配列で管理
+      const conditions = []
+
       if (searchText) {
-        query = query.or(`title.ilike.%${searchText}%,content.ilike.%${searchText}%`)
+        conditions.push(`title.ilike.%${searchText}%,content.ilike.%${searchText}%`)
       }
 
-      // 発言者検索
       if (speakerSearchText) {
-        query = query
-          .or(`last_name.ilike.%${speakerSearchText}%,first_name.ilike.%${speakerSearchText}%`, { foreignTable: 'speaker' })
+        conditions.push(`last_name.ilike.%${speakerSearchText}%,first_name.ilike.%${speakerSearchText}%`)
+      }
+
+      // 条件をORで結合
+      if (conditions.length > 0) {
+        query = query.or(conditions.join(','))
       }
 
       // 日付範囲検索
-      if (startDate || endDate) {
-        if (startDate) {
-          query = query.gte('statement_date', startDate)
-        }
-        if (endDate) {
-          query = query.lte('statement_date', endDate)
-        }
-      }
+      if (startDate) query = query.gte('statement_date', startDate)
+      if (endDate) query = query.lte('statement_date', endDate)
 
-      // タグ検索
+      // タグ検索の最適化
       if (selectedTags.length > 0) {
-        const tagIds = selectedTags.map(tag => tag.id)
-
-        // 1つのクエリで全てのタグに紐づくstatement_idを取得
-        const { data: statementTags, error: tagError } = await supabase
+        const { data: statementTags } = await supabase
           .from('statement_tag')
-          .select('statement_id, tag_id')
-          .in('tag_id', tagIds)
+          .select('statement_id')
+          .in('tag_id', selectedTags.map(tag => tag.id))
+          .eq('tag_id', selectedTags[0].id)
 
-        if (tagError) throw tagError
-
-        // 各statement_idが持つタグの数をカウント
-        const statementTagCounts: Record<string, number> = (statementTags as StatementTag[]).reduce((acc, curr) => {
-          acc[curr.statement_id] = (acc[curr.statement_id] || 0) + 1
-          return acc
-        }, {} as Record<string, number>)
-
-        // 選択されたタグの数と一致するstatement_idのみを抽出
-        const commonStatementIds = Object.entries(statementTagCounts)
-          .filter(([_, count]) => count === selectedTags.length)
-          .map(([statementId]) => statementId)
-
-        if (commonStatementIds.length > 0) {
-          query = query.in('id', commonStatementIds)
+        if (statementTags && statementTags.length > 0) {
+          query = query.in('id', statementTags.map(st => st.statement_id))
         } else {
-          // 共通するstatement_idが存在しない場合は、空の結果を返す
           query = query.eq('id', '00000000-0000-0000-0000-000000000000')
         }
       }
 
-      // 政党検索
+      // 政党検索の最適化
       if (selectedParty > 0) {
-        if (selectedParty === OTHER_PARTY_ID && selectedChildParty) {
-          // その他政党の子政党が選択されている場合
-          query = query.eq('speaker.party_id', selectedChildParty)
-        } else if (selectedParty === OTHER_PARTY_ID) {
-          // その他政党が選択されているが、子政党が選択されていない場合
-          const childPartyIds = childParties.map(party => party.id)
-          if (childPartyIds.length > 0) {
-            query = query.in('speaker.party_id', childPartyIds)
+        if (selectedParty === OTHER_PARTY_ID) {
+          if (selectedChildParty) {
+            query = query.eq('speaker.party_id', selectedChildParty)
+          } else if (childParties.length > 0) {
+            query = query.in('speaker.party_id', childParties.map(party => party.id))
           }
         } else {
-          // 通常の政党が選択されている場合
           query = query.eq('speaker.party_id', selectedParty)
         }
       }
@@ -338,12 +309,9 @@ function StatementsContent() {
         .order('created_at', { ascending: false })
         .range((currentPage - 1) * statementsPerPage, currentPage * statementsPerPage - 1)
 
-      // クエリの実行
       const { data, error, count } = await query
 
-      if (error) {
-        throw error
-      }
+      if (error) throw error
 
       setStatements(data as unknown as Statement[])
       if (count !== null) {
@@ -351,71 +319,29 @@ function StatementsContent() {
         setTotalPages(Math.ceil(count / statementsPerPage))
       }
     } catch (error) {
-      // エラーハンドリング
+      console.error('Error fetching statements:', error)
     } finally {
       setIsLoading(false)
       setIsSearching(false)
     }
-  }
+  }, [
+    supabase,
+    searchText,
+    speakerSearchText,
+    startDate,
+    endDate,
+    selectedTags,
+    selectedParty,
+    selectedChildParty,
+    childParties,
+    currentPage,
+    statementsPerPage
+  ])
 
-  useEffect(() => {
-    fetchStatements()
-  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty, speakerSearchText, currentPage])
-
-  // 検索ボタンのハンドラー
-  const handleSearch = async () => {
-    setIsModalOpen(false)
-    // 検索を実行
-    fetchStatements()
-  }
-
-  // 検索入力のハンドラー
-  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSearchText(value)
-    setIsSearching(!!value)
-  }
-
-  // 発言者検索のハンドラー
-  const handleSpeakerSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value
-    setSpeakerSearchText(value)
-    setIsSearching(!!value)
-  }
-
-  // 日付入力のハンドラー
-  const handleStartDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setStartDate(e.target.value)
-  }
-
-  const handleEndDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setEndDate(e.target.value)
-  }
-
-  // getImagePath関数を修正
-  const getMediaPath = (statement: Statement) => {
-    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-    if (!supabaseUrl) {
-      console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
-      return '/images/video-thumbnail-no-image.jpg';
-    }
-
-    // 画像パスがある場合は画像を表示
-    if (statement.image_path) {
-      return `${supabaseUrl}/storage/v1/object/public/statements/${statement.image_path}`;
-    }
-    
-    // 動画サムネイルがある場合はサムネイルを表示
-    if (statement.video_thumbnail_path) {
-      return `${supabaseUrl}/storage/v1/object/public/video-thumbnails/${statement.video_thumbnail_path}`;
-    }
-
-    // どちらもない場合はデフォルト画像
-    return '/images/video-thumbnail-no-image.jpg';
-  };
-
-  // ページネーションのコンポーネント
+  // ページネーションコンポーネント
   const Pagination = () => {
+    if (totalPages <= 1) return null
+
     const pages = Array.from({ length: totalPages }, (_, i) => i + 1)
     const maxVisiblePages = 4
     let visiblePages = pages
@@ -432,8 +358,6 @@ function StatementsContent() {
         behavior: 'smooth'
       })
     }
-
-    if (totalPages <= 1) return null
 
     return (
       <div className="flex justify-center items-center space-x-2 my-4">
@@ -477,6 +401,78 @@ function StatementsContent() {
       </div>
     )
   }
+
+  // イベントハンドラをuseCallbackでメモ化
+  const handleSearch = useCallback(() => {
+    setIsModalOpen(false)
+    setCurrentPage(1) // 検索時にページを1に戻す
+    fetchStatements()
+  }, [fetchStatements])
+
+  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSearchText(value)
+    setIsSearching(!!value)
+    setCurrentPage(1)
+  }, [])
+
+  const handleSpeakerSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value
+    setSpeakerSearchText(value)
+    setIsSearching(!!value)
+    setCurrentPage(1)
+  }, [])
+
+  const handlePartyChange = useCallback((value: string) => {
+    setSelectedParty(Number(value))
+    setSelectedChildParty(null)
+    setCurrentPage(1)
+  }, [])
+
+  const handleChildPartyChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedChildParty(Number(e.target.value))
+  }
+
+  // getMediaPathをメモ化
+  const getMediaPath = useCallback((statement: Statement) => {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    if (!supabaseUrl) return '/images/video-thumbnail-no-image.jpg'
+
+    if (statement.image_path) {
+      return `${supabaseUrl}/storage/v1/object/public/statements/${statement.image_path}`
+    }
+    
+    if (statement.video_thumbnail_path) {
+      return `${supabaseUrl}/storage/v1/object/public/video-thumbnails/${statement.video_thumbnail_path}`
+    }
+
+    return '/images/video-thumbnail-no-image.jpg'
+  }, [])
+
+  // ビューポート内の画像かどうかを判定する関数
+  const shouldPrioritize = (index: number) => {
+    // モバイルでは1つ、デスクトップでは2つの画像を優先
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 768 ? index < 1 : index < 2;
+    }
+    return index < 2; // SSRのデフォルト値
+  };
+
+  // 次の画像をプリフェッチする関数
+  const prefetchNextImage = (index: number) => {
+    if (index < statements.length - 1) {
+      const nextImageUrl = getMediaPath(statements[index + 1]);
+      const prefetchImage = document.createElement('link');
+      prefetchImage.rel = 'prefetch';
+      prefetchImage.as = 'image';
+      prefetchImage.href = nextImageUrl;
+      document.head.appendChild(prefetchImage);
+    }
+  };
+
+  useEffect(() => {
+    fetchStatements()
+  }, [supabase, searchText, startDate, endDate, selectedTags, selectedParty, selectedChildParty, speakerSearchText, currentPage])
 
   return (
     <>
@@ -559,9 +555,9 @@ function StatementsContent() {
                       placeholder="タグを検索"
                       className="w-full px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    {isTagSearchOpen && filteredTags.length > 0 && (
+                    {isTagSearchOpen && filteredTagsList.length > 0 && (
                       <div className="absolute z-10 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg">
-                        {filteredTags.map(tag => (
+                        {filteredTagsList.map((tag: Tag) => (
                           <div
                             key={tag.id}
                             onClick={() => handleAddTag(tag)}
@@ -609,14 +605,14 @@ function StatementsContent() {
                       <input
                         type="date"
                         value={startDate}
-                        onChange={handleStartDateChange}
+                        onChange={(e) => setStartDate(e.target.value)}
                         className="w-1/2 px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <span className="text-gray-500">〜</span>
                       <input
                         type="date"
                         value={endDate}
-                        onChange={handleEndDateChange}
+                        onChange={(e) => setEndDate(e.target.value)}
                         className="w-1/2 px-3 py-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                     </div>
@@ -687,9 +683,13 @@ function StatementsContent() {
             ) : statements.length > 0 ? (
               <>
                 <div className="columns-1 md:columns-2 gap-4">
-                  {statements.map((statement) => (
+                  {statements.map((statement: Statement, index: number) => (
                     <div key={statement.id} className="break-inside-avoid mb-4">
-                      <Link href={`/statements/${statement.id}`} className="block">
+                      <Link 
+                        href={`/statements/${statement.id}`} 
+                        className="block"
+                        prefetch={true}
+                      >
                         <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
                           <div className="flex items-center justify-center relative">
                             <Image
@@ -698,7 +698,10 @@ function StatementsContent() {
                               width={400}
                               height={300}
                               className="w-full h-full object-cover object-center rounded-t-md"
-                              priority={true}
+                              quality={75}
+                              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                              priority={shouldPrioritize(index)}
+                              onLoad={() => prefetchNextImage(index)}
                             />
                             {statement.video_thumbnail_path && (
                               <div className="absolute inset-0 flex items-center justify-center">
