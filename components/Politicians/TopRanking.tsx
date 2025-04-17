@@ -1,4 +1,5 @@
-import React from 'react';
+'use client';
+import React, { useState } from 'react';
 import { FaCrown } from "react-icons/fa6";
 import Image from 'next/image';
 import Link from 'next/link';
@@ -19,6 +20,8 @@ const politicians: Politician[] = [
 ];
 
 export default function TopRanking({ title }: TopRankingProps) {
+  const [isLoading, setIsLoading] = useState<string | null>(null);
+  
   return (
     <>
       <div className="container px-3 pt-8 mx-auto">
@@ -43,7 +46,16 @@ export default function TopRanking({ title }: TopRankingProps) {
                   <p className="text-gray-600 text-xs">{politician.party}</p>
                 </div>
               </div>
-              <Link href={politician.url} className="text-blue-700 hover:text-blue-500 text-sm">問題発言を見る</Link>
+              <Link 
+                href={politician.url} 
+                prefetch={true}
+                className={`text-blue-700 hover:text-blue-500 text-sm transition-opacity duration-200 ${
+                  isLoading === politician.url ? 'opacity-50' : ''
+                }`}
+                onClick={() => setIsLoading(politician.url)}
+              >
+                問題発言を見る
+              </Link>
             </div>
           ))}
         </div>
