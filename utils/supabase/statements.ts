@@ -21,7 +21,13 @@ export const statementAPI = {
     const supabase = getSupabaseClient()
     return await supabase
       .from('statements')
-      .select('*')
+      .select(`
+        *,
+        speaker:speakers (
+          *,
+          parties (*)
+        )
+      `)
   },
 
   // 新規発言登録

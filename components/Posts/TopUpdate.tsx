@@ -22,6 +22,7 @@ interface Statement {
     id: string;
     last_name: string;
     first_name: string;
+    speaker_type: number;
     party: {
       name: string;
     };
@@ -38,6 +39,7 @@ interface SupabaseResponse {
     id: string;
     last_name: string;
     first_name: string;
+    speaker_type: string;
     party: {
       name: string;
     };
@@ -62,11 +64,12 @@ export default function TopUpdate({ title }: TopUpdateProps) {
             image_path,
             video_path,
             video_thumbnail_path,
-            speaker:speakers!inner (
+            speaker:speakers (
               id,
               last_name,
               first_name,
-              party:parties!inner (
+              speaker_type,
+              party:parties (
                 name
               )
             )
@@ -111,6 +114,24 @@ export default function TopUpdate({ title }: TopUpdateProps) {
 
     // どちらもない場合はデフォルト画像を表示
     return '/images/default-avatar.png';
+  };
+
+  const getSpeakerTypeText = (speaker_type?: number) => {
+    if (!speaker_type) return '無所属';
+    switch (speaker_type) {
+      case 1:
+        return '政治家';
+      case 2:
+        return 'ジャーナリスト';
+      case 3:
+        return '学者・専門家';
+      case 4:
+        return '評論家・言論人';
+      case 5:
+        return 'その他';
+      default:
+        return '無所属';
+    }
   };
 
   return (
@@ -162,10 +183,10 @@ export default function TopUpdate({ title }: TopUpdateProps) {
                     <div className="p-4">
                       <div className="flex items-center gap-2 mb-2">
                         <span className="font-bold text-sm text-gray-900">
-                          {statement.speaker.last_name} {statement.speaker.first_name}
+                          {statement.speaker?.last_name || ''} {statement.speaker?.first_name || ''}
                         </span>
                         <span className="text-xs text-gray-500">
-                          {statement.speaker.party.name}
+                          {statement.speaker?.party?.name || getSpeakerTypeText(statement.speaker?.speaker_type)}
                         </span>
                       </div>
                       {statement.content && (

@@ -247,13 +247,13 @@ function StatementsContent() {
           video_thumbnail_path,
           evidence_url,
           created_at,
-          speaker:speakers!inner (
+          speaker:speakers (
             id,
             last_name,
             first_name,
             last_name_kana,
             first_name_kana,
-            party:parties!inner (
+            party:parties (
               id,
               name
             ),
