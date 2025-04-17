@@ -17,6 +17,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const statement = await getStatementData(resolvedParams.id);
   const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://www.mondai-hatsugen.com';
+  const currentUrl = `${baseUrl}/statements/${resolvedParams.id}`;
   
   // 画像URLの生成
   let imageUrl = `${baseUrl}/images/default-statement.png`;
@@ -29,6 +30,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title: statement ? statement.title : '問題発言ドットコム',
     description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} は ${statement.title} という問題発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
+    alternates: {
+      canonical: currentUrl
+    },
     openGraph: {
       title: statement ? statement.title : '問題発言ドットコム',
       description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} は ${statement.title} という問題発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',

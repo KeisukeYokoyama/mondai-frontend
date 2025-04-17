@@ -20,9 +20,6 @@ export const metadata: Metadata = {
     default: '問題発言ドットコム',
   },
   description: '政治家の暴言やデマ、言行不一致などのスクショを登録して、過去の問題発言を検索できるサービスです。',
-  alternates: {
-    canonical: 'https://www.mondai-hatsugen.com',
-  },
   openGraph: {
     title: '問題発言ドットコム',
     description: '政治家の暴言やデマ、言行不一致などのスクショを登録して、過去の問題発言を検索できるサービスです。',

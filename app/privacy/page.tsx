@@ -1,6 +1,15 @@
+import { Metadata } from 'next';
 import Link from 'next/link';
 import Footer from '@/components/Navs/Footer';
 import Header from '@/components/Navs/Header';
+
+export const metadata: Metadata = {
+  title: 'プライバシーポリシー',
+  description: '問題発言ドットコムのプライバシーポリシーをご確認いただけます。',
+  alternates: {
+    canonical: 'https://www.mondai-hatsugen.com/privacy'
+  }
+}
 
 export default function PrivacyPolicy() {
   return (

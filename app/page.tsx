@@ -1,4 +1,5 @@
 import React from 'react'
+import { Metadata } from 'next'
 import Header from '@/components/Navs/Header'
 import Footer from '@/components/Navs/Footer'
 import TopTagCloud from '@/components/TagCloud/TopTagCloud'
@@ -6,6 +7,12 @@ import TopTagCloud from '@/components/TagCloud/TopTagCloud'
 import TopRanking from '@/components/Politicians/TopRanking'
 import TopUpdate from '@/components/Posts/TopUpdate'
 import Hero from '@/components/Navs/Hero'
+
+export const metadata: Metadata = {
+  alternates: {
+    canonical: 'https://www.mondai-hatsugen.com'
+  }
+}
 
 export default function Home() {
   return (

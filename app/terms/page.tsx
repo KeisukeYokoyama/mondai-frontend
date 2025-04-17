@@ -1,5 +1,14 @@
+import { Metadata } from 'next';
 import Footer from '@/components/Navs/Footer';
 import Header from '@/components/Navs/Header';
+
+export const metadata: Metadata = {
+  title: '利用規約',
+  description: '問題発言ドットコムの利用規約をご確認いただけます。',
+  alternates: {
+    canonical: 'https://www.mondai-hatsugen.com/terms'
+  }
+}
 
 export default function TermsOfService() {
   return (

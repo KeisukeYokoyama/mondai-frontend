@@ -20,9 +20,38 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const resolvedParams = await params;
   const topic = await getTopicData(resolvedParams.id);
   
+  const title = topic ? `${topic.name}に関する問題発言一覧 | 問題発言ドットコム` : 'タグ詳細 | 問題発言ドットコム';
+  const description = topic ? `${topic.name}に関する政治家や言論人の問題発言一覧です。` : '特定のタグに関連する問題発言の一覧を表示します。';
+  const url = `https://www.mondai-hatsugen.com/topics/${resolvedParams.id}`;
+
   return {
-    title: topic ? `${topic.name}に関する問題発言一覧 | 問題発言ドットコム` : 'タグ詳細 | 問題発言ドットコム',
-    description: topic ? `${topic.name}に関する政治家や言論人の問題発言一覧です。` : '特定のタグに関連する問題発言の一覧を表示します。',
+    title,
+    description,
+    alternates: {
+      canonical: url
+    },
+    openGraph: {
+      title,
+      description,
+      url,
+      type: 'website',
+      locale: 'ja_JP',
+      siteName: '問題発言ドットコム',
+      images: [
+        {
+          url: 'https://www.mondai-hatsugen.com/images/ogp-image.png',
+          width: 1200,
+          height: 630,
+          alt: '問題発言ドットコム',
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title,
+      description,
+      images: ['https://www.mondai-hatsugen.com/images/ogp-image.png'],
+    },
   }
 }
 

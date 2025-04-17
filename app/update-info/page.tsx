@@ -1,6 +1,37 @@
+import { Metadata } from 'next';
 import Link from 'next/link';
 import Footer from '@/components/Navs/Footer';
 import Header from '@/components/Navs/Header';
+
+export const metadata: Metadata = {
+  title: '更新情報',
+  description: '問題発言ドットコムの開発予定や更新情報をご確認いただけます。',
+  alternates: {
+    canonical: 'https://www.mondai-hatsugen.com/update-info'
+  },
+  openGraph: {
+    title: '更新情報',
+    description: '問題発言ドットコムの開発予定や更新情報をご確認いただけます。',
+    url: 'https://www.mondai-hatsugen.com/update-info',
+    type: 'website',
+    locale: 'ja_JP',
+    siteName: '問題発言ドットコム',
+    images: [
+      {
+        url: 'https://www.mondai-hatsugen.com/images/ogp-image.png',
+        width: 1200,
+        height: 630,
+        alt: '問題発言ドットコム',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: '更新情報',
+    description: '問題発言ドットコムの開発予定や更新情報をご確認いただけます。',
+    images: ['https://www.mondai-hatsugen.com/images/ogp-image.png'],
+  },
+}
 
 export default function UpdateInfo() {
   return (
