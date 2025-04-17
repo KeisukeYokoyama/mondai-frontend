@@ -163,22 +163,22 @@ export default function TopUpdate({ title }: TopUpdateProps) {
                 <Link 
                   href={`/statements/${statement.id}`}
                   prefetch={true}
-                  className="block transition-transform hover:scale-[1.02] duration-200"
                 >
-                  <div className="border border-gray-200 rounded-md bg-white shadow-sm">
-                    <div className="flex items-center justify-center relative aspect-video">
+                  <div className="border border-gray-200 rounded-md bg-white shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-center justify-center relative">
                       <Image
                         src={getMediaPath(statement)}
                         alt={statement.title || ''}
-                        fill
-                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-                        className="object-cover object-center rounded-t-md"
+                        width={300}
+                        height={300}
+                        className="w-full h-auto object-cover object-center rounded-t-md"
                         loading="lazy"
                         quality={75}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
                       />
                       {statement.video_thumbnail_path && (
-                        <div className="absolute inset-0 flex items-center justify-center z-10">
-                          <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center backdrop-blur-sm">
+                        <div className="absolute inset-0 flex items-center justify-center">
+                          <div className="w-16 h-16 bg-black/50 rounded-full flex items-center justify-center">
                             <div className="w-0 h-0 border-t-[12px] border-t-transparent border-l-[20px] border-l-white border-b-[12px] border-b-transparent ml-1"></div>
                           </div>
                         </div>
