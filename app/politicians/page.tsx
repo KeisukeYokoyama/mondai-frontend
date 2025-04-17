@@ -318,8 +318,9 @@ export default function Home() {
         gender: selectedGender === 0 ? undefined : 
                selectedGender === 1 ? '男' : 
                selectedGender === 2 ? '女' : undefined,
-        party_id: selectedParty ? String(selectedParty) : undefined,
-        prefecture_id: selectedPrefecture,
+        party_id: selectedChildParty ? String(selectedChildParty) : 
+                 selectedParty ? String(selectedParty) : undefined,
+        prefecture_id: selectedPrefecture || undefined,
         speaker_type: 1  // 政治家のみを対象とする
       };
       search(searchParams);
@@ -449,7 +450,8 @@ export default function Home() {
             gender: selectedGender === 0 ? undefined : 
                    selectedGender === 1 ? '男' : 
                    selectedGender === 2 ? '女' : undefined,
-            party_id: selectedParty ? String(selectedParty) : undefined,
+            party_id: selectedChildParty ? String(selectedChildParty) : 
+                     selectedParty ? String(selectedParty) : undefined,
             prefecture_id: selectedPrefecture ? String(selectedPrefecture) : undefined,
             per_page: politiciansPerPage,
             page: currentPage
@@ -873,8 +875,9 @@ export default function Home() {
                           gender: selectedGender === 0 ? undefined : 
                                  selectedGender === 1 ? '男' : 
                                  selectedGender === 2 ? '女' : undefined,
-                          party_id: selectedChildParty ? String(selectedChildParty) : selectedParty ? String(selectedParty) : undefined,
-                          prefecture_id: selectedPrefecture
+                          party_id: selectedChildParty ? String(selectedChildParty) : 
+                                   selectedParty ? String(selectedParty) : undefined,
+                          prefecture_id: selectedPrefecture ? String(selectedPrefecture) : undefined
                         };
                         console.log('Sending search params:', searchParams);
                         handleSearch();

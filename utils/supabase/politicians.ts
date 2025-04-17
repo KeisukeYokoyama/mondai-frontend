@@ -85,17 +85,18 @@ export const politicianAPI = {
         const partyId = Number(params.party_id);
         
         if (partyId === 3925) {
-          // その他の政党が選択された場合、parent_idが3925の政党に所属する政治家を検索
+          // その他の政党が選択された場合、その子政党に所属する政治家を検索
           const { data: childParties } = await supabase
             .from('parties')
             .select('id')
-            .eq('parent_id', 3925);
+            .eq('parent_id', partyId);
           
           if (childParties && childParties.length > 0) {
             const childPartyIds = childParties.map(p => p.id);
             query = query.in('party_id', childPartyIds);
           }
         } else {
+          // 特定の政党が選択された場合、その政党に所属する政治家のみを検索
           query = query.eq('party_id', partyId);
         }
       }

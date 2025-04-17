@@ -551,10 +551,12 @@ function CreateSpeakerContent() {
                           name="child_party_id"
                           value={selectedChildParty || ''}
                           onChange={(e) => {
-                            setSelectedChildParty(Number(e.target.value));
+                            const selectedValue = e.target.value;
+                            setSelectedChildParty(Number(selectedValue));
+                            // 子政党が選択された場合はその政党のIDを、選択されていない場合は親政党（その他）のIDを設定
                             setFormData({
                               ...formData,
-                              party_id: e.target.value
+                              party_id: selectedValue || String(OTHER_PARTY_ID)
                             });
                           }}
                           className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500 appearance-none"
