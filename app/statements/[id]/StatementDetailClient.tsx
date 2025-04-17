@@ -10,6 +10,7 @@ import { commentAPI } from '@/utils/supabase/comments';
 import type { StatementWithRelations, StatementTag, SpeakerWithRelations } from '@/utils/supabase/types';
 import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { recordStatementView } from '@/utils/statementViews';
+import RelatedStatements from '@/components/Statements/RelatedStatements';
 
 interface Comment {
   id: string;
@@ -91,6 +92,7 @@ interface RelatedSpeakerData {
 export default function StatementDetailClient({ id }: { id: string }) {
   const supabase = createClientComponentClient();
   const [statement, setStatement] = useState<StatementWithRelations | null>(null);
+  const [relatedStatements, setRelatedStatements] = useState<StatementWithRelations[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [comments, setComments] = useState<Comment[]>([]);
@@ -145,6 +147,10 @@ export default function StatementDetailClient({ id }: { id: string }) {
         };
 
         setStatement(formattedData);
+
+        // 関連発言を取得
+        const relatedStatementsData = await statementAPI.getRelated(formattedData);
+        setRelatedStatements(relatedStatementsData);
 
         // 表示回数を記録
         await recordStatementView(id);
@@ -500,6 +506,14 @@ export default function StatementDetailClient({ id }: { id: string }) {
           </div>
         </div>
       </section>
+
+      {/* 関連発言セクション */}
+      {statement && (
+        <RelatedStatements
+          currentStatement={statement}
+          relatedStatements={relatedStatements}
+        />
+      )}
 
       {/* コメントセクション */}
       <section className="container px-4 pb-4 mx-auto">
