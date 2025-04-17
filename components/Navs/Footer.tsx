@@ -17,21 +17,14 @@ export default function Footer() {
             <details>
               <summary className="py-2 outline-none cursor-pointer text-sm">政治家/言論人を登録するには？</summary>
               <div className="px-4 pb-4 text-sm">
-                <p>現在、登録機能は開放していません。Xなどでアンケートを実施させていただき検討を加速します。</p>
+                <p>政治家/言論人の検索結果が０件だった時に、政治家/言論人の登録ボタンが出てきます。</p>
               </div>
             </details>
             <details>
               <summary className="py-2 outline-none cursor-pointer text-sm">虚偽のスクショがあるので削除したい</summary>
               <div className="px-4 pb-4 text-sm">
-                <p>「通報」ボタンから通報できます。独自のアルゴリズムで虚偽だと判断した場合は自動的に非表示となります。通報の多いアカウントはロックされます。
-                  また、虚偽の通報をした場合もコメント機能や通報機能が停止されます。
+                <p>近日中に「通報」ボタンを実装予定です。お待ちください。
                 </p>
-              </div>
-            </details>
-            <details>
-              <summary className="py-2 outline-none cursor-pointer text-sm">政治家の画像を削除してほしい</summary>
-              <div className="px-4 pb-4 text-sm">
-                <p>X APIを使用していますので、Xのポリシーに従って対応いたします。</p>
               </div>
             </details>
             <details>
