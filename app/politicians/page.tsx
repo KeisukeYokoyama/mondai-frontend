@@ -916,6 +916,7 @@ export default function Home() {
                     key={politician.id || index} 
                     title={`${politician.last_name} ${politician.first_name}の問題発言`}
                     className="flex items-center justify-between py-4 px-4 bg-white w-full hover:bg-gray-50 transition-colors cursor-pointer"
+                    prefetch={true}
                   >
                     <div className="flex items-center flex-grow">
                       <Image
@@ -924,6 +925,10 @@ export default function Home() {
                         className="w-20 h-20 object-cover rounded-full mr-4 shadow-md" 
                         width={64}
                         height={64}
+                        quality={75}
+                        sizes="64px"
+                        priority={index < 4}
+                        loading={index < 4 ? undefined : "lazy"}
                       />
                       <div className="flex-1 min-w-0">
                         <h2 className="text-gray-900">
