@@ -73,7 +73,7 @@ export default function TopTagCloud({ title }: TopTagCloudProps) {
       try {
         // 直近24時間で最も使用されたタグを取得
         const twentyFourHoursAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
-        let { data: recentTags, error: recentError } = await supabase
+        const { data: recentTags, error: recentError } = await supabase
           .rpc('get_popular_tags', {
             time_limit: twentyFourHoursAgo,
             tag_limit: 10
