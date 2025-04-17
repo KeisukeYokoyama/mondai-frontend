@@ -1,6 +1,7 @@
 import { getSupabaseClient } from './client'
 import { Statement, StatementWithRelations, Speaker, StatementTag } from './types'
 import { SupabaseClient } from '@supabase/supabase-js'
+import { PostgrestError } from '@supabase/supabase-js'
 
 // Fileライクなオブジェクトの型定義
 type FileObject = {
@@ -11,6 +12,11 @@ type FileObject = {
 
 interface RelatedSpeaker {
   speakers: Speaker;
+}
+
+interface StatementResponse {
+  data: StatementWithRelations | null;
+  error: PostgrestError | Error | null;
 }
 
 export const statementAPI = {
@@ -93,7 +99,7 @@ export const statementAPI = {
   },
 
   // 詳細取得
-  getDetail: async (id: string) => {
+  getDetail: async (id: string): Promise<StatementResponse> => {
     const supabase = getSupabaseClient()
     try {
       const { data, error } = await supabase
@@ -119,18 +125,22 @@ export const statementAPI = {
       
       // データの整形
       if (data) {
-        data.related_speakers = data.related_speakers.map((rel: any) => rel.speakers);
+        const formattedData = {
+          ...data,
+          related_speakers: data.related_speakers.map((rel: RelatedSpeaker) => rel.speakers)
+        };
+        return { data: formattedData as StatementWithRelations, error: null };
       }
       
-      return { data, error: null };
+      return { data: null, error: null };
     } catch (err) {
       console.error('予期せぬエラー:', err);
-      return { data: null, error: err };
+      return { data: null, error: err instanceof Error ? err : new Error('Unknown error') };
     }
   },
 
   // 関連発言の取得
-  getRelated: async (currentStatement: StatementWithRelations) => {
+  getRelated: async (currentStatement: StatementWithRelations): Promise<StatementWithRelations[]> => {
     const supabase = getSupabaseClient()
     try {
       // 1. 関連人物に基づく発言を取得
