@@ -74,7 +74,7 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     if (!supabaseUrl) {
       console.error('NEXT_PUBLIC_SUPABASE_URL is not defined');
-      return '/images/default-profile.jpg';
+      return '/images/default-avatar.png';
     }
 
     return `${supabaseUrl}/storage/v1/object/public/politicians/${path}`;
@@ -95,7 +95,7 @@ export default function PoliticianDetailClient({ id }: { id: string }) {
       <section className="mt-5 pt-2 px-4">
         <div className="w-full md:w-1/2 md:mx-auto flex flex-col md:flex-row items-center justify-center text-center">
           <Image 
-            src={politician.image_path ? getProfileImagePath(politician.image_path) : '/images/default-profile.jpg'}
+            src={politician.image_path ? getProfileImagePath(politician.image_path) : '/images/default-avatar.png'}
             alt={`${politician.last_name}${politician.first_name}`}
             width={128}
             height={128}

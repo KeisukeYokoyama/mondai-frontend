@@ -32,10 +32,14 @@ function TagCloudContent({ tags }: { tags: Tag[] }) {
   const maxCount = Math.max(...tags.map(tag => tag.usage_count));
   const minCount = Math.min(...tags.map(tag => tag.usage_count));
 
-  // タグのサイズを計算する関数（1.0 ~ 3.0の範囲でスケーリング）
+  // タグのサイズを計算する関数（1.0 ~ 2.5の範囲でスケーリング）
   const calculateSize = (count: number) => {
     if (maxCount === minCount) return 1.0;
-    return 0.8 + ((count - minCount) / (maxCount - minCount)) * 2.4;
+    // 対数スケーリングを使用
+    const logMin = Math.log(minCount + 1);
+    const logMax = Math.log(maxCount + 1);
+    const logCount = Math.log(count + 1);
+    return 1.0 + ((logCount - logMin) / (logMax - logMin)) * 1.5;
   };
 
   // タグをランダムに並び替え
