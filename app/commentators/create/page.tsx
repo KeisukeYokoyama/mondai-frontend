@@ -91,6 +91,7 @@ function CreateSpeakerContent() {
     age: '',
     gender: '',
     party_id: '',
+    parent_party_id: '',
     prefecture_id: '',
     district: '',
     chamber: '',
@@ -114,9 +115,8 @@ function CreateSpeakerContent() {
   
   // 選択された親政党の子政党をフィルタリング
   const childParties = parties.filter(party => {
-    if (!formData.party_id) return false;
-    const parentId = String(formData.party_id);
-    return String(party.parent_id) === parentId;
+    if (!formData.parent_party_id) return false;
+    return party.parent_id === OTHER_PARTY_ID;
   });
 
   // ログインチェック
@@ -160,10 +160,22 @@ function CreateSpeakerContent() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value
-    });
+    const { name, value } = e.target;
+    if (name === 'party_id') {
+      setFormData({
+        ...formData,
+        party_id: value,
+        parent_party_id: value,
+      });
+      if (Number(value) !== OTHER_PARTY_ID) {
+        setSelectedChildParty(null);
+      }
+    } else {
+      setFormData({
+        ...formData,
+        [name]: value
+      });
+    }
   };
 
   // 画像処理の共通関数
@@ -520,7 +532,7 @@ function CreateSpeakerContent() {
                     <div className="relative">
                       <select
                         name="party_id"
-                        value={formData.party_id}
+                        value={formData.parent_party_id || formData.party_id}
                         onChange={handleChange}
                         required
                         className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500 appearance-none"
@@ -541,7 +553,7 @@ function CreateSpeakerContent() {
                   </div>
 
                   {/* その他政党が選択された場合の子政党選択 */}
-                  {Number(formData.party_id) === OTHER_PARTY_ID && childParties.length > 0 && (
+                  {Number(formData.parent_party_id) === OTHER_PARTY_ID && childParties.length > 0 && (
                     <div>
                       <label className="text-gray-700 text-sm font-bold mb-2 block">
                         その他政党を選択
@@ -552,11 +564,11 @@ function CreateSpeakerContent() {
                           value={selectedChildParty || ''}
                           onChange={(e) => {
                             const selectedValue = e.target.value;
-                            setSelectedChildParty(Number(selectedValue));
-                            // 子政党が選択された場合はその政党のIDを、選択されていない場合は親政党（その他）のIDを設定
+                            setSelectedChildParty(selectedValue ? Number(selectedValue) : null);
                             setFormData({
                               ...formData,
-                              party_id: selectedValue || String(OTHER_PARTY_ID)
+                              party_id: selectedValue || formData.parent_party_id,
+                              parent_party_id: formData.parent_party_id
                             });
                           }}
                           className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500 appearance-none"
@@ -593,13 +605,17 @@ function CreateSpeakerContent() {
                     <label className="text-gray-700 text-sm font-bold mb-2 block">
                       議院
                     </label>
-                    <input
-                      type="text"
+                    <select
                       name="chamber"
                       value={formData.chamber}
                       onChange={handleChange}
                       className="w-full px-3 py-2 text-md border border-gray-300 rounded-md focus:border-indigo-500 focus:ring-indigo-500"
-                    />
+                    >
+                      <option value="">選択してください</option>
+                      <option value="衆議院">衆議院</option>
+                      <option value="参議院">参議院</option>
+                      <option value="地方議会">地方議会</option>
+                    </select>
                   </div>
                   <div>
                     <label className="text-gray-700 text-sm font-bold mb-2 block">
