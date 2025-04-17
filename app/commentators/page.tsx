@@ -299,8 +299,18 @@ export default function Home() {
                   <Pagination />
                 </>
               ) : searchText.length > 0 ? (
-                <div className="text-center py-4 text-gray-500">
-                  {isLoading ? "検索中..." : "検索結果がありません"}
+                <div className="text-center py-8">
+                  <p className="text-gray-500 mb-4">
+                    {isLoading ? "検索中..." : "検索結果がありません"}
+                  </p>
+                  {!isLoading && searchResults && searchResults.length === 0 && (
+                    <Link 
+                      href="/commentators/create"
+                      className="inline-block bg-gray-900 text-white px-6 py-3 rounded-md hover:bg-gray-800 transition-colors"
+                    >
+                      言論人を登録する
+                    </Link>
+                  )}
                 </div>
               ) : null}
             </div>
