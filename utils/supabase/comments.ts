@@ -78,4 +78,18 @@ export const commentAPI = {
 
     if (error) throw error;
   },
+
+  // 最新のコメントを取得
+  getLatestComments: async (limit: number = 5) => {
+    const supabase = createClientComponentClient();
+    
+    const { data, error } = await supabase
+      .from('comments')
+      .select('*, statements(*)')
+      .order('created_at', { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+    return data;
+  },
 }; 

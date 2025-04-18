@@ -7,7 +7,7 @@ import TopTagCloud from '@/components/TagCloud/TopTagCloud'
 import TopRanking from '@/components/Politicians/TopRanking'
 import TopUpdate from '@/components/Posts/TopUpdate'
 import Hero from '@/components/Navs/Hero'
-
+import TopNewComments from '@/components/Comments/TopNewComments'
 export const metadata: Metadata = {
   alternates: {
     canonical: 'https://www.mondai-hatsugen.com'
@@ -28,6 +28,7 @@ export default function Home() {
         {/* <TopTrends title="トレンドの問題発言" /> */}
         <TopRanking title="殿堂入り暴言政治家ランキング" />
         <TopUpdate title="新着の暴言" />
+        <TopNewComments />
       </main>
       <Footer />
     </main>
