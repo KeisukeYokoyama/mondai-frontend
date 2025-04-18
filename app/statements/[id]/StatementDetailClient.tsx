@@ -469,6 +469,11 @@ export default function StatementDetailClient({ id }: { id: string }) {
                     {new Date(statement.statement_date).toLocaleDateString('ja-JP')}の発言
                   </div>
                 )}
+                {statement.evidence_url && (
+                  <div className="mt-2 truncate text-sm">
+                    {convertUrlsToLinks(statement.evidence_url)}
+                  </div>
+                )}
                 {user && (
                   <div className="flex justify-center mt-4">
                     <Link
@@ -480,11 +485,6 @@ export default function StatementDetailClient({ id }: { id: string }) {
                       </svg>
                       編集する
                     </Link>
-                  </div>
-                )}
-                {statement.evidence_url && (
-                  <div className="mt-2 truncate text-sm">
-                    {convertUrlsToLinks(statement.evidence_url)}
                   </div>
                 )}
               </div>
