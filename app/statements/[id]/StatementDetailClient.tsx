@@ -12,6 +12,9 @@ import { createClientComponentClient } from '@supabase/auth-helpers-nextjs';
 import { recordStatementView } from '@/utils/statementViews';
 import RelatedStatements from '@/components/Statements/RelatedStatements';
 import { useAuth } from '@/contexts/AuthContext';
+import { FiShare } from "react-icons/fi";
+import { RiLink } from "react-icons/ri";
+
 
 interface Comment {
   id: string;
@@ -89,6 +92,110 @@ function ConfirmDialog({
 interface RelatedSpeakerData {
   speakers: SpeakerWithRelations;
 }
+
+// シェアボタンのコンポーネント
+const ShareButton = ({ statementId, title, speaker }: { statementId: string; title: string; speaker: { last_name: string; first_name: string } }) => {
+  const [showShareOptions, setShowShareOptions] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const supabase = createClientComponentClient();
+  const { user } = useAuth();
+  const [statement, setStatement] = useState<StatementWithRelations | null>(null);
+
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const { data, error } = await supabase
+          .from('statements')
+          .select(`
+            *,
+            speaker:speakers (*),
+            tags:statement_tag (
+              tags (*)
+            ),
+            related_speakers:statement_speaker (
+              speakers (
+                *,
+                parties (
+                  name
+                )
+              )
+            )
+          `)
+          .eq('id', statementId)
+          .single();
+
+        if (error) {
+          throw new Error(typeof error === 'object' && error !== null && 'message' in error
+            ? error.message as string
+            : '問題発言データの取得に失敗しました');
+        }
+
+        if (!data) {
+          throw new Error('問題発言データが見つかりませんでした');
+        }
+
+        // データの整形
+        const formattedData = {
+          ...data,
+          related_speakers: data.related_speakers.map((rel: RelatedSpeakerData) => rel.speakers)
+        };
+
+        setStatement(formattedData);
+      } catch (err) {
+        console.error('問題発言データの取得に失敗しました', err);
+      }
+    }
+    loadData();
+  }, [statementId, supabase]);
+
+  const shareUrl = `${window.location.origin}/statements/${statementId}`;
+  const tweetText = `${speaker.last_name}${speaker.first_name} が ${title} という発言をしました。`;
+
+  const handleShare = async (type: 'twitter' | 'copy') => {
+    if (type === 'twitter') {
+      const twitterUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(shareUrl)}`;
+      window.open(twitterUrl, '_blank');
+    } else {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
+    setShowShareOptions(false);
+  };
+
+  return (
+    <div className="relative -mb-4 -mt-4">
+      <button
+        onClick={() => setShowShareOptions(!showShareOptions)}
+        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:text-gray-900"
+      >
+        <FiShare className="w-5 h-5" />
+      </button>
+
+      {showShareOptions && (
+        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 z-10">
+          <button
+            onClick={() => handleShare('twitter')}
+            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+            シェア
+          </button>
+          <button
+            onClick={() => handleShare('copy')}
+            className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+          >
+            <RiLink className="w-4 h-4 mr-2" />
+            {copied ? 'コピーしました！' : 'リンクをコピー'}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 export default function StatementDetailClient({ id }: { id: string }) {
   const supabase = createClientComponentClient();
@@ -487,6 +594,9 @@ export default function StatementDetailClient({ id }: { id: string }) {
                     </Link>
                   </div>
                 )}
+                <div className="flex justify-end mt-4">
+                  <ShareButton statementId={statement.id} title={statement.title} speaker={statement.speaker} />
+                </div>
               </div>
               {statement?.related_speakers && statement.related_speakers.length > 0 && (
                 <div className="px-8 pt-4">

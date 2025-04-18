@@ -28,27 +28,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
   
   return {
-    title: statement ? statement.title : '問題発言ドットコム',
-    description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} は ${statement.title} という問題発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
+    title: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。` : '問題発言ドットコム',
+    description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
     alternates: {
       canonical: currentUrl
     },
     openGraph: {
-      title: statement ? statement.title : '問題発言ドットコム',
-      description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} は ${statement.title} という問題発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
+      title: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。` : '問題発言ドットコム',
+      description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
       images: [
         {
           url: imageUrl,
           width: 1200,
           height: 630,
-          alt: statement ? statement.title : '問題発言ドットコム',
+          alt: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。` : '問題発言ドットコム',
         }
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title: statement ? statement.title : '問題発言ドットコム',
-      description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} は ${statement.title} という問題発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
+      title: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。` : '問題発言ドットコム',
+      description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
       images: [imageUrl],
     }
   }
@@ -78,7 +78,7 @@ export default async function Layout({
       />
       {statement && (
         <ArticleJsonLd
-          headline={`${statement.speaker?.last_name}${statement.speaker?.first_name}が「${statement.title}」と発言`}
+          headline={`${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。`}
           image={imageUrl}
           datePublished={statement.statement_date || statement.created_at}
           dateModified={statement.updated_at || statement.created_at}
