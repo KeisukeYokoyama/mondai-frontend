@@ -29,13 +29,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   
   return {
     title: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。` : '問題発言ドットコム',
-    description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
+    description: statement ? `${statement.content}` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
     alternates: {
       canonical: currentUrl
     },
     openGraph: {
       title: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。` : '問題発言ドットコム',
-      description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
+      description: statement ? `${statement.content}` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
       images: [
         {
           url: imageUrl,
@@ -48,7 +48,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     twitter: {
       card: 'summary_large_image',
       title: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。` : '問題発言ドットコム',
-      description: statement ? `${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
+      description: statement ? `${statement.content}` : '問題発言ドットコムは、政治家や言論人の問題発言や矛盾点などを検索できるサイトです。',
       images: [imageUrl],
     }
   }
@@ -78,7 +78,7 @@ export default async function Layout({
       />
       {statement && (
         <ArticleJsonLd
-          headline={`${statement.speaker?.last_name}${statement.speaker?.first_name} が ${statement.title} という発言をしました。`}
+          headline={statement.title}
           image={imageUrl}
           datePublished={statement.statement_date || statement.created_at}
           dateModified={statement.updated_at || statement.created_at}
