@@ -281,21 +281,13 @@ export const politicianAPI = {
         `)
         .eq('speaker_type', 1)
         .order('id', { foreignTable: 'statements', ascending: false })
-        // Limitを増やしてソート前の候補を多く取得
         .limit(20);
-
-      // ★取得直後のデータをログに出力
-      console.log('[getTopByStatementCount] Raw data from Supabase:', data);
 
       if (error) throw error;
 
-      // 発言数でソートして上位5件を取得
       const sortedData = data
         ?.sort((a, b) => (b.statements?.length || 0) - (a.statements?.length || 0))
         .slice(0, 5);
-
-      // ★ソート後のデータをログに出力
-      console.log('[getTopByStatementCount] Sorted data:', sortedData);
 
       const mappedData = sortedData?.map(politician => {
         let imageUrl = '/images/default-profile.png';
@@ -322,9 +314,6 @@ export const politicianAPI = {
           statementCount: politician.statements?.length || 0
         };
       });
-
-      // ★最終的に整形されたデータをログに出力
-      console.log('[getTopByStatementCount] Mapped data for component:', mappedData);
 
       return { 
         data: mappedData, 
