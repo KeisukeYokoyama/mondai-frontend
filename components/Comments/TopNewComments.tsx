@@ -44,8 +44,11 @@ export default function TopNewComments() {
 
   return (
     <>
-      <h2 className="text-xl font-bold mb-4">最新のコメント</h2>
-      <div className="grid gap-4">
+      <div className="container px-3 mt-12 mx-auto">
+        <h2 className="text-xl font-bold">最新のコメント</h2>
+      </div>
+      <div className="container px-0 py-8 mx-auto">
+        <div className="grid gap-4">
         {comments.map((comment) => (
           <div key={comment.id}>
             <Link href={`/statements/${comment.statements.id}`}>
@@ -63,6 +66,7 @@ export default function TopNewComments() {
             </Link>
           </div>
         ))}
+        </div>
       </div>
     </>
   );

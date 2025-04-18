@@ -258,5 +258,81 @@ export const politicianAPI = {
     } catch (error) {
       return { data: null, error: '政治家データの取得に失敗しました' };
     }
+  },
+
+  /**
+   * 発言数の多い政治家のトップ5を取得
+   */
+  getTopByStatementCount: async () => {
+    try {
+      const { data, error } = await supabase
+        .from('speakers')
+        .select(`
+          id,
+          last_name,
+          first_name,
+          image_path,
+          parties (
+            name
+          ),
+          statements!inner (
+            id
+          )
+        `)
+        .eq('speaker_type', 1)
+        .order('id', { foreignTable: 'statements', ascending: false })
+        // Limitを増やしてソート前の候補を多く取得
+        .limit(20);
+
+      // ★取得直後のデータをログに出力
+      console.log('[getTopByStatementCount] Raw data from Supabase:', data);
+
+      if (error) throw error;
+
+      // 発言数でソートして上位5件を取得
+      const sortedData = data
+        ?.sort((a, b) => (b.statements?.length || 0) - (a.statements?.length || 0))
+        .slice(0, 5);
+
+      // ★ソート後のデータをログに出力
+      console.log('[getTopByStatementCount] Sorted data:', sortedData);
+
+      const mappedData = sortedData?.map(politician => {
+        let imageUrl = '/images/default-profile.png';
+        if (politician.image_path) {
+          const { data: publicUrlData } = supabase
+            .storage
+            .from('politicians')
+            .getPublicUrl(politician.image_path);
+          
+          if (publicUrlData) {
+            imageUrl = publicUrlData.publicUrl;
+          }
+        }
+
+        // @ts-expect-error Linter thinks parties is an array, but query returns an object
+        const partyName = politician.parties?.name || '';
+
+        return {
+          id: politician.id,
+          name: `${politician.last_name} ${politician.first_name}`,
+          party: partyName, 
+          img: imageUrl, 
+          url: `/politicians/${politician.id}`,
+          statementCount: politician.statements?.length || 0
+        };
+      });
+
+      // ★最終的に整形されたデータをログに出力
+      console.log('[getTopByStatementCount] Mapped data for component:', mappedData);
+
+      return { 
+        data: mappedData, 
+        error: null 
+      };
+    } catch (error) {
+      console.error('Error getting top politicians:', error);
+      return { data: null, error: '政治家データの取得に失敗しました' };
+    }
   }
 };
