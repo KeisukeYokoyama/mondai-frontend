@@ -75,14 +75,19 @@ export interface Statement {
   video_path: string | null;
   video_thumbnail_path?: string | null;
   evidence_url?: string | null;
+  media_url?: string;
+  thumbnail_url?: string;
+  source_url?: string;
+  fact_check_url?: string;
   user_id: string;
   created_at: string;
   updated_at: string;
   statement_tag?: StatementTag[];
   tags: StatementTag[];
+  related_speakers?: SpeakerWithRelations[];
 }
 
-export interface StatementWithRelations extends Statement {
+export interface StatementWithRelations extends Omit<Statement, 'related_speakers'> {
   speaker: SpeakerWithRelations;
   tags: StatementTag[];
   related_speakers: SpeakerWithRelations[];

@@ -629,28 +629,43 @@ function CreateStatementContent() {
     setMediaType(type);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsSubmitting(true);
-
+  // 登録ボタンクリック時の処理を修正
+  const handleRegisterClick = () => {
+    // バリデーションチェック
     if (!user) {
       setError('ユーザーが認証されていません');
-      setIsSubmitting(false);
       return;
     }
 
     if (!speaker_id) {
       setError('政治家IDが指定されていません');
-      setIsSubmitting(false);
       return;
     }
 
     // メディアのいずれかが必要
     if (!image && !video) {
       showToastMessage('スクショまたは動画を登録してください');
-      setIsSubmitting(false);
       return;
     }
+
+    if (!formData.title.trim()) {
+      showToastMessage('発言内容を入力してください');
+      return;
+    }
+
+    if (selectedTags.length === 0) {
+      showToastMessage('タグを1つ以上選択してください');
+      return;
+    }
+
+    // バリデーション通過後にモーダルを表示
+    setShowRegisterConfirm(true);
+  };
+
+  // 登録確認モーダルで登録をクリック
+  const handleRegisterConfirm = async (e: React.FormEvent) => {
+    setShowRegisterConfirm(false);
+    setIsSubmitting(true);
 
     try {
       const supabase = getSupabaseClient();
@@ -807,20 +822,9 @@ function CreateStatementContent() {
     }
   };
 
-  // 登録確認モーダルを表示
-  const handleRegisterClick = () => {
-    setShowRegisterConfirm(true);
-  };
-
-  // 登録確認モーダルでキャンセルをクリック
-  const handleRegisterCancel = () => {
-    setShowRegisterConfirm(false);
-  };
-
-  // 登録確認モーダルで登録をクリック
-  const handleRegisterConfirm = async (e: React.FormEvent) => {
-    setShowRegisterConfirm(false);
-    await handleSubmit(e);
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    handleRegisterClick();
   };
 
   return (
@@ -1414,13 +1418,13 @@ function CreateStatementContent() {
       {/* 登録確認モーダル */}
       {showRegisterConfirm && (
         <div className="fixed inset-0 z-[9999] flex items-start justify-center pt-28 border-2">
-          <div className="fixed inset-0 bg-gray-600/10 backdrop-blur-xl" onClick={handleRegisterCancel}></div>
+          <div className="fixed inset-0 bg-gray-600/10 backdrop-blur-xl" onClick={() => setShowRegisterConfirm(false)}></div>
           <div className="relative bg-white rounded-lg p-6 max-w-screen-md w-full mx-4 z-10 shadow-xl/30">
             <h3 className="font-semibold mb-4">登録確認</h3>
             <p className="mb-4 text-sm">登録内容を確認して登録してください。このスクショを登録しますか？</p>
             <div className="flex justify-end space-x-3">
               <button
-                onClick={handleRegisterCancel}
+                onClick={() => setShowRegisterConfirm(false)}
                 className="py-2.5 px-5 me-2 mb-2 text-sm font-medium text-gray-900 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-100"
               >
                 キャンセル
