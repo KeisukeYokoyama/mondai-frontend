@@ -521,11 +521,11 @@ ${text}
         setProcessingStep('idle');
         setIsProcessingAI(false);
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('AI処理エラー:', error);
       
       // クォータ制限エラーの場合
-      if (error.message?.includes('quota')) {
+      if (error instanceof Error && error.message?.includes('quota')) {
         showToastMessage('AI処理が一時的に利用できません。手動で入力してください。', 'error');
         
         // フォールバック処理：ユーザーに手動入力を促す
@@ -543,7 +543,7 @@ ${text}
       }
       
       // レート制限エラーの場合
-      if (error.status === 429) {
+      if (error instanceof Error && error.message?.includes('429')) {
         const delay = Math.pow(2, retryAttempt) * 1000; // 指数バックオフ
         setRetryCount(retryAttempt + 1);
         
