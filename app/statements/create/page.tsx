@@ -14,10 +14,18 @@ import { politicianAPI } from '@/utils/supabase/politicians';
 import type { SpeakerWithRelations } from '@/utils/supabase/types';
 import imageCompression from 'browser-image-compression';
 import Link from 'next/link';
+import { createWorker } from 'tesseract.js';
+import OpenAI from 'openai';
 
 interface UploadProgressEvent {
   loaded: number;
   total: number;
+}
+
+interface AIResponse {
+  title: string;
+  content: string;
+  statement_date: string;
 }
 
 // 確認ダイアログのコンポーネント
@@ -164,7 +172,7 @@ function CreateStatementContent() {
   const [newTag, setNewTag] = useState('');
   const [toastMessage, setToastMessage] = useState<string>('');
   const [showToast, setShowToast] = useState(false);
-  const [toastType, setToastType] = useState<'success' | 'error'>('success');
+  const [toastType, setToastType] = useState<'success' | 'error' | 'warning'>('success');
   const [showOptions, setShowOptions] = useState(false);
   const [isDragging, setIsDragging] = useState(false);
   const [relatedSpeakers, setRelatedSpeakers] = useState<SpeakerWithRelations[]>([]);
@@ -175,6 +183,12 @@ function CreateStatementContent() {
   const [uploadState, setUploadState] = useState<'idle' | 'uploading' | 'processing' | 'complete'>('idle');
   const [uploadStatusText, setUploadStatusText] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isProcessingOCR, setIsProcessingOCR] = useState(false);
+  const [isProcessingAI, setIsProcessingAI] = useState(false);
+  const [processingStep, setProcessingStep] = useState<'idle' | 'uploading' | 'ocr' | 'ai'>('idle');
+  const [retryCount, setRetryCount] = useState(0);
+  const MAX_RETRIES = 3;
+  const RETRY_DELAY = 2000; // 2秒
 
   // ログインチェック
   useEffect(() => {
@@ -310,7 +324,7 @@ function CreateStatementContent() {
   }
 
   // Toastを表示する関数を修正
-  const showToastMessage = (message: string, type: 'success' | 'error' = 'error') => {
+  const showToastMessage = (message: string, type: 'success' | 'error' | 'warning' = 'error') => {
     setToastMessage(message);
     setToastType(type);
     setShowToast(true);
@@ -382,15 +396,189 @@ function CreateStatementContent() {
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(compressedFile);
+
+      // OCR処理を実行
+      setProcessingStep('ocr');
+      await processOCR(compressedFile);
+
     } catch (error) {
       console.error('画像の処理に失敗しました:', error);
       showToastMessage('画像の処理に失敗しました');
+      setProcessingStep('idle');
     }
   };
 
+  // OCR処理を行う関数を修正
+  const processOCR = async (imageFile: File) => {
+    try {
+      const worker = await createWorker('jpn');
+      const { data: { text } } = await worker.recognize(imageFile);
+      await worker.terminate();
+      
+      // テキストの整形処理
+      const formattedText = text
+        .replace(/\s+/g, '')
+        .trim();
+
+      // テキストが検出されない場合の処理
+      if (!formattedText || formattedText.length < 10) {
+        showToastMessage('テキストを検出できませんでした。引用元の投稿と問題発言を手動で入力してください。', 'warning');
+        setFormData(prev => ({
+          ...prev,
+          title: '',
+          content: '',
+          statement_date: ''
+        }));
+        setProcessingStep('idle');
+        return;
+      }
+      
+      // AI処理を実行
+      setProcessingStep('ai');
+      await processWithAI(formattedText);
+      
+    } catch (error) {
+      console.error('OCR処理エラー:', error);
+      showToastMessage('OCR処理に失敗しました。手動で入力してください。');
+      setProcessingStep('idle');
+    }
+  };
+
+  // OpenAIでテキストを処理する関数を追加
+  const processWithAI = async (text: string, retryAttempt = 0): Promise<void> => {
+    try {
+      // リトライ回数が最大値を超えた場合、早期リターン
+      if (retryAttempt >= MAX_RETRIES) {
+        showToastMessage('最大リトライ回数を超えました。手動で入力してください。', 'error');
+        setFormData(prev => ({
+          ...prev,
+          title: text.split('\n')[0] || '',
+          content: text,
+          statement_date: ''
+        }));
+        setProcessingStep('idle');
+        setRetryCount(0);
+        setIsProcessingAI(false);
+        return;
+      }
+
+      const openai = new OpenAI({
+        apiKey: process.env.NEXT_PUBLIC_OPENAI_API_KEY,
+        dangerouslyAllowBrowser: true
+      });
+
+      const response = await openai.chat.completions.create({
+        model: "gpt-3.5-turbo",
+        messages: [
+          {
+            role: "system",
+            content: "あなたは政治家や言論人の問題発言を分析・指摘する専門家です。与えられたテキストから重要な情報を抽出し、指定されたJSON形式で出力してください。"
+          },
+          {
+            role: "user",
+            content: `次の政治家や言論人のXでの問題発言を分析し、指定されたJSON形式で出力してください：
+
+■元のテキスト：
+${text}
+
+■出力フォーマット：
+{
+  "title": "投稿の核心的で印象的なフレーズを原文のまま出力",
+  "content": "原文を引用しつつ、自然な日本語で300文字以内で問題点を指摘して要約",
+  "statement_date": "投稿に日付がある場合はYYYY-MM-DD形式で抽出、なければ「不明」"
+}
+
+■注意点：
+- titleは100文字以内で原文のまま出力
+- フロントで「発言者は{title}という発言をしました」と処理する
+- contentは要約文をそのまま出力、無理に長くする必要はありませんが、投稿の背景がわかるようにしてください
+- statement_dateは日付のみを出力（YYYY-MM-DD形式）`
+          }
+        ],
+        temperature: 0.7,
+        max_tokens: 1000
+      });
+
+      const processedText = response.choices[0].message.content;
+      
+      try {
+        const parsedResponse = JSON.parse(processedText || '{}') as AIResponse;
+        
+        setFormData(prev => ({
+          ...prev,
+          title: parsedResponse.title || '',
+          content: parsedResponse.content || '',
+          statement_date: parsedResponse.statement_date !== '不明' ? parsedResponse.statement_date : ''
+        }));
+        
+        showToastMessage('AIによるテキスト処理が完了しました', 'success');
+        setRetryCount(0);
+        setProcessingStep('idle');
+        setIsProcessingAI(false);
+      } catch (parseError) {
+        console.error('JSON解析エラー:', parseError);
+        showToastMessage('テキストの解析に失敗しました');
+        setProcessingStep('idle');
+        setIsProcessingAI(false);
+      }
+    } catch (error: any) {
+      console.error('AI処理エラー:', error);
+      
+      // クォータ制限エラーの場合
+      if (error.message?.includes('quota')) {
+        showToastMessage('AI処理が一時的に利用できません。手動で入力してください。', 'error');
+        
+        // フォールバック処理：ユーザーに手動入力を促す
+        setFormData(prev => ({
+          ...prev,
+          title: text.split('\n')[0] || '',
+          content: text,
+          statement_date: ''
+        }));
+        
+        setProcessingStep('idle');
+        setRetryCount(0);
+        setIsProcessingAI(false);
+        return;
+      }
+      
+      // レート制限エラーの場合
+      if (error.status === 429) {
+        const delay = Math.pow(2, retryAttempt) * 1000; // 指数バックオフ
+        setRetryCount(retryAttempt + 1);
+        
+        // リトライ回数が少ない場合は再試行
+        if (retryAttempt < MAX_RETRIES) {
+          showToastMessage(`API制限に達しました。${delay/1000}秒後に再試行します... (${retryAttempt + 1}/${MAX_RETRIES})`, 'warning');
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return processWithAI(text, retryAttempt + 1);
+        } else {
+          showToastMessage('最大リトライ回数を超えました。手動で入力してください。', 'error');
+          setFormData(prev => ({
+            ...prev,
+            title: text.split('\n')[0] || '',
+            content: text,
+            statement_date: ''
+          }));
+          setProcessingStep('idle');
+          setRetryCount(0);
+          setIsProcessingAI(false);
+        }
+      } else {
+        // その他のエラーの場合
+        showToastMessage('AIによるテキスト処理に失敗しました', 'error');
+        setProcessingStep('idle');
+        setRetryCount(0);
+        setIsProcessingAI(false);
+      }
+    }
+  };
+
+  // handleImageChange関数を修正
   const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       const file = e.target.files[0];
+      setProcessingStep('uploading');
 
       try {
         // ファイルタイプのチェック
@@ -422,13 +610,19 @@ function CreateStatementContent() {
           setImagePreview(reader.result as string);
         };
         reader.readAsDataURL(compressedFile);
+
+        // OCR処理を実行
+        setProcessingStep('ocr');
+        await processOCR(compressedFile);
       } catch (error) {
         console.error('画像処理エラー:', error);
         showToastMessage('画像の処理中にエラーが発生しました');
+        setProcessingStep('idle');
       }
     } else {
       setImage(null);
       setImagePreview(null);
+      setProcessingStep('idle');
       if (fileInputRef.current) {
         fileInputRef.current.value = '';
       }
@@ -842,7 +1036,9 @@ function CreateStatementContent() {
         <div className="fixed inset-0 flex items-center justify-center z-[9999]">
           <div className={`${toastType === 'success'
               ? 'bg-green-50 border-green-400 text-green-700'
-              : 'bg-red-50 border-red-400 text-red-700'
+              : toastType === 'error'
+                ? 'bg-red-50 border-red-400 text-red-700'
+                : 'bg-yellow-50 border-yellow-400 text-yellow-700'
             } px-6 py-3 min-w-72 rounded-md shadow-lg max-w-md animate-fade-in border`}>
             {toastMessage}
           </div>
@@ -894,6 +1090,21 @@ function CreateStatementContent() {
           {error && (
             <div className="bg-red-50 border border-red-600 text-red-700 px-4 py-3 rounded mb-4">
               {error}
+            </div>
+          )}
+
+          <div className="mb-4 bg-amber-50 px-4 py-3 rounded-md border border-amber-300">
+            <p className="text-xs text-amber-900">
+              AIによる自動化の試用運転中です。<span className="text-red-600">タグは自動化対象外</span>です。投稿内容をご確認の上、おかしなところは編集してください。
+            </p>
+          </div>
+
+          {/* APIキー未設定時の警告 */}
+          {!process.env.NEXT_PUBLIC_OPENAI_API_KEY && (
+            <div className="mb-4 bg-red-50 px-4 py-3 rounded-md border border-red-300">
+              <p className="text-xs text-red-900">
+                AI処理の設定が完了していません。画像のテキスト認識のみ実行されます。
+              </p>
             </div>
           )}
 
@@ -1436,6 +1647,55 @@ function CreateStatementContent() {
                 登録
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {(isProcessingOCR || isProcessingAI) && (
+        <div className="fixed inset-0 flex items-center justify-center z-[9999]">
+          <div className="bg-white p-4 rounded-lg shadow-lg flex items-center">
+            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-indigo-500 mr-3"></div>
+            <span className="text-gray-700">
+              {isProcessingOCR ? 'OCR処理中...' : 'AIによるテキスト処理中...'}
+            </span>
+          </div>
+        </div>
+      )}
+
+      {processingStep !== 'idle' && (
+        <div className="fixed inset-0 flex items-center justify-center z-[9999]">
+          <div className="bg-white p-6 rounded-lg shadow-lg w-80">
+            <div className="mb-4">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-sm font-medium text-gray-700">
+                  {processingStep === 'uploading' && '画像を読み込み中'}
+                  {processingStep === 'ocr' && 'テキスト処理中'}
+                  {processingStep === 'ai' && 'AIによる分析中'}
+                </span>
+                <span className="text-sm text-gray-500">
+                  {processingStep === 'uploading' && '1/3'}
+                  {processingStep === 'ocr' && '2/3'}
+                  {processingStep === 'ai' && '3/3'}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-2.5">
+                <div
+                  className={`h-2.5 rounded-full transition-all duration-300 ${
+                    processingStep === 'uploading' ? 'w-1/3 bg-blue-500' :
+                    processingStep === 'ocr' ? 'w-2/3 bg-indigo-500' :
+                    'w-full bg-green-500'
+                  }`}
+                ></div>
+              </div>
+            </div>
+            <div className="flex justify-center">
+              <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-gray-900"></div>
+            </div>
+            {retryCount > 0 && (
+              <div className="mt-2 text-center text-sm text-yellow-600">
+                再試行中... ({retryCount}/{MAX_RETRIES})
+              </div>
+            )}
           </div>
         </div>
       )}
