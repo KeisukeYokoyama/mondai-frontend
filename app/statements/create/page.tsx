@@ -355,7 +355,7 @@ function CreateStatementContent() {
 
       video.onloadedmetadata = () => {
         window.URL.revokeObjectURL(video.src);
-        resolve(video.duration <= 60); // 60秒以下かチェック
+        resolve(video.duration <= 220); // 220秒以下かチェック
       };
 
       video.src = URL.createObjectURL(file);
@@ -746,16 +746,16 @@ ${text}
           return;
         }
 
-        // ファイルサイズのチェック (5MB制限)
-        if (!checkFileSize(file, 5)) {
-          showToastMessage('ファイルサイズは5MB以下にしてください');
+        // ファイルサイズのチェック (10MB制限)
+        if (!checkFileSize(file, 10)) {
+          showToastMessage('ファイルサイズは10MB以下にしてください');
           return;
         }
 
         // 動画の再生時間をチェック
         const isValidDuration = await checkVideoDuration(file);
         if (!isValidDuration) {
-          showToastMessage('動画の長さは60秒以下にしてください');
+          showToastMessage('動画の長さは220秒以下にしてください');
           return;
         }
 
@@ -1240,8 +1240,8 @@ ${text}
                                 <span className="font-semibold">クリックして選択</span>
                               </p>
                               <p className="text-xs">
-                                <span className="text-red-500">5MB以下</span>,
-                                <span className="text-red-500"> 60秒以内</span>
+                                <span className="text-red-500">10MB以下</span>,
+                                <span className="text-red-500"> 220秒以内</span>
                                 <span className="text-gray-500">の動画</span>
                               </p>
                               <p className="text-xs text-gray-500 mt-1">MP4, WebM (推奨)</p>
