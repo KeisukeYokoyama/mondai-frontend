@@ -139,6 +139,11 @@ export default function Hero() {
               </button>
             </div>
 
+            <div className="mb-4 bg-red-50 px-4 py-3 rounded-md border border-red-300">
+              <p className="text-xs text-red-900">
+                主題の違うスクショを一枚の画像にまとめないでください。また、発言部分だけをトリミングをしてから登録してください。
+              </p>
+            </div>
             <div className="space-y-4">
               <div className="text-left">
                 <ul className="list-decimal pl-5 space-y-1 text-sm">
