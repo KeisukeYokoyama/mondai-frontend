@@ -515,7 +515,7 @@ export default function StatementDetailClient({ id }: { id: string }) {
         <div className="max-w-screen-md mx-auto flex flex-row items-center">
           <div className="flex flex-col mb-4 w-full">
             <h1 className="text-center">
-              <Link href={`/politicians/${statement.speaker.id}`}>
+              <Link href={statement.speaker.speaker_type === 1 ? `/politicians/${statement.speaker.id}` : `/commentators/${statement.speaker.id}`}>
                 <span className="font-bold text-4xl text-emerald-600 leading-tight">
                   {statement.speaker.last_name}{statement.speaker.first_name}
                 </span>
