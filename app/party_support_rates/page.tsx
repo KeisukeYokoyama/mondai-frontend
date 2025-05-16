@@ -16,6 +16,12 @@ const ATTR_TYPES = [
   { value: 'total', label: '全体' }
 ];
 
+// レーダーチャートのデータ型を定義
+interface RadarDataItem {
+  属性: string;
+  [key: string]: string | number;
+}
+
 // 政党名を短く表示する関数
 const getShortPartyName = (partyName: string): string => {
   if (partyName === 'わからない・無回答') return '無回答';
@@ -112,7 +118,7 @@ const PartySupportRates: React.FC = () => {
 
   // 3. レーダーチャート用データ（年齢層のみ）
   const radarData = ageAttributes.map(attr => {
-    const row: any = { 属性: attr };
+    const row: RadarDataItem = { 属性: attr };
     selectedParties.forEach(party => {
       // その政党の全属性合計
       const total = ageAttributes.reduce((sum, a) => {
