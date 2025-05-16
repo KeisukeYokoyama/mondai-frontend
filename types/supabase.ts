@@ -79,3 +79,14 @@ export type Database = {
     }
   }
 }
+
+export interface PartySupportRate {
+  id: number;
+  year: number;
+  month: number;
+  party_name: string;
+  attribute_type: string; // 'gender' | 'age_group' | 'total'
+  attribute_value: string; // '男性' | '女性' | '18～39歳' | '全体' など
+  support_rate: number;
+  created_at: string;
+}
